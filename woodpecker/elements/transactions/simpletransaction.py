@@ -8,7 +8,6 @@ class SimpleTransaction(object):
 
     def __init__(self, str_testname, int_iteration, **kwargs):
         self.settings = kwargs.get('settings', {})
-        self.last_response = False
         self.thread_variables = kwargs.get('thread_variables', {})
 
     def configure(self):
@@ -30,6 +29,4 @@ class SimpleTransaction(object):
         self.configure()
         self.steps()
         return self.settings,\
-            self.session,\
-            self.last_response,\
             self.thread_variables

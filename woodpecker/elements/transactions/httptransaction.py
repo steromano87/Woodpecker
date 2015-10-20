@@ -11,7 +11,11 @@ class HttpTransaction(SimpleTransaction):
 
     def __init__(self, str_testname, int_iteration, **kwargs):
         super(HttpTransaction, self).__init__(str_testname, int_iteration, **kwargs)
-        self.session = kwargs.get('session', requests.Session())
+
+        # Check for existence of '_session' key in thread variables dictionary.
+        # If it does not exist a new session is created
+        if '_session' not in self.thread_variables:
+            self.thread_variables['_session'] = requests.Session()
 
     def http_request(self, str_request_name, str_url, **kwargs):
         str_method = kwargs.get('method', 'GET')
@@ -32,57 +36,58 @@ class HttpTransaction(SimpleTransaction):
             requests.packages.urllib3.disable_warnings()
 
         if str_method == 'GET':
-            self.last_response =\
-                self.session.get(str_url,
-                                 params=obj_data,
-                                 headers=obj_headers,
-                                 cookies=obj_cookies,
-                                 allow_redirects=bool_redirects,
-                                 proxies=obj_proxy,
-                                 verify=bool_verify_ssl)
+            self.thread_variables['_last_response'] = \
+                self.thread_variables['_session'].get(str_url,
+                                                      params=obj_data,
+                                                      headers=obj_headers,
+                                                      cookies=obj_cookies,
+                                                      allow_redirects=bool_redirects,
+                                                      proxies=obj_proxy,
+                                                      verify=bool_verify_ssl)
 
         elif str_method == 'POST':
             if self.is_json(obj_data):
-                self.last_response =\
-                    self.session.post(str_url,
-                                      json=obj_data,
-                                      headers=obj_headers,
-                                      cookies=obj_cookies,
-                                      allow_redirects=bool_redirects,
-                                      proxies=obj_proxy,
-                                      verify=bool_verify_ssl)
+                self.thread_variables['_last_response'] = \
+                    self.thread_variables['_session'].post(str_url,
+                                                           json=obj_data,
+                                                           headers=obj_headers,
+                                                           cookies=obj_cookies,
+                                                           allow_redirects=bool_redirects,
+                                                           proxies=obj_proxy,
+                                                           verify=bool_verify_ssl)
 
             else:
-                self.last_response =\
-                    self.session.post(str_url,
-                                      data=obj_data,
-                                      headers=obj_headers,
-                                      cookies=obj_cookies,
-                                      allow_redirects=bool_redirects,
-                                      proxies=obj_proxy,
-                                      verify=bool_verify_ssl)
+                self.thread_variables['_last_response'] = \
+                    self.thread_variables['_session'].post(str_url,
+                                                           data=obj_data,
+                                                           headers=obj_headers,
+                                                           cookies=obj_cookies,
+                                                           allow_redirects=bool_redirects,
+                                                           proxies=obj_proxy,
+                                                           verify=bool_verify_ssl)
 
         elif str_method == 'PUT':
-            self.last_response =\
-                self.session.put(str_url,
-                                 params=obj_data,
-                                 headers=obj_headers,
-                                 cookies=obj_cookies,
-                                 allow_redirects=bool_redirects,
-                                 verify=bool_verify_ssl)
+            self.thread_variables['_last_response'] = \
+                self.thread_variables['_session'].put(str_url,
+                                                      params=obj_data,
+                                                      headers=obj_headers,
+                                                      cookies=obj_cookies,
+                                                      allow_redirects=bool_redirects,
+                                                      verify=bool_verify_ssl)
 
         elif str_method == 'DELETE':
-            self.last_response =\
-                self.session.delete(str_url,
-                                 params=obj_data,
-                                 headers=obj_headers,
-                                 cookies=obj_cookies,
-                                 allow_redirects=bool_redirects,
-                                 proxies=obj_proxy,
-                                 verify=bool_verify_ssl)
+            self.thread_variables['_last_response'] = \
+                self.thread_variables['_session'].delete(str_url,
+                                                         params=obj_data,
+                                                         headers=obj_headers,
+                                                         cookies=obj_cookies,
+                                                         allow_redirects=bool_redirects,
+                                                         proxies=obj_proxy,
+                                                         verify=bool_verify_ssl)
 
         # This line is for debug purposes only
-        print(str_request_name + ' - ' + str(self.last_response.status_code) + ' - ' + str(self.last_response.elapsed))
+        print(str_request_name + ' - ' + str(self.thread_variables['_last_response'].status_code) + ' - ' +
+              str(self.thread_variables['_last_response'].elapsed))
 
     @staticmethod
     def is_json(str_json):
