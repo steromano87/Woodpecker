@@ -1,6 +1,4 @@
 import abc
-import requests
-import json
 
 __author__ = 'Stefano.Romano'
 
@@ -10,7 +8,6 @@ class SimpleTransaction(object):
 
     def __init__(self, str_testname, int_iteration, **kwargs):
         self.settings = kwargs.get('settings', {})
-        self.session = kwargs.get('session', requests.Session())
         self.last_response = False
         self.thread_variables = kwargs.get('thread_variables', {})
 
