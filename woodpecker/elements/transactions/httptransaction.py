@@ -1,6 +1,8 @@
 import abc
 import json
+
 import requests
+
 from woodpecker.elements.transactions.simpletransaction import SimpleTransaction
 
 __author__ = 'Stefano'

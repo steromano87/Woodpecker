@@ -1,4 +1,5 @@
 import abc
+
 from woodpecker.elements.ramp import Ramp
 from woodpecker.misc.utils import get_timestamp
 

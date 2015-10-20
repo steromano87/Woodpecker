@@ -1,5 +1,5 @@
 import abc
-import requests
+
 from woodpecker.misc.utils import get_timestamp
 
 
