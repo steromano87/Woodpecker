@@ -11,7 +11,7 @@ class Test(object):
         self.settings = kwargs.get('settings', {})
         self.thread_variables = {}
         self.test_transactions = []
-        self.uid = None
+        self.spawn_id = None
 
     @abc.abstractmethod
     def transactions(self):
@@ -23,13 +23,14 @@ class Test(object):
         obj_transaction = {'name': str_name, 'path': str_path}
         self.test_transactions.append(obj_transaction)
 
-    def run(self, uid=None):
-        self.uid = uid
+    def run(self, str_spawn_id=None):
+        self.spawn_id = str_spawn_id
         int_iteration = 0
         for obj_transaction_item in self.test_transactions:
             obj_module = __import__(obj_transaction_item['path'])
             obj_class = getattr(obj_module, obj_transaction_item['path'])
             obj_transaction = obj_class(self.name,
+                                        self.spawn_id,
                                         int_iteration,
                                         settings=self.settings,
                                         thread_variables=self.thread_variables)
@@ -39,4 +40,4 @@ class Test(object):
             int_iteration += 1
 
             # This line is printed only for debug purposes
-            print('ID: ' + str(self.uid) + ' Timestamp: ' + get_timestamp())
+            print('ID: ' + str(self.spawn_id) + ' Timestamp: ' + get_timestamp())

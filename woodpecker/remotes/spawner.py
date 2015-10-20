@@ -23,8 +23,9 @@ class Spawner(object):
         self.armed = True
 
     def run(self):
-        self.scenario.tests_definition()
         self.scenario.configure()
+        self.scenario.tests_definition()
+
         self.scenario.scenario_start = get_timestamp(False)
         self.scenario.scenario_duration =\
             self.scenario.get_scenario_duration()

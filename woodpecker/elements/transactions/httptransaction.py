@@ -11,8 +11,8 @@ __author__ = 'Stefano'
 class HttpTransaction(SimpleTransaction):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, str_testname, int_iteration, **kwargs):
-        super(HttpTransaction, self).__init__(str_testname, int_iteration, **kwargs)
+    def __init__(self, str_testname, str_spawn_id, int_iteration, **kwargs):
+        super(HttpTransaction, self).__init__(str_testname, str_spawn_id, int_iteration, **kwargs)
 
         # Check for existence of '_session' key in thread variables dictionary.
         # If it does not exist a new session is created
