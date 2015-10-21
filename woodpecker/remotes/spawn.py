@@ -12,6 +12,7 @@ class Spawn(StoppableThread):
         obj_module = __import__(self.testpath)
         obj_class = getattr(obj_module, self.testpath)
         self.testclass = obj_class(str_test_name)
+        self.testclass.configure()
         self.testclass.transactions()
         self.armed = False
 

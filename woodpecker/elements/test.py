@@ -20,6 +20,9 @@ class Test(object):
         in the execution order"""
         pass
 
+    def configure(self):
+        pass
+
     def add_transaction(self, str_name, str_path):
         obj_transaction = {'name': str_name, 'path': str_path}
         self.test_transactions.append(obj_transaction)
@@ -33,8 +36,8 @@ class Test(object):
             obj_transaction = obj_class(self.name,
                                         self.spawn_id,
                                         self.iteration,
-                                        settings=self.settings,
-                                        thread_variables=self.thread_variables)
+                                        self.settings,
+                                        self.thread_variables)
             self.settings,\
                 self.thread_variables = obj_transaction.run()
             del obj_transaction
