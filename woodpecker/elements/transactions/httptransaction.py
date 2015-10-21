@@ -38,36 +38,24 @@ class HttpTransaction(SimpleTransaction):
         if not bool_verify_ssl:
             requests.packages.urllib3.disable_warnings()
 
-        if str_method == 'GET' or str_method == 'DELETE':
-            self.thread_variables['_last_response'] = \
-                self.thread_variables['_session'].get(str_url,
-                                                      params=obj_data,
-                                                      headers=obj_headers,
-                                                      cookies=obj_cookies,
-                                                      allow_redirects=bool_redirects,
-                                                      proxies=obj_proxy,
-                                                      verify=bool_verify_ssl)
+        # Build kwargs for request according to method
+        dic_request_kwargs = {'headers': obj_headers,
+                              'cookies': obj_cookies,
+                              'allow_redirects': bool_redirects,
+                              'proxies': obj_proxy,
+                              'verify': bool_verify_ssl}
 
+        if str_method == 'GET' or str_method == 'DELETE':
+            dic_request_kwargs['params'] = obj_data
         elif str_method == 'POST' or str_method == 'PUT' or str_method == 'PATCH':
             if self.is_json(obj_data):
-                self.thread_variables['_last_response'] = \
-                    self.thread_variables['_session'].request(str_method, str_url,
-                                                              json=obj_data,
-                                                              headers=obj_headers,
-                                                              cookies=obj_cookies,
-                                                              allow_redirects=bool_redirects,
-                                                              proxies=obj_proxy,
-                                                              verify=bool_verify_ssl)
-
+                dic_request_kwargs['json'] = obj_data
             else:
-                self.thread_variables['_last_response'] = \
-                    self.thread_variables['_session'].request(str_method, str_url,
-                                                              data=obj_data,
-                                                              headers=obj_headers,
-                                                              cookies=obj_cookies,
-                                                              allow_redirects=bool_redirects,
-                                                              proxies=obj_proxy,
-                                                              verify=bool_verify_ssl)
+                dic_request_kwargs['data'] = obj_data
+
+        # Send unique request with kwargs defined in dict
+        self.thread_variables['_last_response'] = \
+            self.thread_variables['_session'].request(str_method, str_url, **dic_request_kwargs)
 
         # This line is for debug purposes only
         print(str_request_name + ' - ' + str(self.thread_variables['_last_response'].status_code) + ' - ' +
