@@ -6,9 +6,13 @@ from woodpecker.misc.utils import get_timestamp
 class Test(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, str_testname, **kwargs):
+    def __init__(self, str_testname, dic_settings=None):
         self.name = str_testname
-        self.settings = kwargs.get('settings', {})
+
+        if not dic_settings:
+            self.settings = {}
+        else:
+            self.settings = dic_settings
         self.thread_variables = {}
         self.test_transactions = []
         self.spawn_id = None
@@ -22,6 +26,16 @@ class Test(object):
 
     def configure(self):
         pass
+
+    def add_setting(self, str_default_key, str_value):
+        """Add a setting value to the specified key"""
+
+        self.settings[str_default_key] = str_value
+
+    def set_variable(self, str_name, str_value):
+        """Add a variable to the thread variables dict"""
+
+        self.thread_variables[str_name] = str_value
 
     def add_transaction(self, str_name, str_path):
         obj_transaction = {'name': str_name, 'path': str_path}

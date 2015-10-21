@@ -51,7 +51,7 @@ class Spawner(object):
                         str_id = random_id(16)
                         print(str_id)
                         obj_spawn = Spawn(str_id, str_test_name,
-                                          str_test_path)
+                                          str_test_path, self.scenario.settings)
                         obj_spawn.start()
                         self.scenario.tests[str_test_name]['threads'].append(obj_spawn)
 
