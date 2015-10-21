@@ -12,6 +12,7 @@ class Test(object):
         self.thread_variables = {}
         self.test_transactions = []
         self.spawn_id = None
+        self.iteration = 0
 
     @abc.abstractmethod
     def transactions(self):
@@ -25,19 +26,19 @@ class Test(object):
 
     def run(self, str_spawn_id=None):
         self.spawn_id = str_spawn_id
-        int_iteration = 0
+        self.iteration = 1
         for obj_transaction_item in self.test_transactions:
             obj_module = __import__(obj_transaction_item['path'])
             obj_class = getattr(obj_module, obj_transaction_item['path'])
             obj_transaction = obj_class(self.name,
                                         self.spawn_id,
-                                        int_iteration,
+                                        self.iteration,
                                         settings=self.settings,
                                         thread_variables=self.thread_variables)
             self.settings,\
                 self.thread_variables = obj_transaction.run()
             del obj_transaction
-            int_iteration += 1
+            self.iteration += 1
 
             # This line is printed only for debug purposes
             print('ID: ' + str(self.spawn_id) + ' Timestamp: ' + get_timestamp())
