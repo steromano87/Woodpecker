@@ -24,6 +24,11 @@ class Scenario(object):
     def tests_definition(self):
         pass
 
+    def add_setting(self, str_default_key, str_value):
+        """Add a setting value to the specified key"""
+
+        self.settings[str_default_key] = str_value
+
     def add_test(self, str_testname, str_path):
         obj_module = __import__(str_path)
         obj_class = getattr(obj_module, str_path)
