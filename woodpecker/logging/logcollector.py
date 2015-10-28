@@ -8,8 +8,10 @@ __author__ = 'Stefano'
 
 class LogCollector(SocketServer.StreamRequestHandler):
 
-    def setup(self):
-        self.dbwriter = DBWriter
+    def __init__(self, request, client_address, server):
+        self.dbwriter = DBWriter('testDB.sqlite')
+        SocketServer.StreamRequestHandler.__init__(self, request, client_address, server)
+        return
 
     def handle(self):
         str_message = self.rfile.readline().strip()
@@ -25,3 +27,7 @@ class LogCollector(SocketServer.StreamRequestHandler):
             self.dbwriter.write_spawns_info(dic_message.get('payload', {}))
         elif dic_message.get('logType') == 'sysmonitor':
             self.dbwriter.write_sysmonitor_info(dic_message.get('payload', {}))
+
+if __name__ == '__main__':
+    obj_server = SocketServer.TCPServer(('localhost', 7777), LogCollector)
+    obj_server.serve_forever()
