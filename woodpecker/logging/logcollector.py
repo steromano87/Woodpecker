@@ -9,11 +9,19 @@ __author__ = 'Stefano'
 class LogCollector(SocketServer.StreamRequestHandler):
 
     def setup(self):
-        pass
+        self.dbwriter = DBWriter
 
     def handle(self):
-        str_payload = self.rfile.readline().strip()
-        obj_payload = json.loads(str_payload)
+        str_message = self.rfile.readline().strip()
+        dic_message = json.loads(str_message)
 
-        if obj_payload['logType'] == 'transaction':
-            pass
+        if dic_message.get('logType') == 'transactionStart':
+            self.dbwriter.write_transaction_start(dic_message.get('payload', {}))
+        elif dic_message.get('logType') == 'transactionEnd':
+            self.dbwriter.write_transaction_end(dic_message.get('payload', {}))
+        elif dic_message.get('logType') == 'request':
+            self.dbwriter.write_request(dic_message.get('payload', {}))
+        elif dic_message.get('logType') == 'spawns':
+            self.dbwriter.write_spawns_info(dic_message.get('payload', {}))
+        elif dic_message.get('logType') == 'sysmonitor':
+            self.dbwriter.write_sysmonitor_info(dic_message.get('payload', {}))

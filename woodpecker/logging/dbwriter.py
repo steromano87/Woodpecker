@@ -158,7 +158,7 @@ class DBWriter(object):
                             )
         self.conn.commit()
 
-    def write_spawn_info(self, dic_payload):
+    def write_spawns_info(self, dic_payload):
         str_prepared = 'INSERT INTO spawns ' \
                        'VALUES (?, ?, ?, ?)'
         self.cursor.execute(str_prepared,
