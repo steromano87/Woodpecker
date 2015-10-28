@@ -5,8 +5,17 @@ __author__ = 'Stefano.Romano'
 
 class DBWriter(object):
 
-    def __enter__(self, str_filepath):
+    def __init__(self, str_filepath):
+        self.__create_database(str_filepath)
 
+    def __enter__(self, str_filepath):
+        self.__create_database(str_filepath)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.conn.commit()
+        self.conn.close()
+
+    def __create_database(self, str_filepath):
         # Create the DB
         self.conn = sqlite3.connect(str_filepath)
         self.cursor = self.conn.cursor()
@@ -44,8 +53,8 @@ class DBWriter(object):
                                         'on requests (hostName, spawnID, testName, iteration, requestName);'
         str_requests_timestamp_index_query = 'CREATE INDEX IF NOT EXISTS requests_timestamp ' \
                                              'on requests (timestamp);'
-        str_requests_status_code_index_query = 'CREATE INDEX IF NOT EXISTS requests_statuscode ' \
-                                               'on requests (statusCode);'
+        str_requests_status_code_index_query = 'CREATE INDEX IF NOT EXISTS requests_status ' \
+                                               'on requests (status);'
         str_requests_skeleton_index_query = 'CREATE INDEX IF NOT EXISTS requests_skeleton ' \
                                             'on requests (requestSkeleton);'
         str_requests_assertion_index_query = 'CREATE INDEX IF NOT EXISTS requests_assertions ' \
@@ -59,7 +68,7 @@ class DBWriter(object):
                                  'runningSpawns INTEGER' \
                                  ');'
         str_spawns_main_index_query = 'CREATE INDEX IF NOT EXISTS spawns_mainkeys ' \
-                                      'as spawns (hostName, timestamp);'
+                                      'on spawns (hostName, timestamp);'
 
         # System monitor table
         str_sysmonitor_table_query = 'CREATE TABLE IF NOT EXISTS sysmonitor (' \
@@ -72,9 +81,9 @@ class DBWriter(object):
                                      'memoryPerc REAL' \
                                      ');'
         str_sysmonitor_main_index_query = 'CREATE INDEX IF NOT EXISTS sysmonitor_mainkeys ' \
-                                          'as sysmonitor (hostName, timestamp);'
+                                          'on sysmonitor (hostName, timestamp);'
         str_sysmonitor_host_type_index_query = 'CREATE INDEX IF NOT EXISTS sysmonitor_hostType ' \
-                                               'as sysmonitor (hostType);'
+                                               'on sysmonitor (hostType);'
 
         # Executes all the queries as script
         self.cursor.executescript('\n'.join((
@@ -96,10 +105,6 @@ class DBWriter(object):
         )))
 
         self.conn.commit()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.conn.commit()
-        self.conn.close()
 
     def write_transaction_start(self, dic_payload):
         str_prepared = 'INSERT INTO transactions ' \
