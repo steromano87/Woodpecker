@@ -85,6 +85,20 @@ class DBWriter(object):
         str_sysmonitor_host_type_index_query = 'CREATE INDEX IF NOT EXISTS sysmonitor_hostType ' \
                                                'on sysmonitor (hostType);'
 
+        # Messages table
+        str_messages_table_query = 'CREATE TABLE IF NOT EXISTS messages (' \
+                                   'hostName TEXT DEFAULT \'LOCALHOST\',' \
+                                   'spawnID TEXT, ' \
+                                   'testName TEXT, ' \
+                                   'iteration INTEGER, ' \
+                                   'timestamp TEXT, ' \
+                                   'message BLOB' \
+                                   ')'
+        str_messages_main_index_query = 'CREATE INDEX IF NOT EXISTS messages_mainkeys ' \
+                                        'on messages (hostName, spawnID, testName, iteration)'
+        str_messages_timestamp_index_query = 'CREATE INDEX IF NOT EXISTS messages_timestamp ' \
+                                             'on messages (timestamp)'
+
         # Executes all the queries as script
         self.cursor.executescript('\n'.join((
             str_transactions_table_query,
@@ -99,9 +113,14 @@ class DBWriter(object):
             '\n',
             str_spawns_table_query,
             str_spawns_main_index_query,
+            '\n',
             str_sysmonitor_table_query,
             str_sysmonitor_main_index_query,
-            str_sysmonitor_host_type_index_query
+            str_sysmonitor_host_type_index_query,
+            '\n',
+            str_messages_table_query,
+            str_messages_main_index_query,
+            str_messages_timestamp_index_query
         )))
 
         self.conn.commit()
@@ -188,6 +207,21 @@ class DBWriter(object):
                                 dic_payload.get('memoryUsed'),
                                 dic_payload.get('memoryAvail'),
                                 dic_payload.get('memoryPerc')
+                            )
+                            )
+        self.conn.commit()
+
+    def write_message(self, dic_payload):
+        str_prepared = 'INSERT INTO messages ' \
+                       'VALUES (?, ?, ?, ?, ?, ?)'
+        self.cursor.execute(str_prepared,
+                            (
+                                dic_payload.get('hostName'),
+                                dic_payload.get('spawnID'),
+                                dic_payload.get('testName'),
+                                dic_payload.get('iteration'),
+                                dic_payload.get('timestamp'),
+                                dic_payload.get('messages')
                             )
                             )
         self.conn.commit()

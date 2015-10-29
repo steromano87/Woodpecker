@@ -26,6 +26,8 @@ class LogCollector(SocketServer.BaseRequestHandler):
             self.dbwriter.write_spawns_info(dic_payload)
         elif dic_message.get('logType') == 'sysmonitor':
             self.dbwriter.write_sysmonitor_info(dic_payload)
+        elif dic_message.get('logType') == 'message':
+            self.dbwriter.write_message(dic_payload)
 
 if __name__ == '__main__':
     obj_server = SocketServer.UDPServer(('localhost', 7777), LogCollector)
