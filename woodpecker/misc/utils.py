@@ -2,6 +2,7 @@ import string
 import time
 import datetime
 import random
+import socket
 
 __author__ = 'Stefano.Romano'
 
@@ -39,3 +40,7 @@ def bytes2human(n):
             value = float(n) / prefix[s]
             return '%.1f%s' % (value, s)
     return "%sB" % n
+
+
+def get_ip_address():
+    return socket.gethostbyname(socket.gethostbyname())
