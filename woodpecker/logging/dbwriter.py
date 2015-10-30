@@ -12,6 +12,12 @@ class DBWriter(object):
         self.__create_database(str_filepath)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__disconnect()
+
+    def __del__(self):
+        self.__disconnect()
+
+    def __disconnect(self):
         self.conn.commit()
         self.conn.close()
 
