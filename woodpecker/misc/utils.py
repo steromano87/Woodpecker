@@ -3,6 +3,9 @@ import time
 import datetime
 import random
 import socket
+import os
+import imp
+
 
 __author__ = 'Stefano.Romano'
 
@@ -43,4 +46,22 @@ def bytes2human(n):
 
 
 def get_ip_address():
-    return socket.gethostbyname(socket.gethostbyname())
+    return socket.gethostbyname(socket.gethostname())
+
+
+def import_from_path(str_path, str_class_name):
+    class_inst = None
+    py_mod = None
+
+    mod_name, file_ext = os.path.splitext(os.path.split(str_path)[-1])
+
+    if file_ext.lower() == '.py':
+        py_mod = imp.load_source(mod_name, str_path)
+
+    elif file_ext.lower() == '.pyc':
+        py_mod = imp.load_compiled(mod_name, str_path)
+
+    if hasattr(py_mod, str_class_name):
+        class_inst = getattr(py_mod, str_class_name)()
+
+    return class_inst
