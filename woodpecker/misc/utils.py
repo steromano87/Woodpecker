@@ -65,3 +65,14 @@ def import_from_path(str_path, str_class_name):
         class_inst = getattr(py_mod, str_class_name)()
 
     return class_inst
+
+
+def get_abs_path(str_path, str_cwd=None):
+    if not str_cwd:
+        str_cwd = os.getcwd()
+
+    if os.path.isabs(str_path):
+        return str_path
+    else:
+        tpl_scenario_path = (str_cwd, str_path)
+        return os.path.normpath(''.join(tpl_scenario_path))
