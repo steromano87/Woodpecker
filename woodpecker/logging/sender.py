@@ -14,6 +14,12 @@ class Sender(object):
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__disconnect()
+
+    def __del__(self):
+        self.__disconnect()
+
+    def __disconnect(self):
         self.socket.close()
 
     def __initialize(self, str_receiver_url, int_receiver_port, str_protocol):
