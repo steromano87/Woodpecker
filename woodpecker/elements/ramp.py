@@ -12,6 +12,9 @@ class Ramp(object):
         self.ramp_up = kwargs.get('ramp_up', 30)
         self.ramp_down = kwargs.get('ramp_down', 10)
 
+    def rescale_by_factor(self, dbl_scaling_factor):
+        self.spawns = self.spawns * dbl_scaling_factor
+
     def get_planned_spawns_at(self, dbl_elapsed_time):
         if dbl_elapsed_time < self.initial_delay:
             int_result = 0
@@ -47,3 +50,6 @@ class Ramp(object):
     def get_total_duration(self):
         return self.initial_delay + self.ramp_up + self.load_duration\
             + self.ramp_down
+
+    def get_max_spawns(self):
+        return self.spawns

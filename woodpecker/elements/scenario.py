@@ -92,3 +92,23 @@ class Scenario(object):
 
     def get_elapsed_time(self):
         return utils.get_timestamp(False) - self.scenario_start
+
+    def get_max_test_spawns(self, str_testname):
+        list_spawns = []
+        for obj_ramp in self.tests[str_testname]['ramps']:
+            list_spawns.append(obj_ramp.get_max_spawns())
+        return sum(list_spawns)
+
+    def get_max_scenario_spawns(self):
+        list_spawns = []
+        for str_testname in self.tests.iterkeys():
+            list_spawns.append(self.get_max_test_spawns(str_testname))
+        return sum(list_spawns)
+
+    def rescale_spawns_to(self, int_rescaled_spawns):
+        int_max_scenario_spawns = self.get_max_scenario_spawns() if self.get_max_scenario_spawns() > 0 else 1
+        dbl_rescale_factor = int_rescaled_spawns / int_max_scenario_spawns
+        for str_testname, dic_testdata in self.tests.iteritems():
+            for int_index, obj_ramp in enumerate(dic_testdata['ramps']):
+                self.tests[str_testname]['ramps'][int_index].rescale_by_factor(dbl_rescale_factor)
+        pass
