@@ -41,23 +41,19 @@ class Test(object):
         self.thread_variables[str_name] = str_value
 
     def add_transaction(self, str_name, str_path):
-        obj_transaction = {'name': str_name, 'path': utils.get_abs_path(str_path, self.scenario_folder)}
+        str_abspath = utils.get_abs_path(str_path, self.scenario_folder)
+        obj_transaction = {'name': str_name,
+                           'path': str_abspath,
+                           'class': utils.import_from_path(str_abspath, str_name, {'test_name': self.name})}
         self.test_transactions.append(obj_transaction)
 
     def run(self, str_spawn_id=None):
         self.spawn_id = str_spawn_id
         self.iteration = 1
         for obj_transaction_item in self.test_transactions:
-            obj_class = utils.import_from_path(os.path.abspath(obj_transaction_item['path']),
-                                               obj_transaction_item['name'])
-            obj_transaction = obj_class(self.name,
-                                        self.spawn_id,
-                                        self.iteration,
-                                        self.settings,
-                                        self.thread_variables)
             self.settings,\
-                self.thread_variables = obj_transaction.run()
-            del obj_transaction
+                self.thread_variables = \
+                obj_transaction_item['class'].run(self.spawn_id, self.iteration, self.settings, self.thread_variables)
 
         self.iteration += 1
 
