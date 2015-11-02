@@ -29,10 +29,12 @@ class Controller(object):
         # IP addresses and ports
         self.controller_ip_addr = utils.get_ip_address()
         self.port = kwargs.get('port', 7878)
-        self.spawners_ip_addr = kwargs.get('spawners', ('localhost',))
 
-        # Allocate an empty dict to collect spawners hostnames (for better logging readability)
+        # Allocate an empty dict to collect spawners data
         self.spawners = {}
+        list_spawners = kwargs.get('spawners', ['localhost'])
+        for str_spawner in list_spawners:
+            self.spawners[str_spawner] = {}
 
         # Running mode (controller or spawner), defaults to controller
         self.run_mode = kwargs.get('run_mode', 'controller')
@@ -67,5 +69,22 @@ class Controller(object):
         # Load tests
         self.scenario.tests_definition()
 
+    def __scale_ramps(self):
+        # Get spawners number
+        int_spawners_num = len(self.spawners)
+        int_max_spawns = self.scenario.get_max_scenario_spawns()
+
+        # Cycle through spawners scenarios and rescale max spawn number to match total spawn number
+        for str_spawner_ip, dic_spawner_data in self.spawners.iteritems():
+            # First assign original scenario...
+            self.spawners[str_spawner_ip]['scenario'] = self.scenario
+
+            # Then calculate max spawn number and assign it
+            int_spawner_quota = int(round(int_max_spawns / int_spawners_num, 0))
+            int_max_spawns -= int_spawner_quota
+            int_spawners_num -= 1
+            self.spawners[str_spawner_ip]['scenario'].rescale_spawns_to(int_spawner_quota)
+
     def start_scenario(self):
         self.__load_scenario()
+        self.__scale_ramps()
