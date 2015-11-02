@@ -49,9 +49,12 @@ def get_ip_address():
     return socket.gethostbyname(socket.gethostname())
 
 
-def import_from_path(str_path, str_class_name):
+def import_from_path(str_path, str_class_name, dic_kwargs=None):
     class_inst = None
     py_mod = None
+
+    if not dic_kwargs:
+        dic_kwargs = {}
 
     mod_name, file_ext = os.path.splitext(os.path.split(str_path)[-1])
 
@@ -62,7 +65,7 @@ def import_from_path(str_path, str_class_name):
         py_mod = imp.load_compiled(mod_name, str_path)
 
     if hasattr(py_mod, str_class_name):
-        class_inst = getattr(py_mod, str_class_name)()
+        class_inst = getattr(py_mod, str_class_name)(**dic_kwargs)
 
     return class_inst
 
