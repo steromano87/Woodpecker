@@ -1,6 +1,6 @@
 import threading
 import cPickle
-import json
+import base64
 import os
 
 from woodpecker.remotes.sysmonitor import Sysmonitor
@@ -35,6 +35,9 @@ class Controller(object):
         list_spawners = kwargs.get('spawners', ['localhost'])
         for str_spawner in list_spawners:
             self.spawners[str_spawner] = {}
+
+            # Create a sender for each spawner
+            self.spawners[str_spawner]['sender'] = Sender(str_spawner, self.port, 'TCP')
 
         # Running mode (controller or spawner), defaults to controller
         self.run_mode = kwargs.get('run_mode', 'controller')
@@ -89,9 +92,17 @@ class Controller(object):
         # Cycle through spawners and serialize their own scenario class
         for str_spawner_ip in self.spawners.iterkeys():
             self.spawners[str_spawner_ip]['serialized'] = \
-                cPickle.dumps(self.spawners[str_spawner_ip]['scenario'], cPickle.HIGHEST_PROTOCOL)
+                base64.b64encode(cPickle.dumps(self.spawners[str_spawner_ip]['scenario'], cPickle.HIGHEST_PROTOCOL))
+            print self.spawners[str_spawner_ip]['serialized']
+
+    def __send_serialized_scenarios(self):
+        # Cycle through spawners and send serialized scenario class
+        for str_spawner_ip in self.spawners.iterkeys():
+            dic_payload = {'scenarioSerializedClass': self.spawners[str_spawner_ip]['serialized']}
+            # self.spawners[str_spawner_ip]['sender'].send('serializedScenario', dic_payload)
 
     def start_scenario(self):
         self.__load_scenario()
         self.__scale_ramps()
         self.__serialize_scenarios()
+        self.__send_serialized_scenarios()
