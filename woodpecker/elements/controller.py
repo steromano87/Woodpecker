@@ -1,22 +1,23 @@
 import threading
 import cPickle
 import json
+import os
 
 from woodpecker.remotes.sysmonitor import Sysmonitor
 from woodpecker.logging.sender import Sender
 from woodpecker.logging.logcollector import LogCollector
-from woodpecker.misc.utils import get_ip_address, get_timestamp
+import woodpecker.misc.utils as utils
 
 __author__ = 'Stefano.Romano'
 
 
 class Controller(object):
 
-    def __init__(self, str_scenario_class_path, **kwargs):
-        self.__initialize(str_scenario_class_path, **kwargs)
+    def __init__(self, str_scenario_name, **kwargs):
+        self.__initialize(str_scenario_name, **kwargs)
 
-    def __enter__(self, str_scenario_class_path, **kwargs):
-        self.__initialize(str_scenario_class_path, **kwargs)
+    def __enter__(self, str_scenario_name, **kwargs):
+        self.__initialize(str_scenario_name, **kwargs)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
@@ -24,9 +25,9 @@ class Controller(object):
     def __del__(self):
         pass
 
-    def __initialize(self, str_scenario_class_path, **kwargs):
+    def __initialize(self, str_scenario_name, **kwargs):
         # IP addresses and ports
-        self.controller_ip_addr = get_ip_address()
+        self.controller_ip_addr = utils.get_ip_address()
         self.port = kwargs.get('port', 7878)
         self.spawners_ip_addr = kwargs.get('spawners', ('localhost',))
 
@@ -41,3 +42,30 @@ class Controller(object):
 
         # Local flag to run everything on localhost (to nbe used in the future...), defaults to False
         self.local = kwargs.get('local', False)
+
+        # Placeholder for scenario
+        self.scenario = None
+
+        # Scenario class name
+        self.scenario_name = str_scenario_name
+
+        # Scenario folder
+        self.scenario_folder = os.getcwd()
+
+        # Scenario file path, defaults to standard scenario file
+        self.scenario_file_path = utils.get_abs_path(kwargs.get('scenario_file_path', './scenario.py'),
+                                                     self.scenario_folder)
+
+        # Result file path
+        self.result_file_path = utils.get_abs_path(kwargs.get('result_file', './results/results.sqlite'),
+                                                   self.scenario_folder)
+
+    def __load_scenario(self):
+        # Get scenario from path and name
+        self.scenario = utils.import_from_path(self.scenario_file_path, self.scenario_name)
+
+        # Load tests
+        self.scenario.tests_definition()
+
+    def start_scenario(self):
+        self.__load_scenario()
