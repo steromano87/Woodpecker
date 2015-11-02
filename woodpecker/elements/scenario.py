@@ -1,7 +1,8 @@
 import abc
+import os
 
 from woodpecker.elements.ramp import Ramp
-from woodpecker.misc.utils import get_timestamp
+import woodpecker.misc.utils as utils
 
 __author__ = 'Stefano.Romano'
 
@@ -16,6 +17,7 @@ class Scenario(object):
         self.tests = {}
         self.armed = False
         self.scenario_duration = 0
+        self.scenario_folder = kwargs.get('scenario_folder', os.getcwd())
 
     def configure(self):
         pass
@@ -25,16 +27,17 @@ class Scenario(object):
         pass
 
     def add_setting(self, str_default_key, str_value):
-        """Add a setting value to the specified key"""
-
+        """
+        Add a setting value to the specified key
+        """
         self.settings[str_default_key] = str_value
 
     def add_test(self, str_testname, str_path):
-        obj_module = __import__(str_path)
-        obj_class = getattr(obj_module, str_path)
         self.tests[str_testname] = {}
         self.tests[str_testname]['path'] = str_path
-        self.tests[str_testname]['class'] = obj_class(str_testname)
+        self.tests[str_testname]['class'] = utils.import_from_path(utils.get_abs_path(str_path, self.scenario_folder),
+                                                                   str_testname,
+                                                                   {'test_name': str_testname})
         self.tests[str_testname]['ramps'] = []
         self.tests[str_testname]['iteration_limit'] = 0
         self.tests[str_testname]['current_spawns'] = 0
@@ -88,4 +91,4 @@ class Scenario(object):
         return sum(list_spawns)
 
     def get_elapsed_time(self):
-        return get_timestamp(False) - self.scenario_start
+        return utils.get_timestamp(False) - self.scenario_start
