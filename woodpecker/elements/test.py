@@ -58,7 +58,8 @@ class Test(object):
             self.settings,\
                 self.thread_variables = obj_transaction.run()
             del obj_transaction
-            self.iteration += 1
 
-            # This line is printed only for debug purposes
-            print('ID: ' + str(self.spawn_id) + ' Timestamp: ' + utils.get_timestamp())
+        self.iteration += 1
+
+        # This line is printed only for debug purposes
+        print('ID: ' + str(self.spawn_id) + ' Timestamp: ' + utils.get_timestamp())
