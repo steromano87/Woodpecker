@@ -75,7 +75,7 @@ class Controller(object):
         int_max_spawns = self.scenario.get_max_scenario_spawns()
 
         # Cycle through spawners scenarios and rescale max spawn number to match total spawn number
-        for str_spawner_ip, dic_spawner_data in self.spawners.iteritems():
+        for str_spawner_ip in self.spawners.iterkeys():
             # First assign original scenario...
             self.spawners[str_spawner_ip]['scenario'] = self.scenario
 
@@ -85,6 +85,13 @@ class Controller(object):
             int_spawners_num -= 1
             self.spawners[str_spawner_ip]['scenario'].rescale_spawns_to(int_spawner_quota)
 
+    def __serialize_scenarios(self):
+        # Cycle through spawners and serialize their own scenario class
+        for str_spawner_ip in self.spawners.iterkeys():
+            self.spawners[str_spawner_ip]['serialized'] = \
+                cPickle.dumps(self.spawners[str_spawner_ip]['scenario'], cPickle.HIGHEST_PROTOCOL)
+
     def start_scenario(self):
         self.__load_scenario()
         self.__scale_ramps()
+        self.__serialize_scenarios()
