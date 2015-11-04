@@ -108,7 +108,9 @@ class Scenario(object):
     def rescale_spawns_to(self, int_rescaled_spawns):
         int_max_scenario_spawns = self.get_max_scenario_spawns() if self.get_max_scenario_spawns() > 0 else 1
         dbl_rescale_factor = int_rescaled_spawns / int_max_scenario_spawns
+        self.rescale_spawns_by_factor(dbl_rescale_factor)
+
+    def rescale_spawns_by_factor(self, dbl_rescale_factor):
         for str_testname, dic_testdata in self.tests.iteritems():
             for int_index, obj_ramp in enumerate(dic_testdata['ramps']):
                 self.tests[str_testname]['ramps'][int_index].rescale_by_factor(dbl_rescale_factor)
-        pass
