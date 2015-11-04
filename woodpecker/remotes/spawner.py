@@ -1,5 +1,4 @@
-import tempfile
-import base64
+import os
 import woodpecker.misc.utils as utils
 
 from woodpecker.remotes.spawn import Spawn
@@ -11,13 +10,26 @@ __author__ = 'Stefano.Romano'
 
 class Spawner(StoppableThread):
 
-    def __init__(self, str_server_address, str_base64_scenario_serialization):
+    def __init__(self,
+                 str_server_address,
+                 int_controller_port,
+                 str_scenario_folder,
+                 str_scenario_name,
+                 str_scenario_file_path,
+                 str_results_file_path,
+                 dbl_spawn_quota):
         # Initialize the father stoppable thread class
         super(Spawner, self).__init__()
 
         # Instantiates everything
-        self.__initialize(server_address=str_server_address)
-        # self.__set_scenario_class(str_base64_scenario_serialization)
+        self.__initialize(controller_ip_address=str_server_address,
+                          controller_port=int_controller_port,
+                          scenario_folder=str_scenario_folder,
+                          scenario_file=str_scenario_file_path,
+                          scenario_name=str_scenario_name,
+                          results_file=str_results_file_path,
+                          spawn_quota=dbl_spawn_quota)
+        self.__set_scenario_class()
         self.__arm()
 
     def run(self):
@@ -25,13 +37,27 @@ class Spawner(StoppableThread):
 
     def __initialize(self, **kwargs):
         # Controller and Log collector socket port
-        self.port = kwargs.get('port', 7878)
+        self.port = kwargs.get('controller_port', 7878)
 
         #  Controller address, void at the beginning
-        self.server_address = kwargs.get('server_address', None)
+        self.server_address = kwargs.get('controller_ip_address', None)
 
-        # Working dir, defaults to standard temp folder (depending on OS)
-        self.temp_folder = tempfile.gettempdir()
+        # Scenario folder, defaults to current directory
+        self.scenario_folder = kwargs.get('scenario_folder', os.getcwd())
+
+        # Scenario file name, defaults to './scenario.py'
+        self.scenario_file_path = utils.get_abs_path(kwargs.get('scenario_file', './scenario.py'),
+                                                     self.scenario_folder)
+
+        # Results file path, defaults to './results/results.sqlite'
+        self.results_file_path = utils.get_abs_path(kwargs.get('results_file', './results/results.sqlite'),
+                                                    self.scenario_folder)
+
+        # Scenario name, defaults to 'Scenario'
+        self.scenario_name = kwargs.get('scenario_name', 'Scenario')
+
+        # Spawn quota for local spawner
+        self.spawn_quota = kwargs.get('spawn_quota', 1)
 
         # Placeholder for scenario
         self.scenario = None
@@ -45,9 +71,10 @@ class Spawner(StoppableThread):
         # Internal message sender placeholder
         self.sender = Sender(self.server_address, self.port, 'UDP') if self.server_address else None
 
-    def __set_scenario_class(self, str_base64_scenario_serialization):
-        # Load scenario from ZIP file
-        pass
+    def __set_scenario_class(self):
+        # Load scenario from temporary folder
+        self.scenario = utils.import_from_path(self.scenario_file_path, self.scenario_name)
+        self.scenario.rescale_spawns_by_factor(self.spawn_quota)
 
     def __arm(self):
         # Arm itself
