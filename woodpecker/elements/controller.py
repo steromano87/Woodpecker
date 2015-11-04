@@ -56,13 +56,17 @@ class Controller(object):
         # Scenario folder
         self.scenario_folder = utils.get_abs_path(kwargs.get('scenario_folder',  os.getcwd()))
 
+        # Scenario file, defaults to 'scenario.py'
+        self.scenario_file = kwargs.get('scenario_file_path', './scenario.py')
+
         # Scenario file path, defaults to standard scenario file
-        self.scenario_file_path = utils.get_abs_path(kwargs.get('scenario_file_path', './scenario.py'),
-                                                     self.scenario_folder)
+        self.scenario_file_path = utils.get_abs_path(self.scenario_file, self.scenario_folder)
+
+        # Result file, defaults to 'results/results.sqlite' file
+        self.results_file = kwargs.get('results_file', './results/results.sqlite')
 
         # Result file path
-        self.result_file_path = utils.get_abs_path(kwargs.get('result_file', './results/results.sqlite'),
-                                                   self.scenario_folder)
+        self.results_file_path = utils.get_abs_path(self.results_file, self.scenario_folder)
 
     def __load_scenario(self):
         # Get scenario from path and name
@@ -79,10 +83,10 @@ class Controller(object):
 
         # Cycle through spawners scenarios and rescale max spawn number to match total spawn number
         for str_spawner_ip in self.spawners.iterkeys():
-            int_spawner_quota = int(round(int_max_spawns / int_spawners_num, 0))
-            int_max_spawns -= int_spawner_quota
+            int_spawn_quota = int(round(int_max_spawns / int_spawners_num, 0))
+            int_max_spawns -= int_spawn_quota
             int_spawners_num -= 1
-            self.spawners[str_spawner_ip]['spawn_quota'] = int_spawner_quota
+            self.spawners[str_spawner_ip]['spawn_quota'] = int_spawn_quota
 
     def __zip__scenario_folder(self):
         # Create a in-memory string file and write Zip file in it
@@ -92,15 +96,22 @@ class Controller(object):
         # Walk through files and folders
         for root, dirs, files in os.walk(self.scenario_folder):
             for file in files:
-                obj_zipfile.write(os.path.join(root, file))
+                str_relpath = os.path.relpath(root, self.scenario_folder)
+                obj_zipfile.write(os.path.join(root, file), os.path.join(str_relpath, file))
         obj_zipfile.close()
         self.scenario_folder_encoded_zip = base64.b64encode(obj_in_memory_zip.getvalue())
 
     def __send_zipped_scenarios(self):
         # Cycle through spawners and send serialized scenario class
-        dic_payload = {'scenarioSerializedFolder': self.scenario_folder_encoded_zip}
         for str_spawner_ip in self.spawners.iterkeys():
-            # self.spawners[str_spawner_ip]['sender'].send('serializedScenario', dic_payload)
+            dic_payload = {'scenarioBase64ZippedFolder': self.scenario_folder_encoded_zip,
+                           'spawnQuota': self.spawners[str_spawner_ip]['spawn_quota'],
+                           'controllerIPAddress': self.controller_ip_addr,
+                           'controllerPort': self.port,
+                           'scenarioName': self.scenario_name,
+                           'scenarioFile': self.scenario_file,
+                           'resultsFile': self.results_file}
+            self.spawners[str_spawner_ip]['sender'].send('initialization', dic_payload)
             pass
 
     def start_scenario(self):
