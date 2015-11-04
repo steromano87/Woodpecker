@@ -1,4 +1,4 @@
-import threading
+from __future__ import division
 import base64
 import os
 
@@ -84,9 +84,10 @@ class Controller(object):
         # Cycle through spawners scenarios and rescale max spawn number to match total spawn number
         for str_spawner_ip in self.spawners.iterkeys():
             int_spawn_quota = int(round(int_max_spawns / int_spawners_num, 0))
+            dbl_spawn_quota = int_spawn_quota / int_max_spawns
             int_max_spawns -= int_spawn_quota
             int_spawners_num -= 1
-            self.spawners[str_spawner_ip]['spawn_quota'] = int_spawn_quota
+            self.spawners[str_spawner_ip]['spawn_quota'] = dbl_spawn_quota
 
     def __zip__scenario_folder(self):
         # Create a in-memory string file and write Zip file in it
@@ -101,7 +102,7 @@ class Controller(object):
         obj_zipfile.close()
         self.scenario_folder_encoded_zip = base64.b64encode(obj_in_memory_zip.getvalue())
 
-    def __send_zipped_scenarios(self):
+    def __start_scenario(self):
         # Cycle through spawners and send serialized scenario class
         for str_spawner_ip in self.spawners.iterkeys():
             dic_payload = {'scenarioBase64ZippedFolder': self.scenario_folder_encoded_zip,
@@ -111,11 +112,10 @@ class Controller(object):
                            'scenarioName': self.scenario_name,
                            'scenarioFile': self.scenario_file,
                            'resultsFile': self.results_file}
-            self.spawners[str_spawner_ip]['sender'].send('initialization', dic_payload)
-            pass
+            self.spawners[str_spawner_ip]['sender'].send('start', dic_payload)
 
     def start_scenario(self):
         self.__load_scenario()
         self.__scale_ramps()
         self.__zip__scenario_folder()
-        self.__send_zipped_scenarios()
+        self.__start_scenario()
