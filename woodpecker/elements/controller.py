@@ -102,7 +102,7 @@ class Controller(object):
         obj_zipfile.close()
         self.scenario_folder_encoded_zip = base64.b64encode(obj_in_memory_zip.getvalue())
 
-    def __start_scenario(self):
+    def __send_scenario(self):
         # Cycle through spawners and send serialized scenario class
         for str_spawner_ip in self.spawners.iterkeys():
             dic_payload = {'scenarioBase64ZippedFolder': self.scenario_folder_encoded_zip,
@@ -112,10 +112,20 @@ class Controller(object):
                            'scenarioName': self.scenario_name,
                            'scenarioFile': self.scenario_file,
                            'resultsFile': self.results_file}
-            self.spawners[str_spawner_ip]['sender'].send('start', dic_payload)
+            self.spawners[str_spawner_ip]['sender'].send('setup', dic_payload)
 
-    def start_scenario(self):
+    def setup_scenario(self):
         self.__load_scenario()
         self.__scale_ramps()
         self.__zip__scenario_folder()
-        self.__start_scenario()
+        self.__send_scenario()
+
+    def start_scenario(self):
+        # Cycle through spawners and send serialized scenario class
+        dic_payload = {'spawnMode': self.spawn_mode}
+        for str_spawner_ip in self.spawners.iterkeys():
+            self.spawners[str_spawner_ip]['sender'].send('start', dic_payload)
+
+    def shutdown_remotes(self):
+        for str_spawner_ip in self.spawners.iterkeys():
+            self.spawners[str_spawner_ip]['sender'].send('shutdown', {})
