@@ -53,6 +53,9 @@ class RemoteController(object):
         # Sysmonitor object
         self.sysmonitor = None
 
+        #  Display options
+        self.stdout_title_width = 64
+
         # Initialize the socket
         self.__initialize(int_listening_port)
 
@@ -68,26 +71,33 @@ class RemoteController(object):
 
         # Print message on screen
         str_message = ' '.join(('Socket opened on port', str(self.listening_port)))
-        click.echo(str_message)
+        click.echo(self.__logify(str_message))
 
     def __handle(self):
         # Read the messages and parse them into dict
         obj_message = json.loads(self.data)
 
+        str_message = ' '.join(('Controller connected from ', self.client_address[0]))
+        click.secho(self.__logify(str_message), fg='green')
+
         # Switch action according to message type
         if obj_message['dataType'] == 'setup':
+            click.secho(self.__mark_as_title('SCENARIO SETUP'), fg='red')
             self.__setup_scenario(obj_message['payload'])
         elif obj_message['dataType'] == 'start':
+            click.secho(self.__mark_as_title('STARTING SCENARIO'), fg='red')
             self.__start_scenario()
         elif obj_message['dataType'] == 'stop':
-            pass
+            click.secho(self.__mark_as_title('STOPPING SCENARIO'), fg='red')
         elif obj_message['dataType'] == 'emergency_stop':
-            pass
+            click.secho(self.__mark_as_title('!!!EMERGENCYY STOP!!!'), err=True)
         elif obj_message['dataType'] == 'shutdown':
+            click.secho(self.__mark_as_title('CLOSING REMOTE CONTROLLER'), fg='red')
             self.shutdown()
 
     def __setup_scenario(self, dic_payload):
         # Get the Base64 encoded ZIP file from payload
+        click.secho(self.__logify('Unpacking scenario... '), nl=False)
         str_base64_zipped_scenario = dic_payload['scenarioBase64ZippedFolder']
         obj_zipped_scenario = StringIO(base64.b64decode(str_base64_zipped_scenario))
         obj_zipfile = ZipFile(obj_zipped_scenario, 'r')
@@ -95,6 +105,11 @@ class RemoteController(object):
         # Extract  ZIP file into temporary folder
         self.scenario_folder = tempfile.mkdtemp(prefix='woodpecker-')
         obj_zipfile.extractall(self.scenario_folder)
+        click.secho('DONE', fg='green', bold=True)
+
+        # Logging temp folder
+        str_message = ' '.join(('Scenario temporary folder set to: ', self.scenario_folder))
+        click.secho(self.__logify(str_message))
 
         # Fill all the object properties
         self.controller_ip_address = dic_payload.get('controllerIPAddress', 'localhost')
@@ -106,10 +121,8 @@ class RemoteController(object):
         self.results_file_path = utils.get_abs_path(dic_payload.get('resultsFile', './results/results.sqlite'),
                                                     self.scenario_folder)
 
-        # Create Sysmonitor
-        self.sysmonitor = Sysmonitor(self.controller_ip_address, self.controller_port)
-
-    def __start_scenario(self):
+        # Create spawner
+        click.secho(self.__logify('Setting up spawner... '), nl=False)
         self.spawner = Spawner(self.controller_ip_address,
                                self.controller_port,
                                self.scenario_folder,
@@ -117,20 +130,35 @@ class RemoteController(object):
                                self.scenario_file_path,
                                self.results_file_path,
                                self.spawn_quota)
+        click.secho('DONE', fg='green', bold=True)
+
+        # Create Sysmonitor
+        self.sysmonitor = Sysmonitor(self.controller_ip_address, self.controller_port)
+
+    def __start_scenario(self):
+        self.spawner.start()
 
     def serve_forever(self):
-        click.secho('Waiting for controller connection...', fg='green', bold=True)
+        click.secho(self.__logify('Waiting for controller connection...'), fg='green', bold=True)
         while self.active:
             self.connection, self.client_address = self.socket.accept()
             self.data = self.connection.recv(self.buffer_size)
             self.__handle()
 
         self.connection.close()
+        str_message = ' '.join(('Remote controller gracefully closed by controller on', self.client_address[0]))
+        click.echo(self.__logify(str_message))
 
     def shutdown(self):
-        str_message = ' '.join(('Remote controller gracefully closed by controller on', self.client_address))
-        click.echo(str_message)
         self.active = False
+
+    def __mark_as_title(self, str_message):
+        str_formatted_message = (' '.join(('', str_message, ''))).center(self.stdout_title_width, '=')
+        return ''.join(('\n', str_formatted_message))
+
+    @staticmethod
+    def __logify(str_message):
+        return ''.join(('[', utils.get_timestamp(), ']', '\t', str_message))
 
 if __name__ == '__main__':
     obj_server = RemoteController(7878)
