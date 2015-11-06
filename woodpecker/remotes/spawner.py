@@ -73,7 +73,8 @@ class Spawner(StoppableThread):
 
     def __set_scenario_class(self):
         # Load scenario from temporary folder
-        self.scenario = utils.import_from_path(self.scenario_file_path, self.scenario_name)
+        self.scenario = utils.import_from_path(self.scenario_file_path, self.scenario_name,
+                                               {'scenario_folder': self.scenario_folder})
         self.scenario.rescale_spawns_by_factor(self.spawn_quota)
 
     def __arm(self):
@@ -101,7 +102,7 @@ class Spawner(StoppableThread):
                     self.scenario.get_planned_spawns(str_test_name, self.elapsed_time)
 
                 self.scenario.tests[str_test_name]['current_spawns'] =\
-                    len(self.scenario.tests[str_test_name]['spawns'])
+                    len(self.scenario.tests[str_test_name].get('spawns', {}))
 
                 int_spawns_difference = self.scenario.tests[str_test_name][
                     'current_spawns'] - self.scenario.tests[
@@ -112,8 +113,11 @@ class Spawner(StoppableThread):
                         str_test_path = self.scenario.get_test_path(str_test_name)
                         str_id = utils.random_id(16)
                         print(str_id)
-                        obj_spawn = Spawn(str_id, str_test_name,
-                                          str_test_path, self.scenario.settings)
+                        obj_spawn = Spawn(str_id,
+                                          str_test_name,
+                                          str_test_path,
+                                          self.scenario_folder,
+                                          self.scenario.settings)
                         obj_spawn.start()
                         self.scenario.tests[str_test_name]['spawns'].append(obj_spawn)
 
