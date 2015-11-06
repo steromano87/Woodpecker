@@ -140,6 +140,7 @@ class RemoteController(object):
 
     def serve_forever(self):
         click.secho(self.__logify('Waiting for controller connection...'), fg='green', bold=True)
+
         while self.active:
             self.connection, self.client_address = self.socket.accept()
             self.data = self.connection.recv(self.buffer_size)
