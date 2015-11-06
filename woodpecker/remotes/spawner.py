@@ -94,6 +94,9 @@ class Spawner(StoppableThread):
             self.scenario.get_scenario_duration()
         list_tests = self.scenario.get_test_names()
 
+        time_elapsed = utils.get_timestamp(False) - self.scenario.scenario_start
+        self.elapsed_time = time_elapsed.total_seconds()
+
         while self.elapsed_time <= self.scenario.scenario_duration and self.armed:
             time_elapsed = utils.get_timestamp(False) - self.scenario.scenario_start
             self.elapsed_time = time_elapsed.total_seconds()
@@ -102,7 +105,7 @@ class Spawner(StoppableThread):
                     self.scenario.get_planned_spawns(str_test_name, self.elapsed_time)
 
                 self.scenario.tests[str_test_name]['current_spawns'] =\
-                    len(self.scenario.tests[str_test_name].get('spawns', {}))
+                    len(self.scenario.tests[str_test_name]['threads'])
 
                 int_spawns_difference = self.scenario.tests[str_test_name][
                     'current_spawns'] - self.scenario.tests[
@@ -119,11 +122,18 @@ class Spawner(StoppableThread):
                                           self.scenario_folder,
                                           self.scenario.settings)
                         obj_spawn.start()
-                        self.scenario.tests[str_test_name]['spawns'].append(obj_spawn)
+                        self.scenario.tests[str_test_name]['threads'].append(obj_spawn)
 
                 elif int_spawns_difference > 0:
                     for int_counter in range(0, int_spawns_difference):
-                        obj_spawn = self.scenario.tests[str_test_name]['spawns'].pop(0)
+                        obj_spawn = self.scenario.tests[str_test_name]['threads'].pop(0)
                         obj_spawn.terminate()
                         obj_spawn.join()
                         print('Killed one')
+
+        for str_test_name in list_tests:
+            for int_counter in range(0, len(self.scenario.tests[str_test_name]['threads'])):
+                obj_spawn = self.scenario.tests[str_test_name]['threads'].pop(0)
+                obj_spawn.terminate()
+                obj_spawn.join()
+                print('Killed one')
