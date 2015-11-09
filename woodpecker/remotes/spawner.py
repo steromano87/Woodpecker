@@ -1,9 +1,12 @@
 import os
 import woodpecker.misc.utils as utils
 
+from threading import Timer
+
 from woodpecker.remotes.spawn import Spawn
 from woodpecker.logging.sender import Sender
 from woodpecker.misc.stoppablethread import StoppableThread
+from woodpecker.remotes.sysmonitor import Sysmonitor
 
 __author__ = 'Stefano.Romano'
 
@@ -71,6 +74,10 @@ class Spawner(StoppableThread):
         # Internal message sender placeholder
         self.sender = Sender(self.server_address, self.port, 'UDP') if self.server_address else None
 
+        # Internal Sysmonitor object and related thread
+        self.sysmonitor_polling_interval = kwargs.get('sysmonitor_polling_interval', 1.0)
+        self.sysmonitor = Sysmonitor(self.server_address, self.port, self.sysmonitor_polling_interval)
+
     def __set_scenario_class(self):
         # Load scenario from temporary folder
         self.scenario = utils.import_from_path(self.scenario_file_path, self.scenario_name,
@@ -86,6 +93,8 @@ class Spawner(StoppableThread):
         self.armed = False
 
     def __run(self):
+        self.sysmonitor.start()
+
         self.scenario.configure()
         self.scenario.tests_definition()
 
@@ -137,3 +146,6 @@ class Spawner(StoppableThread):
                 obj_spawn.terminate()
                 obj_spawn.join()
                 print('Killed one')
+
+        self.sysmonitor.terminate()
+        self.sysmonitor.join()

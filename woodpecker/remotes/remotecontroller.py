@@ -10,7 +10,6 @@ from zipfile import ZipFile
 from StringIO import StringIO
 
 from woodpecker.remotes.spawner import Spawner
-from woodpecker.remotes.sysmonitor import Sysmonitor
 
 __author__ = 'romano'
 
@@ -49,9 +48,6 @@ class RemoteController(object):
 
         # Spawner object
         self.spawner = None
-
-        # Sysmonitor object
-        self.sysmonitor = None
 
         #  Display options
         self.stdout_title_width = 64
@@ -131,9 +127,6 @@ class RemoteController(object):
                                self.results_file_path,
                                self.spawn_quota)
         click.secho('DONE', fg='green', bold=True)
-
-        # Create Sysmonitor
-        self.sysmonitor = Sysmonitor(self.controller_ip_address, self.controller_port)
 
     def __start_scenario(self):
         self.spawner.start()
