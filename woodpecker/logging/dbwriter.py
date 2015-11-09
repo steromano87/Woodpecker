@@ -70,6 +70,7 @@ class DBWriter(object):
         str_spawns_table_query = 'CREATE TABLE IF NOT EXISTS spawns (' \
                                  'hostName TEXT DEFAULT \'LOCALHOST\',' \
                                  'timestamp TEXT,' \
+                                 'testName TEXT,' \
                                  'plannedSpawns INTEGER,' \
                                  'runningSpawns INTEGER' \
                                  ');'
@@ -190,11 +191,12 @@ class DBWriter(object):
 
     def write_spawns_info(self, dic_payload):
         str_prepared = 'INSERT INTO spawns ' \
-                       'VALUES (?, ?, ?, ?)'
+                       'VALUES (?, ?, ?, ?, ?)'
         self.cursor.execute(str_prepared,
                             (
                                 dic_payload.get('hostName'),
                                 dic_payload.get('timestamp'),
+                                dic_payload.get('testName'),
                                 dic_payload.get('plannedSpawns'),
                                 dic_payload.get('runningSpawns')
                             )
