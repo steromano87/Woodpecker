@@ -1,5 +1,7 @@
 import abc
 
+from woodpecker.logging.sender import Sender
+
 __author__ = 'Stefano.Romano'
 
 
@@ -15,6 +17,11 @@ class SimpleTransaction(object):
         self.spawn_id = ''
         self.settings = {}
         self.thread_variables = {}
+
+        # Sender variables
+        self.server_address = kwargs.get('server_address', 'localhost')
+        self.server_port = kwargs.get('server_port', 7878)
+        self.sender = Sender(self.server_address, self.server_port, 'UDP')
 
     def configure(self):
         """

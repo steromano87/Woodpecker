@@ -1,8 +1,6 @@
 import os
 import woodpecker.misc.utils as utils
 
-from threading import Timer
-
 from woodpecker.remotes.spawn import Spawn
 from woodpecker.logging.sender import Sender
 from woodpecker.misc.stoppablethread import StoppableThread
@@ -129,6 +127,8 @@ class Spawner(StoppableThread):
                                           str_test_name,
                                           str_test_path,
                                           self.scenario_folder,
+                                          self.server_address,
+                                          self.port,
                                           self.scenario.settings)
                         obj_spawn.start()
                         self.scenario.tests[str_test_name]['threads'].append(obj_spawn)
