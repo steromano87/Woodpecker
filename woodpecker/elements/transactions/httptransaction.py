@@ -3,6 +3,8 @@ import json
 
 import requests
 
+import woodpecker.misc.utils as utils
+
 from woodpecker.elements.transactions.simpletransaction import SimpleTransaction
 
 __author__ = 'Stefano'
@@ -38,11 +40,13 @@ class HttpTransaction(SimpleTransaction):
             requests.packages.urllib3.disable_warnings()
 
         # Build kwargs for request according to method
-        dic_request_kwargs = {'headers': obj_headers,
-                              'cookies': obj_cookies,
-                              'allow_redirects': bool_redirects,
-                              'proxies': obj_proxy,
-                              'verify': bool_verify_ssl}
+        dic_request_kwargs = {
+            'headers': obj_headers,
+            'cookies': obj_cookies,
+            'allow_redirects': bool_redirects,
+            'proxies': obj_proxy,
+            'verify': bool_verify_ssl
+        }
 
         if str_method == 'GET' or str_method == 'DELETE':
             dic_request_kwargs['params'] = obj_data
@@ -53,12 +57,28 @@ class HttpTransaction(SimpleTransaction):
                 dic_request_kwargs['data'] = obj_data
 
         # Send unique request with kwargs defined in dict
+        str_timestamp = utils.get_timestamp()
         self.thread_variables['_last_response'] = \
             self.thread_variables['_session'].request(str_method, str_url, **dic_request_kwargs)
 
-        # This line is for debug purposes only
-        print(str_request_name + ' - ' + str(self.thread_variables['_last_response'].status_code) + ' - ' +
-              str(self.thread_variables['_last_response'].elapsed))
+        # Send request data using sender object
+        self.sender.send('request',
+                         {
+                             'hostName': utils.get_ip_address(),
+                             'spawnID': self.spawn_id,
+                             'testName': self.test_name,
+                             'iteration': self.iteration,
+                             'timestamp': str_timestamp,
+                             'requestName': str_request_name,
+                             'requestType': '_'.join(('HTTP', str_method)),
+                             'requestSkeleton': None,
+                             'requestSpecs': json.dumps(obj_data),
+                             'duration': self.thread_variables['_last_response'].get('elapsed', None),
+                             'status': self.thread_variables['_last_response'].get('status_code', None),
+                             'responseSize': self.thread_variables['_last_response']['headers'].get('content-length',
+                                                                                                    None),
+                             'assertionResult': 1
+                         })
 
     @staticmethod
     def is_json(str_json):
