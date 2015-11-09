@@ -72,6 +72,10 @@ class Spawner(StoppableThread):
         # Internal message sender placeholder
         self.sender = Sender(self.server_address, self.port, 'UDP') if self.server_address else None
 
+        # Sender spawn message poll interval
+        self.sender_spawn_polling_interval = kwargs.get('sender_spawn_polling_interval', 5)
+        self.sender_spawn_elapsed_time = 0.0
+
         # Internal Sysmonitor object and related thread
         self.sysmonitor_polling_interval = kwargs.get('sysmonitor_polling_interval', 1.0)
         self.sysmonitor = Sysmonitor(self.server_address, self.port, self.sysmonitor_polling_interval)
@@ -101,23 +105,40 @@ class Spawner(StoppableThread):
             self.scenario.get_scenario_duration()
         list_tests = self.scenario.get_test_names()
 
-        time_elapsed = utils.get_timestamp(False) - self.scenario.scenario_start
-        self.elapsed_time = time_elapsed.total_seconds()
+        # Update sender spawn message elapsed time
+        self.sender_spawn_elapsed_time += self.elapsed_time
 
         while self.elapsed_time <= self.scenario.scenario_duration and self.armed:
+            # Get elapsed time
             time_elapsed = utils.get_timestamp(False) - self.scenario.scenario_start
             self.elapsed_time = time_elapsed.total_seconds()
+
+            # Cycle through tests
             for str_test_name in list_tests:
+                # Get planned and current spawn number
                 self.scenario.tests[str_test_name]['planned_spawns'] =\
                     self.scenario.get_planned_spawns(str_test_name, self.elapsed_time)
 
                 self.scenario.tests[str_test_name]['current_spawns'] =\
                     len(self.scenario.tests[str_test_name]['threads'])
 
+                # Send spawn message, but only if is passed enough time from last sending
+                if self.sender_spawn_elapsed_time >= self.sender_spawn_polling_interval:
+                    self.sender.send('spawns',
+                                     {
+                                         'hostName': utils.get_ip_address(),
+                                         'timestamp': utils.get_timestamp(),
+                                         'testName': str_test_name,
+                                         'plannedSpawns': self.scenario.tests[str_test_name]['planned_spawns'],
+                                         'runningSpawns': self.scenario.tests[str_test_name]['current_spawns']
+                                     })
+                    self.sender_spawn_elapsed_time = 0.0
+
                 int_spawns_difference = self.scenario.tests[str_test_name][
                     'current_spawns'] - self.scenario.tests[
                     str_test_name]['planned_spawns']
 
+                # If there are less spawns than planned, add some spawns
                 if int_spawns_difference < 0:
                     for int_counter in range(0, -int_spawns_difference):
                         str_test_path = self.scenario.get_test_path(str_test_name)
@@ -133,6 +154,7 @@ class Spawner(StoppableThread):
                         obj_spawn.start()
                         self.scenario.tests[str_test_name]['threads'].append(obj_spawn)
 
+                # If there are more spawns than planned, start killing older spawns
                 elif int_spawns_difference > 0:
                     for int_counter in range(0, int_spawns_difference):
                         obj_spawn = self.scenario.tests[str_test_name]['threads'].pop(0)
