@@ -2,6 +2,8 @@ import psutil
 import json
 import time
 
+import woodpecker.misc.utils as utils
+
 from woodpecker.misc.stoppablethread import StoppableThread
 from woodpecker.logging.sender import Sender
 
@@ -10,24 +12,28 @@ __author__ = 'Stefano'
 
 class Sysmonitor(StoppableThread):
 
-    def __init__(self, str_receiver_url, int_receiver_port, int_polling_interval=10.0):
+    def __init__(self, str_receiver_url, int_receiver_port, int_polling_interval=10.0, str_host_type='remote'):
         super(Sysmonitor, self).__init__()
-        self.__initialize(str_receiver_url, int_receiver_port, int_polling_interval)
+        self.__initialize(str_receiver_url, int_receiver_port, int_polling_interval, str_host_type)
 
-    def __enter__(self, str_receiver_url, int_receiver_port, int_polling_interval=10.0):
-        self.__initialize(str_receiver_url, int_receiver_port, int_polling_interval)
+    def __enter__(self, str_receiver_url, int_receiver_port, int_polling_interval=10.0, str_host_type='remote'):
+        self.__initialize(str_receiver_url, int_receiver_port, int_polling_interval, str_host_type)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    def __initialize(self, str_receiver_url, int_receiver_port, int_polling_interval):
+    def __initialize(self, str_receiver_url, int_receiver_port, int_polling_interval, str_host_type):
         self.sender = Sender(str_receiver_url, int_receiver_port, 'UDP')
         self.polling_interval = int_polling_interval
         self.cpu_percent = CpuPercent()
+        self.host_type = str_host_type
 
     def send_sysmonitor_info(self):
         tpl_memory = psutil.virtual_memory()
         dic_payload = {
+            'hostName': utils.get_ip_address(),
+            'timestamp': utils.get_timestamp(),
+            'hostType': self.host_type,
             'CPUperc': self.cpu_percent.update(),
             'memoryUsed': tpl_memory.total - tpl_memory.available,
             'memoryAvail': tpl_memory.available,
