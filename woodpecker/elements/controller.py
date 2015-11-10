@@ -28,8 +28,7 @@ class Controller(object):
         pass
 
     def __initialize(self, str_scenario_name, **kwargs):
-        # IP addresses and ports
-        self.controller_ip_addr = utils.get_ip_address()
+        # Controller port
         self.port = kwargs.get('port', 7878)
 
         # Allocate an empty dict to collect spawners data
@@ -96,9 +95,9 @@ class Controller(object):
 
         # Walk through files and folders
         for root, dirs, files in os.walk(self.scenario_folder):
-            for file in files:
+            for filename in files:
                 str_relpath = os.path.relpath(root, self.scenario_folder)
-                obj_zipfile.write(os.path.join(root, file), os.path.join(str_relpath, file))
+                obj_zipfile.write(os.path.join(root, filename), os.path.join(str_relpath, filename))
         obj_zipfile.close()
         self.scenario_folder_encoded_zip = base64.b64encode(obj_in_memory_zip.getvalue())
 
@@ -107,7 +106,6 @@ class Controller(object):
         for str_spawner_ip in self.spawners.iterkeys():
             dic_payload = {'scenarioBase64ZippedFolder': self.scenario_folder_encoded_zip,
                            'spawnQuota': self.spawners[str_spawner_ip]['spawn_quota'],
-                           'controllerIPAddress': self.controller_ip_addr,
                            'controllerPort': self.port,
                            'scenarioName': self.scenario_name,
                            'scenarioFile': self.scenario_file,

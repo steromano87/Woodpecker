@@ -72,8 +72,9 @@ class RemoteController(object):
     def __handle(self):
         # Read the messages and parse them into dict
         obj_message = json.loads(self.data)
+        self.controller_ip_address = self.client_address[0]
 
-        str_message = ' '.join(('Controller connected from ', self.client_address[0]))
+        str_message = ' '.join(('Controller connected from ', self.controller_ip_address))
         click.secho(self.__logify(str_message), fg='green')
 
         # Switch action according to message type
@@ -108,7 +109,6 @@ class RemoteController(object):
         click.secho(self.__logify(str_message))
 
         # Fill all the object properties
-        self.controller_ip_address = dic_payload.get('controllerIPAddress', 'localhost')
         self.controller_port = dic_payload.get('controllerPort', '7878')
         self.spawn_quota = dic_payload.get('spawnQuota', 1)
         self.scenario_name = dic_payload.get('scenarioName', 'Scenario')
