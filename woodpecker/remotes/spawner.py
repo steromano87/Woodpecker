@@ -1,4 +1,6 @@
 import os
+import click
+
 import woodpecker.misc.utils as utils
 
 from woodpecker.remotes.spawn import Spawn
@@ -78,7 +80,10 @@ class Spawner(StoppableThread):
 
         # Internal Sysmonitor object and related thread
         self.sysmonitor_polling_interval = kwargs.get('sysmonitor_polling_interval', 1.0)
+
+        click.secho(utils.logify('Setting up Sysmonitor... ', 'Spawner'), nl=False)
         self.sysmonitor = Sysmonitor(self.server_address, self.port, self.sysmonitor_polling_interval)
+        click.secho('DONE', fg='green', bold=True)
 
     def __set_scenario_class(self):
         # Load scenario from temporary folder
@@ -95,7 +100,9 @@ class Spawner(StoppableThread):
         self.armed = False
 
     def __run(self):
+        click.secho(utils.logify('Starting Sysmonitor... ', 'Spawner'), nl=False)
         self.sysmonitor.start()
+        click.secho('DONE', fg='green', bold=True)
 
         self.scenario.configure()
         self.scenario.tests_definition()
@@ -107,6 +114,9 @@ class Spawner(StoppableThread):
 
         # Update sender spawn message elapsed time
         self.sender_spawn_elapsed_time += self.elapsed_time
+
+        # Write beginning message
+        click.secho(utils.logify('Running scenario...', 'Spawner'), fg='green')
 
         while self.elapsed_time <= self.scenario.scenario_duration and self.armed:
             # Get elapsed time
@@ -162,12 +172,22 @@ class Spawner(StoppableThread):
                         obj_spawn.join()
                         print('Killed one')
 
+        self.__unarm()
+
+        # Clean all the remaining threads
+        click.secho(utils.logify('Cleaning up... ', 'Spawner'), nl=False)
         for str_test_name in list_tests:
             for int_counter in range(0, len(self.scenario.tests[str_test_name]['threads'])):
                 obj_spawn = self.scenario.tests[str_test_name]['threads'].pop(0)
                 obj_spawn.terminate()
                 obj_spawn.join()
-                print('Killed one')
+                print('Killed one - Cleanup')
+        click.secho('DONE', fg='green', bold=True)
 
+        # Close Sysmonitor thread
+        click.secho(utils.logify('Closing Sysmonitor... ', 'Spawner'), nl=False)
         self.sysmonitor.terminate()
         self.sysmonitor.join()
+        click.secho('DONE', fg='green', bold=True)
+
+        click.secho(utils.logify('Scenario gracefully completed!', 'Spawner'), fg='green', bold=True)
