@@ -100,11 +100,11 @@ class DBWriter(object):
                                    'iteration INTEGER, ' \
                                    'timestamp TEXT, ' \
                                    'message BLOB' \
-                                   ')'
+                                   ');'
         str_messages_main_index_query = 'CREATE INDEX IF NOT EXISTS messages_mainkeys ' \
-                                        'on messages (hostName, spawnID, testName, iteration)'
+                                        'on messages (hostName, spawnID, testName, iteration);'
         str_messages_timestamp_index_query = 'CREATE INDEX IF NOT EXISTS messages_timestamp ' \
-                                             'on messages (timestamp)'
+                                             'on messages (timestamp);'
 
         # Executes all the queries as script
         self.cursor.executescript('\n'.join((
