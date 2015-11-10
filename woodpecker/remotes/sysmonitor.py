@@ -34,7 +34,7 @@ class Sysmonitor(StoppableThread):
             'memoryPerc': tpl_memory.percent
         }
 
-        self.sender.send('sysmonitor', json.dumps(dic_payload))
+        self.sender.send('sysmonitor', dic_payload)
         print json.dumps(dic_payload)
 
     def run(self):
