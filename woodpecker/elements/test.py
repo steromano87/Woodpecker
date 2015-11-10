@@ -26,7 +26,7 @@ class Test(object):
         self.thread_variables = {}
         self.test_transactions = []
         self.spawn_id = None
-        self.iteration = 0
+        self.iteration = 1
 
     @abc.abstractmethod
     def transactions(self):
@@ -64,7 +64,6 @@ class Test(object):
 
     def run(self, str_spawn_id=None):
         self.spawn_id = str_spawn_id
-        self.iteration = 1
 
         # Cycle through transactions
         for obj_transaction_item in self.test_transactions:
