@@ -79,3 +79,7 @@ def get_abs_path(str_path, str_cwd=None):
     else:
         tpl_scenario_path = (str_cwd, str_path)
         return os.path.normpath(''.join(tpl_scenario_path))
+
+
+def logify(str_message):
+    return ''.join(('[', get_timestamp(), ']', '\t', str_message))

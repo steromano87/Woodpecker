@@ -67,7 +67,7 @@ class RemoteController(object):
 
         # Print message on screen
         str_message = ' '.join(('Socket opened on port', str(self.listening_port)))
-        click.echo(self.__logify(str_message))
+        click.echo(utils.logify(str_message))
 
     def __handle(self):
         # Read the messages and parse them into dict
@@ -75,7 +75,7 @@ class RemoteController(object):
         self.controller_ip_address = self.client_address[0]
 
         str_message = ' '.join(('Controller connected from ', self.controller_ip_address))
-        click.secho(self.__logify(str_message), fg='green')
+        click.secho(utils.logify(str_message), fg='green')
 
         # Switch action according to message type
         if obj_message['dataType'] == 'setup':
@@ -94,7 +94,7 @@ class RemoteController(object):
 
     def __setup_scenario(self, dic_payload):
         # Get the Base64 encoded ZIP file from payload
-        click.secho(self.__logify('Unpacking scenario... '), nl=False)
+        click.secho(utils.logify('Unpacking scenario... '), nl=False)
         str_base64_zipped_scenario = dic_payload['scenarioBase64ZippedFolder']
         obj_zipped_scenario = StringIO(base64.b64decode(str_base64_zipped_scenario))
         obj_zipfile = ZipFile(obj_zipped_scenario, 'r')
@@ -106,7 +106,7 @@ class RemoteController(object):
 
         # Logging temp folder
         str_message = ' '.join(('Scenario temporary folder set to: ', self.scenario_folder))
-        click.secho(self.__logify(str_message))
+        click.secho(utils.logify(str_message))
 
         # Fill all the object properties
         self.controller_port = dic_payload.get('controllerPort', '7878')
@@ -118,7 +118,7 @@ class RemoteController(object):
                                                     self.scenario_folder)
 
         # Create spawner
-        click.secho(self.__logify('Setting up spawner... '), nl=False)
+        click.secho(utils.logify('Setting up spawner... '), nl=False)
         self.spawner = Spawner(self.controller_ip_address,
                                self.controller_port,
                                self.scenario_folder,
@@ -130,9 +130,10 @@ class RemoteController(object):
 
     def __start_scenario(self):
         self.spawner.start()
+        click.secho(utils.logify('Launching Spawner...'), fg='green')
 
     def serve_forever(self):
-        click.secho(self.__logify('Waiting for controller connection...'), fg='green', bold=True)
+        click.secho(utils.logify('Waiting for controller connection...'), fg='green', bold=True)
 
         while self.active:
             self.connection, self.client_address = self.socket.accept()
@@ -141,7 +142,7 @@ class RemoteController(object):
 
         self.connection.close()
         str_message = ' '.join(('Remote controller gracefully closed by controller on', self.client_address[0]))
-        click.echo(self.__logify(str_message))
+        click.echo(utils.logify(str_message))
 
     def shutdown(self):
         self.active = False
@@ -149,10 +150,6 @@ class RemoteController(object):
     def __mark_as_title(self, str_message):
         str_formatted_message = (' '.join(('', str_message, ''))).center(self.stdout_title_width, '=')
         return ''.join(('\n', str_formatted_message))
-
-    @staticmethod
-    def __logify(str_message):
-        return ''.join(('[', utils.get_timestamp(), ']', '\t', str_message))
 
 if __name__ == '__main__':
     obj_server = RemoteController(7878)
