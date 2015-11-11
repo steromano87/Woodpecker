@@ -1,7 +1,9 @@
 import SocketServer
 import json
+import socket
 
 from woodpecker.logging.dbwriter import DBWriter
+from woodpecker.misc.stoppablethread import StoppableThread
 
 __author__ = 'Stefano'
 
@@ -29,7 +31,12 @@ class LogCollector(SocketServer.BaseRequestHandler):
         elif dic_message.get('dataType') == 'message':
             self.dbwriter.write_message(dic_payload)
 
-if __name__ == '__main__':
-    obj_server = SocketServer.UDPServer(('localhost', 7878), LogCollector)
-    obj_server.result_file_path = "D:/Data/Varie/Programmi Python/Woodpecker/tests/results.sqlite"
-    obj_server.serve_forever()
+
+class LogCollectorThread(StoppableThread):
+    def __init__(self, str_results_file_path, int_port=7878):
+        super(LogCollectorThread, self).__init__()
+        self.server = SocketServer.UDPServer((socket.gethostname(), int_port), LogCollector)
+        self.server.results_file_path = str_results_file_path
+
+    def run(self):
+        self.server.serve_forever()
