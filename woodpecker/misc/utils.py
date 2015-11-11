@@ -5,6 +5,7 @@ import random
 import socket
 import os
 import imp
+import unicodedata
 
 
 __author__ = 'Stefano.Romano'
@@ -85,3 +86,10 @@ def logify(str_message, str_submodule='MAIN'):
     return ''.join(('[', get_timestamp(), ']',
                     '\t', '[', str_submodule, ']',
                     '\t', str_message))
+
+
+def unicode2ascii(mix_input):
+    if isinstance(mix_input, basestring):
+        return unicodedata.normalize('NFKD', mix_input).encode('ascii', 'ignore')
+    else:
+        return mix_input
