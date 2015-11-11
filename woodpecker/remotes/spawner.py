@@ -81,9 +81,9 @@ class Spawner(StoppableThread):
         # Internal Sysmonitor object and related thread
         self.sysmonitor_polling_interval = kwargs.get('sysmonitor_polling_interval', 1.0)
 
-        click.secho(utils.logify('Setting up Sysmonitor... ', 'Spawner'), nl=False)
+        click.secho(utils.logify('Setting up Sysmonitor... ', 'Spawner'))
         self.sysmonitor = Sysmonitor(self.server_address, self.port, self.sysmonitor_polling_interval)
-        click.secho('DONE', fg='green', bold=True)
+        click.secho(utils.logify('Sysmonitor started'), fg='green', bold=True)
 
     def __set_scenario_class(self):
         # Load scenario from temporary folder

@@ -11,7 +11,7 @@ __author__ = 'Stefano'
 class LogCollector(SocketServer.BaseRequestHandler):
 
     def setup(self):
-        self.dbwriter = DBWriter(self.server.result_file_path)
+        self.dbwriter = DBWriter(self.server.results_file_path)
 
     def handle(self):
         str_message = self.request[0].strip()

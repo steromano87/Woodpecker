@@ -23,7 +23,7 @@ class RemoteController(object):
         self.connection = None
         self.client_address = None
         self.data = None
-        self.buffer_size = 2 ** 20
+        self.buffer_size = long(2 ** 30)
 
         # Placeholder for scenario folder
         self.scenario_folder = None
@@ -87,7 +87,7 @@ class RemoteController(object):
         elif obj_message['dataType'] == 'stop':
             click.secho(self.__mark_as_title('STOPPING SCENARIO'), fg='red')
         elif obj_message['dataType'] == 'emergency_stop':
-            click.secho(self.__mark_as_title('!!!EMERGENCYY STOP!!!'), err=True)
+            click.secho(self.__mark_as_title('!!!EMERGENCY STOP!!!'), err=True)
         elif obj_message['dataType'] == 'shutdown':
             click.secho(self.__mark_as_title('CLOSING REMOTE CONTROLLER'), fg='red')
             self.shutdown()
@@ -118,7 +118,7 @@ class RemoteController(object):
                                                     self.scenario_folder)
 
         # Create spawner
-        click.secho(utils.logify('Setting up spawner... '), nl=False)
+        click.secho(utils.logify('Setting up spawner... '))
         self.spawner = Spawner(self.controller_ip_address,
                                self.controller_port,
                                self.scenario_folder,
@@ -126,7 +126,7 @@ class RemoteController(object):
                                self.scenario_file_path,
                                self.results_file_path,
                                self.spawn_quota)
-        click.secho('DONE', fg='green', bold=True)
+        click.secho(utils.logify('Spawner created'), fg='green', bold=True)
 
     def __start_scenario(self):
         self.spawner.start()
