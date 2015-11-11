@@ -1,13 +1,16 @@
 from __future__ import division
 import base64
 import os
+import time
+import zipfile
+import socket
+import click
 
-from zipfile import ZipFile
 from StringIO import StringIO
 
 from woodpecker.remotes.sysmonitor import Sysmonitor
 from woodpecker.logging.sender import Sender
-from woodpecker.logging.logcollector import LogCollector
+from woodpecker.logging.logcollector import LogCollectorThread
 import woodpecker.misc.utils as utils
 
 __author__ = 'Stefano.Romano'
@@ -22,18 +25,21 @@ class Controller(object):
         self.__initialize(str_scenario_name, **kwargs)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        click.secho('Controller closed', fg='red')
 
     def __del__(self):
-        pass
+        click.secho('Controller closed', fg='red')
 
     def __initialize(self, str_scenario_name, **kwargs):
+        # Self address
+        self.ip_address = socket.gethostname()
+
         # Controller port
         self.port = kwargs.get('port', 7878)
 
         # Allocate an empty dict to collect spawners data
         self.spawners = {}
-        list_spawners = kwargs.get('spawners', ['localhost'])
+        list_spawners = kwargs.get('spawners', [self.ip_address])
         for str_spawner in list_spawners:
             self.spawners[str_spawner] = {}
 
@@ -43,7 +49,7 @@ class Controller(object):
         # Spawning mode (threads or subprocesses), defaults to threads
         self.spawn_mode = kwargs.get('spawn_mode', 'thread')
 
-        # Local flag to run everything on localhost (to nbe used in the future...), defaults to False
+        # Local flag to run everything on localhost (to be used in the future...), defaults to False
         self.local = kwargs.get('local', False)
 
         # Placeholder for scenario
@@ -66,6 +72,15 @@ class Controller(object):
 
         # Result file path
         self.results_file_path = utils.get_abs_path(self.results_file, self.scenario_folder)
+
+        # Sysmonitor thread
+        self.sysmonitor = Sysmonitor(self.ip_address, self.port, str_host_type='controller', bool_debug=True)
+
+        # Log Collector thread
+        self.logcollector = LogCollectorThread(self.results_file_path, self.port)
+
+        # Internal variable to wait if tests are running
+        self.is_running = False
 
     def __load_scenario(self):
         # Get scenario from path and name
@@ -91,7 +106,7 @@ class Controller(object):
     def __zip__scenario_folder(self):
         # Create a in-memory string file and write Zip file in it
         obj_in_memory_zip = StringIO()
-        obj_zipfile = ZipFile(obj_in_memory_zip, 'w')
+        obj_zipfile = zipfile.ZipFile(obj_in_memory_zip, 'w', zipfile.ZIP_DEFLATED)
 
         # Walk through files and folders
         for root, dirs, files in os.walk(self.scenario_folder):
@@ -99,7 +114,8 @@ class Controller(object):
                 str_relpath = os.path.relpath(root, self.scenario_folder)
                 obj_zipfile.write(os.path.join(root, filename), os.path.join(str_relpath, filename))
         obj_zipfile.close()
-        self.scenario_folder_encoded_zip = base64.b64encode(obj_in_memory_zip.getvalue())
+        bin_archive = obj_in_memory_zip.getvalue()
+        self.scenario_folder_encoded_zip = base64.b64encode(bin_archive)
 
     def __send_scenario(self):
         # Cycle through spawners and send serialized scenario class
@@ -119,10 +135,19 @@ class Controller(object):
         self.__send_scenario()
 
     def start_scenario(self):
+        # Start Logcollector and Sysmonitor threads
+        self.is_running = True
+        self.logcollector.start()
+        self.sysmonitor.start()
+
         # Cycle through spawners and send serialized scenario class
         dic_payload = {'spawnMode': self.spawn_mode}
         for str_spawner_ip in self.spawners.iterkeys():
             self.spawners[str_spawner_ip]['sender'].send('start', dic_payload)
+
+        # Wait until completion
+        while self.is_running:
+            time.sleep(1)
 
     def shutdown_remotes(self):
         for str_spawner_ip in self.spawners.iterkeys():
