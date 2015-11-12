@@ -7,8 +7,6 @@ import dateutil.parser as parser
 
 import woodpecker.misc.utils as utils
 
-from itertools import chain
-
 __author__ = 'Stefano'
 
 
