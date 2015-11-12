@@ -67,6 +67,9 @@ class Controller(object):
         # Scenario file path, defaults to standard scenario file
         self.scenario_file_path = utils.get_abs_path(self.scenario_file, self.scenario_folder)
 
+        # Scenario duration, o be filled later
+        self.scenario_duration = None
+
         # Result file, defaults to 'results/results.sqlite' file
         self.results_file = kwargs.get('results_file', './results/results.sqlite')
 
@@ -74,13 +77,13 @@ class Controller(object):
         self.results_file_path = utils.get_abs_path(self.results_file, self.scenario_folder)
 
         # Sysmonitor thread
-        self.sysmonitor = Sysmonitor(self.ip_address, self.port, str_host_type='controller', bool_debug=True)
+        self.sysmonitor = Sysmonitor(self.ip_address, self.port, str_host_type='controller', bool_debug=False)
 
         # Log Collector thread
         self.logcollector = LogCollectorThread(self.results_file_path, self.port)
 
-        # Internal variable to wait if navigations are running
-        self.is_running = False
+        # Elapsed time since scenario duration
+        self.scenario_elapsed_time = 0
 
     def __load_scenario(self):
         # Get scenario from path and name
@@ -89,6 +92,9 @@ class Controller(object):
 
         # Load navigations
         self.scenario.navigations_definition()
+
+        # Fill scenario duration
+        self.scenario_duration = self.scenario.get_scenario_duration()
 
     def __scale_ramps(self):
         # Get spawners number
@@ -136,7 +142,6 @@ class Controller(object):
 
     def start_scenario(self):
         # Start Logcollector and Sysmonitor threads
-        self.is_running = True
         self.logcollector.start()
         self.sysmonitor.start()
 
@@ -146,8 +151,16 @@ class Controller(object):
             self.spawners[str_spawner_ip]['sender'].send('start', dic_payload)
 
         # Wait until completion
-        while self.is_running:
+        while self.scenario_elapsed_time <= self.scenario_duration:
             time.sleep(1)
+            self.scenario_elapsed_time += 1
+
+        # Terminate Sysmonitor and Log Collector at the ennd of the scenario
+        self.sysmonitor.terminate()
+        self.sysmonitor.join()
+
+        self.logcollector.terminate()
+        self.logcollector.join()
 
     def shutdown_remotes(self):
         for str_spawner_ip in self.spawners.iterkeys():
