@@ -71,7 +71,7 @@ class HttpTransaction(SimpleTransaction):
                              'timestamp': str_timestamp,
                              'requestName': str_request_name,
                              'requestType': '_'.join(('HTTP', str_method)),
-                             'requestSkeleton': None,
+                             'requestSkeleton': str_url,
                              'requestSpecs': json.dumps(obj_data),
                              'duration': self.thread_variables['_last_response'].elapsed.total_seconds() * 1000,
                              'status': self.thread_variables['_last_response'].status_code,
