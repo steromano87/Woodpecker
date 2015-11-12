@@ -175,8 +175,3 @@ class HarConverter(object):
         self.__load_har(str_filepath)
         self.__parse_har()
         self.__write_transactions(str_destination_folder)
-
-if __name__ == '__main__':
-    obj_har_converter = HarConverter()
-    obj_har_converter.convert('D:/Data/Varie/Programmi Python/Woodpecker/tests/test.har',
-                              'D:/Data/Varie/Programmi Python/Woodpecker/tests/scenario_tests/')
