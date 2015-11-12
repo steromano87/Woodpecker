@@ -9,8 +9,8 @@ class Spawn(StoppableThread):
 
     def __init__(self,
                  str_id,
-                 str_test_name,
-                 str_test_path,
+                 str_navigation_name,
+                 str_navigation_path,
                  str_scenario_folder,
                  str_server_address,
                  int_server_port,
@@ -25,20 +25,20 @@ class Spawn(StoppableThread):
         self.armed = False
 
         # Navigation class instantiation
-        self.testclass = utils.import_from_path(utils.get_abs_path(str_test_path, str_scenario_folder),
-                                                str_test_name,
+        self.navclass = utils.import_from_path(utils.get_abs_path(str_navigation_path, str_scenario_folder),
+                                                str_navigation_name,
                                                 {
                                                     'scenario_folder': str_scenario_folder,
                                                     'server_address': self.server_address,
                                                     'server_port': self.port
                                                 })
-        self.testclass.configure()
-        self.testclass.transactions()
+        self.navclass.configure()
+        self.navclass.transactions()
 
     def run(self):
         self.armed = True
         while self.armed:
-            self.testclass.run(self.ID)
+            self.navclass.run(self.ID)
 
     def stop(self):
         self.armed = False
