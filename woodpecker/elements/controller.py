@@ -3,7 +3,6 @@ import base64
 import os
 import time
 import zipfile
-import socket
 import click
 
 from StringIO import StringIO
@@ -86,6 +85,9 @@ class Controller(object):
         self.scenario_elapsed_time = 0
 
     def __load_scenario(self):
+        # Log message
+        click.secho(utils.logify('Loading scenario... '), nl=False)
+
         # Get scenario from path and name
         self.scenario = utils.import_from_path(self.scenario_file_path, self.scenario_name,
                                                {'scenario_folder': self.scenario_folder})
@@ -109,7 +111,13 @@ class Controller(object):
             int_spawners_num -= 1
             self.spawners[str_spawner_ip]['spawn_quota'] = dbl_spawn_quota
 
+        # End of message
+        click.secho('DONE', fg='green', bold=True)
+
     def __zip__scenario_folder(self):
+        # Log message
+        click.secho(utils.logify('Zipping scenario... '), nl=False)
+
         # Create a in-memory string file and write Zip file in it
         obj_in_memory_zip = StringIO()
         obj_zipfile = zipfile.ZipFile(obj_in_memory_zip, 'w', zipfile.ZIP_DEFLATED)
@@ -123,9 +131,14 @@ class Controller(object):
         bin_archive = obj_in_memory_zip.getvalue()
         self.scenario_folder_encoded_zip = base64.b64encode(bin_archive)
 
+        # End of message
+        click.secho('DONE', fg='green', bold=True)
+
     def __send_scenario(self):
         # Cycle through spawners and send serialized scenario class
         for str_spawner_ip in self.spawners.iterkeys():
+            click.secho(utils.logify(''.join(('Sending scenario to spawner ', str_spawner_ip, '... '))), nl=False)
+
             dic_payload = {'scenarioBase64ZippedFolder': self.scenario_folder_encoded_zip,
                            'spawnQuota': self.spawners[str_spawner_ip]['spawn_quota'],
                            'controllerPort': self.port,
@@ -133,6 +146,8 @@ class Controller(object):
                            'scenarioFile': self.scenario_file,
                            'resultsFile': self.results_file}
             self.spawners[str_spawner_ip]['sender'].send('setup', dic_payload)
+
+            click.secho('DONE', fg='green', bold=True)
 
     def setup_scenario(self):
         self.__load_scenario()
@@ -142,26 +157,41 @@ class Controller(object):
 
     def start_scenario(self):
         # Start Logcollector and Sysmonitor threads
+        click.secho(utils.logify('Starting Log Collector... '), nl=False)
         self.logcollector.start()
+        click.secho('DONE', fg='green', bold=True)
+
+        click.secho(utils.logify('Starting Sysmonitor... '), nl=False)
         self.sysmonitor.start()
+        click.secho('DONE', fg='green', bold=True)
 
         # Cycle through spawners and send serialized scenario class
         dic_payload = {'spawnMode': self.spawn_mode}
         for str_spawner_ip in self.spawners.iterkeys():
+            click.secho(utils.logify(''.join(('Starting spawner ', str_spawner_ip, '... '))), nl=False)
             self.spawners[str_spawner_ip]['sender'].send('start', dic_payload)
+            click.secho('DONE', fg='green', bold=True)
 
         # Wait until completion
+        click.secho(utils.logify('Waiting for scenario completion...'), fg='green', bold=True)
         while self.scenario_elapsed_time <= self.scenario_duration:
             time.sleep(1)
             self.scenario_elapsed_time += 1
 
         # Terminate Sysmonitor and Log Collector at the ennd of the scenario
+        click.secho(utils.logify('Closing Sysmonitor... '), nl=False)
         self.sysmonitor.terminate()
         self.sysmonitor.join()
+        click.secho('DONE', fg='green', bold=True)
 
+        click.secho(utils.logify('Closing Log Collector... '), nl=False)
         self.logcollector.terminate()
         self.logcollector.join()
+        click.secho('DONE', fg='green', bold=True)
 
     def shutdown_remotes(self):
         for str_spawner_ip in self.spawners.iterkeys():
+            click.secho(utils.logify(''.join(('Sending shutdown message to spawner ',
+                                              str_spawner_ip, '... '))), nl=False)
             self.spawners[str_spawner_ip]['sender'].send('shutdown', {})
+            click.secho('DONE', fg='green', bold=True)
