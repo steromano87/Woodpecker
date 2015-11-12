@@ -73,10 +73,10 @@ class HttpTransaction(SimpleTransaction):
                              'requestType': '_'.join(('HTTP', str_method)),
                              'requestSkeleton': None,
                              'requestSpecs': json.dumps(obj_data),
-                             'duration': self.thread_variables['_last_response'].get('elapsed', None),
-                             'status': self.thread_variables['_last_response'].get('status_code', None),
-                             'responseSize': self.thread_variables['_last_response']['headers'].get('content-length',
-                                                                                                    None),
+                             'duration': self.thread_variables['_last_response'].elapsed.total_seconds() * 1000,
+                             'status': self.thread_variables['_last_response'].status_code,
+                             'responseSize': self.thread_variables['_last_response'].headers.get('content-length',
+                                                                                                 None),
                              'assertionResult': 1
                          })
 
