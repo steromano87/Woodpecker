@@ -43,7 +43,7 @@ Planned features
 - Command-line interface to initialize scenarios, create transactions from HAR files, start/stop controller and remote spawners and analyze results
 - Fully portable results storage in a single SQLite3 file
 - Generic load profile generation by combination of basic ramp elements
-- Capability to generate load on:
+- Capability to generate load on\:
     - Web pages using HTTP protocol
     - SOA services
     - Databases
@@ -56,3 +56,4 @@ Planned features
 - Requests result assertions
 - Different spawning logic (using threads or sub-processes) to optimize memory consumption different architectures
 - Easily switch between different load configurations by changing one parameter in command-line invocation
+- Embedded system monitor (CPU and memory usage) for both controller and spawners
