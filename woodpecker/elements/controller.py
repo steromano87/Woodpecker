@@ -32,7 +32,7 @@ class Controller(object):
 
     def __initialize(self, str_scenario_name, **kwargs):
         # Self address
-        self.ip_address = kwargs.get('ip_address', socket.gethostname())
+        self.ip_address = kwargs.get('ip_address', utils.get_ip_address())
 
         # Controller port
         self.port = kwargs.get('port', 7878)
