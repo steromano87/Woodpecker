@@ -7,6 +7,8 @@ import dateutil.parser as parser
 
 import woodpecker.misc.utils as utils
 
+from itertools import chain
+
 __author__ = 'Stefano'
 
 
@@ -27,6 +29,7 @@ class HarConverter(object):
         self.round_think_times = kwargs.get('round_think_times', True)
         self.think_time_limit = kwargs.get('think_time_limit', -1)
         self.tab_size = kwargs.get('tab_size', 4)
+        self.user_agent = None
 
         # Placeholder for transactions
         self.transactions = []
@@ -58,11 +61,38 @@ class HarConverter(object):
                 if dic_header['name'] != 'Cookie':
                     dic_headers[utils.unicode2ascii(dic_header['name'])] = utils.unicode2ascii(dic_header['value'])
 
+            # If User Agent is not set, get the User Agent used during recording and use it
+            if not self.user_agent:
+                self.user_agent = dic_headers.get('User-Agent', None)
+
+            # If User-Agent key is present, remove it
+            if dic_headers['User-Agent']:
+                dic_headers.pop('User-Agent')
+
+            # If the request has a query string, extract only the base address and handle arguments separately
+            dic_data = {}
+            str_url = dic_entry['request']['url']
+            if len(dic_entry['request']['queryString']) > 0:
+                str_url = re.search("(http[s]?://.+?)\?", dic_entry['request']['url']).group(1)
+
+                for dic_querystring_entry in dic_entry['request']['queryString']:
+                    dic_data[utils.unicode2ascii(dic_querystring_entry['name'])] = \
+                        utils.unicode2ascii(dic_querystring_entry['value'])
+
+            # If method is POST, PUT or PATCH search for data in POST data and compile dic_data
+            elif dic_entry['request']['method'] == 'POST' \
+                    or dic_entry['request']['method'] == 'PUT' \
+                    or dic_entry['request']['method'] == 'PATCH':
+
+                arr_params = dic_entry['request']['postData'].get('params', [])
+                for dic_post_entry in arr_params:
+                    dic_data[utils.unicode2ascii(dic_post_entry['name'])] = \
+                        utils.unicode2ascii(dic_post_entry['value'])
+
             dic_current_request = {
-                'url': dic_entry['request']['url'],
+                'url': str_url,
                 'method': dic_entry['request']['method'],
-                'queryString': dic_entry['request']['queryString'],
-                'postData': dic_entry['request']['postData'],
+                'data': dic_data,
                 'headers': dic_headers,
                 'expectedStatus': dic_entry['response']['status'],
                 'expectedMimeType': dic_entry['response']['content']['mimeType'],
@@ -120,6 +150,16 @@ class HarConverter(object):
                     str(int_transaction_counter),
                     '(HttpTransaction):\n'
                 )))
+
+                # If is the first transaction, define User Agent in thread variables
+                if int_transaction_counter == 1:
+                    obj_fp.write('\tdef configure(self):\n'.replace('\t', ' ' * self.tab_size))
+                    obj_fp.write(''.join((
+                        '\t\tself.set_variable(\'_user_agent\', '
+                        '\'', self.user_agent,
+                        '\')\n\n'
+                    )).replace('\t', ' ' * self.tab_size))
+
                 obj_fp.write('\tdef steps(self):\n'.replace('\t', ' ' * self.tab_size))
 
                 # Cycle on entries in transaction
@@ -139,14 +179,25 @@ class HarConverter(object):
         # Define indentation width in spaces for arguments and header entries
         int_arguments_indent = len('self.http_request(') + 2 * self.tab_size
         int_headers_indent = len('self.http_request(headers={') + 2 * self.tab_size
+        int_data_indent = len('self.http_request(data={') + 2 * self.tab_size
 
         # Replace URL with partial address as name
         str_host = dic_payload['headers'].get('Host', '')
         str_pattern = re.compile(''.join(('http[s]?://', str_host)))
 
-        # Pretty print headers as dict
+        # Pretty print headers and data as dict
         str_parsed_headers = \
             repr(dic_payload['headers']).replace('\', \'', ''.join(('\',\n', ' ' * int_headers_indent, '\'')))
+        str_parsed_data = \
+            repr(dic_payload['data']).replace('\', \'', ''.join(('\',\n', ' ' * int_data_indent, '\'')))
+
+        # Add User-Agent hardcoded line
+        str_parsed_headers = str_parsed_headers.replace('}', ''.join((',\n',
+                                                                      ' ' * int_headers_indent,
+                                                                      '\'User-Agent\': ',
+                                                                      'self.get_variable(\'_user_agent\')}'
+                                                                      ))
+                                                        )
 
         # Compose the call
         str_request = ''.join((
@@ -156,7 +207,7 @@ class HarConverter(object):
             '\t\'', dic_payload['url'], '\',\n',
             '\tmethod=\'', dic_payload['method'], '\',\n',
             '\theaders=', str_parsed_headers, ',\n',
-            '\tdata={}', '\n',
+            '\tdata=', str_parsed_data, ',\n',
             '\t)\n\n'
         ))
 
