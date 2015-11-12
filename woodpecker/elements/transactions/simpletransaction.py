@@ -61,7 +61,7 @@ class SimpleTransaction(object):
         if str_type == 'fixed':
             time.sleep(int_amount)
         elif str_type == 'random_gaussian':
-            time.sleep(random.gauss(int_amount, kwargs.get('std', int_amount * 0.5)))
+            time.sleep(abs(random.gauss(int_amount, kwargs.get('std', int_amount * 0.5))))
 
     def run(self, str_spawn_id, int_iteration, dic_settings=None, dic_thread_variables=None):
         self.spawn_id = str_spawn_id
