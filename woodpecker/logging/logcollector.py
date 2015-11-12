@@ -33,9 +33,9 @@ class LogCollector(SocketServer.BaseRequestHandler):
 
 
 class LogCollectorThread(StoppableThread):
-    def __init__(self, str_results_file_path, int_port=7878):
+    def __init__(self, str_results_file_path, str_ip_address=socket.gethostname(), int_port=7878):
         super(LogCollectorThread, self).__init__()
-        self.server = SocketServer.UDPServer((socket.gethostname(), int_port), LogCollector)
+        self.server = SocketServer.UDPServer((str_ip_address, int_port), LogCollector)
         self.server.results_file_path = str_results_file_path
 
     def run(self):

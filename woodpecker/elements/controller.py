@@ -32,7 +32,7 @@ class Controller(object):
 
     def __initialize(self, str_scenario_name, **kwargs):
         # Self address
-        self.ip_address = socket.gethostname()
+        self.ip_address = kwargs.get('ip_address', socket.gethostname())
 
         # Controller port
         self.port = kwargs.get('port', 7878)
@@ -80,7 +80,7 @@ class Controller(object):
         self.sysmonitor = Sysmonitor(self.ip_address, self.port, str_host_type='controller', bool_debug=False)
 
         # Log Collector thread
-        self.logcollector = LogCollectorThread(self.results_file_path, self.port)
+        self.logcollector = LogCollectorThread(self.results_file_path, self.ip_address, self.port)
 
         # Elapsed time since scenario duration
         self.scenario_elapsed_time = 0
