@@ -139,8 +139,10 @@ class Spawner(StoppableThread):
                                          'hostName': utils.get_ip_address(),
                                          'timestamp': utils.get_timestamp(),
                                          'navigationName': str_navigation_name,
-                                         'plannedSpawns': self.scenario.navigations[str_navigation_name]['planned_spawns'],
-                                         'runningSpawns': self.scenario.navigations[str_navigation_name]['current_spawns']
+                                         'plannedSpawns':
+                                             self.scenario.navigations[str_navigation_name]['planned_spawns'],
+                                         'runningSpawns':
+                                             self.scenario.navigations[str_navigation_name]['current_spawns']
                                      })
                     self.sender_spawn_elapsed_time = 0.0
 
@@ -153,7 +155,8 @@ class Spawner(StoppableThread):
                     for int_counter in range(0, -int_spawns_difference):
                         str_navigation_path = self.scenario.get_navigation_path(str_navigation_name)
                         str_id = utils.random_id(16)
-                        print(str_id)
+
+                        # Create and launch spawn
                         obj_spawn = Spawn(str_id,
                                           str_navigation_name,
                                           str_navigation_path,
@@ -161,28 +164,37 @@ class Spawner(StoppableThread):
                                           self.server_address,
                                           self.port,
                                           self.scenario.settings)
+
+                        click.secho(utils.logify(''.join(('Starting spawn ', str_id, '... ')), 'Spawner'), nl=False)
                         obj_spawn.start()
                         self.scenario.navigations[str_navigation_name]['threads'].append(obj_spawn)
+                        click.secho('DONE', fg='green', bold=True)
 
                 # If there are more spawns than planned, start killing older spawns
                 elif int_spawns_difference > 0:
                     for int_counter in range(0, int_spawns_difference):
                         obj_spawn = self.scenario.navigations[str_navigation_name]['threads'].pop(0)
+
+                        click.secho(utils.logify(''.join(('Terminating spawn ', obj_spawn.ID, '... ')), 'Spawner'),
+                                    nl=False)
                         obj_spawn.terminate()
                         obj_spawn.join()
-                        print('Killed one')
+                        click.secho('DONE', fg='green', bold=True)
 
         self.__unarm()
 
         # Clean all the remaining threads
-        click.secho(utils.logify('Cleaning up... ', 'Spawner'), nl=False)
+        click.secho(utils.logify('Cleaning up... ', 'Spawner'))
         for str_navigation_name in list_navigations:
             for int_counter in range(0, len(self.scenario.navigations[str_navigation_name]['threads'])):
                 obj_spawn = self.scenario.navigations[str_navigation_name]['threads'].pop(0)
+
+                click.secho(utils.logify(''.join(('Cleaning spawn ', obj_spawn.ID, '... ')), 'Spawner'),
+                            nl=False)
                 obj_spawn.terminate()
                 obj_spawn.join()
-                print('Killed one - Cleanup')
-        click.secho('DONE', fg='green', bold=True)
+                click.secho('DONE', fg='green', bold=True)
+        click.secho(utils.logify('Cleaning completed', 'Spawner'), fg='green', bold=True)
 
         # Close Sysmonitor thread
         click.secho(utils.logify('Closing Sysmonitor... ', 'Spawner'), nl=False)
