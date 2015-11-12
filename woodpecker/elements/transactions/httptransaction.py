@@ -66,7 +66,7 @@ class HttpTransaction(SimpleTransaction):
                          {
                              'hostName': utils.get_ip_address(),
                              'spawnID': self.spawn_id,
-                             'testName': self.test_name,
+                             'testName': self.navigation_name,
                              'iteration': self.iteration,
                              'timestamp': str_timestamp,
                              'requestName': str_request_name,

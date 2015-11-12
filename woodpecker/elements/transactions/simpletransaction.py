@@ -50,6 +50,12 @@ class SimpleTransaction(object):
         """
         self.thread_variables[str_name] = str_value
 
+    def get_variable(self, str_name):
+        """
+        Gets a variable from the thread variables dict
+        """
+        return self.thread_variables[str_name]
+
     def think_time(self, int_amount, **kwargs):
         str_type = kwargs.get('type', 'fixed')
         if str_type == 'fixed':
