@@ -22,9 +22,13 @@ Requirements
 ------------
 At the moment the libraries required to run Woodpecker are the following:
 - python-dateutil
+
 - colorama
+
 - click
+
 - psutil
+
 - requests
 
 All of them are hosted on PyPi and can be installed using ``pip`` or ``easy_install``:
