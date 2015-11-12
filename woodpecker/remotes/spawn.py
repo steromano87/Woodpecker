@@ -26,12 +26,12 @@ class Spawn(StoppableThread):
 
         # Navigation class instantiation
         self.navclass = utils.import_from_path(utils.get_abs_path(str_navigation_path, str_scenario_folder),
-                                                str_navigation_name,
-                                                {
-                                                    'scenario_folder': str_scenario_folder,
-                                                    'server_address': self.server_address,
-                                                    'server_port': self.port
-                                                })
+                                               str_navigation_name,
+                                               {
+                                                   'scenario_folder': str_scenario_folder,
+                                                   'server_address': self.server_address,
+                                                   'server_port': self.port
+                                               })
         self.navclass.configure()
         self.navclass.transactions()
 
