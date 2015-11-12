@@ -14,7 +14,7 @@ class Scenario(object):
         self.settings = kwargs.get('settings', {})
         self.scenario_start = None
         self.scenario_stop = None
-        self.tests = {}
+        self.navigations = {}
         self.armed = False
         self.scenario_duration = 0
         self.scenario_folder = kwargs.get('scenario_folder', os.getcwd())
@@ -23,7 +23,7 @@ class Scenario(object):
         pass
 
     @abc.abstractmethod
-    def tests_definition(self):
+    def navigations_definition(self):
         pass
 
     def add_setting(self, str_default_key, str_value):
@@ -32,22 +32,22 @@ class Scenario(object):
         """
         self.settings[str_default_key] = str_value
 
-    def add_test(self, str_testname, str_path):
-        self.tests[str_testname] = {}
-        self.tests[str_testname]['path'] = str_path
-        self.tests[str_testname]['class'] = utils.import_from_path(utils.get_abs_path(str_path, self.scenario_folder),
-                                                                   str_testname,
-                                                                   {'test_name': str_testname})
-        self.tests[str_testname]['ramps'] = []
-        self.tests[str_testname]['iteration_limit'] = 0
-        self.tests[str_testname]['current_spawns'] = 0
-        self.tests[str_testname]['planned_spawns'] = 0
-        self.tests[str_testname]['iterations'] = 0
-        self.tests[str_testname]['start_time'] = None
-        self.tests[str_testname]['elapsed_time'] = 0
-        self.tests[str_testname]['threads'] = []
+    def add_navigation(self, str_navigationname, str_path):
+        self.navigations[str_navigationname] = {}
+        self.navigations[str_navigationname]['path'] = str_path
+        self.navigations[str_navigationname]['class'] = utils.import_from_path(utils.get_abs_path(str_path, self.scenario_folder),
+                                                                   str_navigationname,
+                                                                   {'navigation_name': str_navigationname})
+        self.navigations[str_navigationname]['ramps'] = []
+        self.navigations[str_navigationname]['iteration_limit'] = 0
+        self.navigations[str_navigationname]['current_spawns'] = 0
+        self.navigations[str_navigationname]['planned_spawns'] = 0
+        self.navigations[str_navigationname]['iterations'] = 0
+        self.navigations[str_navigationname]['start_time'] = None
+        self.navigations[str_navigationname]['elapsed_time'] = 0
+        self.navigations[str_navigationname]['threads'] = []
 
-    def add_ramp(self, str_testname, **kwargs):
+    def add_ramp(self, str_navigationname, **kwargs):
         int_initial_delay = kwargs.get('initial_delay', 0)
         int_ramp_up = kwargs.get('ramp_up', 30)
         int_spawns = kwargs.get('spawns', 1)
@@ -58,34 +58,34 @@ class Scenario(object):
                         load_duration=int_load_duration,
                         ramp_up=int_ramp_up,
                         ramp_down=int_ramp_down)
-        self.tests[str_testname]['ramps'].append(obj_ramp)
+        self.navigations[str_navigationname]['ramps'].append(obj_ramp)
 
-    def get_test_names(self):
-        return self.tests.keys()
+    def get_navigation_names(self):
+        return self.navigations.keys()
 
-    def get_test_class(self, str_test_name):
-        return self.tests[str_test_name]['class']
+    def get_navigation_class(self, str_navigation_name):
+        return self.navigations[str_navigation_name]['class']
 
-    def get_test_path(self, str_test_name):
-        return self.tests[str_test_name]['path']
+    def get_navigation_path(self, str_navigation_name):
+        return self.navigations[str_navigation_name]['path']
 
     def get_scenario_duration(self):
         list_durations = []
-        for obj_test in self.tests.itervalues():
-            obj_ramps = obj_test['ramps']
+        for obj_navigation in self.navigations.itervalues():
+            obj_ramps = obj_navigation['ramps']
             for obj_ramp in obj_ramps:
                 list_durations.append(obj_ramp.get_total_duration())
         return max(list_durations)
 
-    def get_test_duration(self, str_testname):
+    def get_navigation_duration(self, str_navigationname):
         list_durations = []
-        for obj_ramp in self.tests[str_testname]['ramps']:
+        for obj_ramp in self.navigations[str_navigationname]['ramps']:
             list_durations.append(obj_ramp.get_total_duration())
         return max(list_durations)
 
-    def get_planned_spawns(self, str_testname, dbl_elapsed_time):
+    def get_planned_spawns(self, str_navigationname, dbl_elapsed_time):
         list_spawns = []
-        for obj_ramp in self.tests[str_testname]['ramps']:
+        for obj_ramp in self.navigations[str_navigationname]['ramps']:
             list_spawns.append(obj_ramp.get_planned_spawns_at(
                 dbl_elapsed_time))
         return sum(list_spawns)
@@ -93,16 +93,16 @@ class Scenario(object):
     def get_elapsed_time(self):
         return utils.get_timestamp(False) - self.scenario_start
 
-    def get_max_test_spawns(self, str_testname):
+    def get_max_navigation_spawns(self, str_navigationname):
         list_spawns = []
-        for obj_ramp in self.tests[str_testname]['ramps']:
+        for obj_ramp in self.navigations[str_navigationname]['ramps']:
             list_spawns.append(obj_ramp.get_max_spawns())
         return sum(list_spawns)
 
     def get_max_scenario_spawns(self):
         list_spawns = []
-        for str_testname in self.tests.iterkeys():
-            list_spawns.append(self.get_max_test_spawns(str_testname))
+        for str_navigationname in self.navigations.iterkeys():
+            list_spawns.append(self.get_max_navigation_spawns(str_navigationname))
         return sum(list_spawns)
 
     def rescale_spawns_to(self, int_rescaled_spawns):
@@ -111,6 +111,6 @@ class Scenario(object):
         self.rescale_spawns_by_factor(dbl_rescale_factor)
 
     def rescale_spawns_by_factor(self, dbl_rescale_factor):
-        for str_testname, dic_testdata in self.tests.iteritems():
-            for int_index, obj_ramp in enumerate(dic_testdata['ramps']):
-                self.tests[str_testname]['ramps'][int_index].rescale_by_factor(dbl_rescale_factor)
+        for str_navigationname, dic_navigationdata in self.navigations.iteritems():
+            for int_index, obj_ramp in enumerate(dic_navigationdata['ramps']):
+                self.navigations[str_navigationname]['ramps'][int_index].rescale_by_factor(dbl_rescale_factor)

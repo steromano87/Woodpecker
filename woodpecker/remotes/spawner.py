@@ -105,12 +105,12 @@ class Spawner(StoppableThread):
         click.secho('DONE', fg='green', bold=True)
 
         self.scenario.configure()
-        self.scenario.tests_definition()
+        self.scenario.navigations_definition()
 
         self.scenario.scenario_start = utils.get_timestamp(False)
         self.scenario.scenario_duration =\
             self.scenario.get_scenario_duration()
-        list_tests = self.scenario.get_test_names()
+        list_navigations = self.scenario.get_navigation_names()
 
         # Update sender spawn message elapsed time
         self.sender_spawn_elapsed_time += self.elapsed_time
@@ -123,14 +123,14 @@ class Spawner(StoppableThread):
             time_elapsed = utils.get_timestamp(False) - self.scenario.scenario_start
             self.elapsed_time = time_elapsed.total_seconds()
 
-            # Cycle through tests
-            for str_test_name in list_tests:
+            # Cycle through navigations
+            for str_navigation_name in list_navigations:
                 # Get planned and current spawn number
-                self.scenario.tests[str_test_name]['planned_spawns'] =\
-                    self.scenario.get_planned_spawns(str_test_name, self.elapsed_time)
+                self.scenario.navigations[str_navigation_name]['planned_spawns'] =\
+                    self.scenario.get_planned_spawns(str_navigation_name, self.elapsed_time)
 
-                self.scenario.tests[str_test_name]['current_spawns'] =\
-                    len(self.scenario.tests[str_test_name]['threads'])
+                self.scenario.navigations[str_navigation_name]['current_spawns'] =\
+                    len(self.scenario.navigations[str_navigation_name]['threads'])
 
                 # Send spawn message, but only if is passed enough time from last sending
                 if self.sender_spawn_elapsed_time >= self.sender_spawn_polling_interval:
@@ -138,36 +138,36 @@ class Spawner(StoppableThread):
                                      {
                                          'hostName': utils.get_ip_address(),
                                          'timestamp': utils.get_timestamp(),
-                                         'testName': str_test_name,
-                                         'plannedSpawns': self.scenario.tests[str_test_name]['planned_spawns'],
-                                         'runningSpawns': self.scenario.tests[str_test_name]['current_spawns']
+                                         'navigationName': str_navigation_name,
+                                         'plannedSpawns': self.scenario.navigations[str_navigation_name]['planned_spawns'],
+                                         'runningSpawns': self.scenario.navigations[str_navigation_name]['current_spawns']
                                      })
                     self.sender_spawn_elapsed_time = 0.0
 
-                int_spawns_difference = self.scenario.tests[str_test_name][
-                    'current_spawns'] - self.scenario.tests[
-                    str_test_name]['planned_spawns']
+                int_spawns_difference = self.scenario.navigations[str_navigation_name][
+                    'current_spawns'] - self.scenario.navigations[
+                    str_navigation_name]['planned_spawns']
 
                 # If there are less spawns than planned, add some spawns
                 if int_spawns_difference < 0:
                     for int_counter in range(0, -int_spawns_difference):
-                        str_test_path = self.scenario.get_test_path(str_test_name)
+                        str_navigation_path = self.scenario.get_navigation_path(str_navigation_name)
                         str_id = utils.random_id(16)
                         print(str_id)
                         obj_spawn = Spawn(str_id,
-                                          str_test_name,
-                                          str_test_path,
+                                          str_navigation_name,
+                                          str_navigation_path,
                                           self.scenario_folder,
                                           self.server_address,
                                           self.port,
                                           self.scenario.settings)
                         obj_spawn.start()
-                        self.scenario.tests[str_test_name]['threads'].append(obj_spawn)
+                        self.scenario.navigations[str_navigation_name]['threads'].append(obj_spawn)
 
                 # If there are more spawns than planned, start killing older spawns
                 elif int_spawns_difference > 0:
                     for int_counter in range(0, int_spawns_difference):
-                        obj_spawn = self.scenario.tests[str_test_name]['threads'].pop(0)
+                        obj_spawn = self.scenario.navigations[str_navigation_name]['threads'].pop(0)
                         obj_spawn.terminate()
                         obj_spawn.join()
                         print('Killed one')
@@ -176,9 +176,9 @@ class Spawner(StoppableThread):
 
         # Clean all the remaining threads
         click.secho(utils.logify('Cleaning up... ', 'Spawner'), nl=False)
-        for str_test_name in list_tests:
-            for int_counter in range(0, len(self.scenario.tests[str_test_name]['threads'])):
-                obj_spawn = self.scenario.tests[str_test_name]['threads'].pop(0)
+        for str_navigation_name in list_navigations:
+            for int_counter in range(0, len(self.scenario.navigations[str_navigation_name]['threads'])):
+                obj_spawn = self.scenario.navigations[str_navigation_name]['threads'].pop(0)
                 obj_spawn.terminate()
                 obj_spawn.join()
                 print('Killed one - Cleanup')

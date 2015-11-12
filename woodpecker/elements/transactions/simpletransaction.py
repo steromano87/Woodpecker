@@ -15,7 +15,7 @@ class SimpleTransaction(object):
         Sets up base variables
         """
         self.iteration = 0
-        self.test_name = kwargs.get('test_name', 'NONAME')
+        self.navigation_name = kwargs.get('navigation_name', 'NONAME')
         self.spawn_id = ''
         self.settings = {}
         self.thread_variables = {}

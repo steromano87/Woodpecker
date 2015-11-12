@@ -17,14 +17,14 @@ class Spawn(StoppableThread):
                  dic_settings=None):
         super(Spawn, self).__init__()
 
-        # Test and sender variables
+        # Navigation and sender variables
         self.ID = str_id
         self.settings = dic_settings
         self.server_address = str_server_address
         self.port = int_server_port
         self.armed = False
 
-        # Test class instantiation
+        # Navigation class instantiation
         self.testclass = utils.import_from_path(utils.get_abs_path(str_test_path, str_scenario_folder),
                                                 str_test_name,
                                                 {

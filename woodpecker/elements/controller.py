@@ -79,7 +79,7 @@ class Controller(object):
         # Log Collector thread
         self.logcollector = LogCollectorThread(self.results_file_path, self.port)
 
-        # Internal variable to wait if tests are running
+        # Internal variable to wait if navigations are running
         self.is_running = False
 
     def __load_scenario(self):
@@ -87,8 +87,8 @@ class Controller(object):
         self.scenario = utils.import_from_path(self.scenario_file_path, self.scenario_name,
                                                {'scenario_folder': self.scenario_folder})
 
-        # Load tests
-        self.scenario.tests_definition()
+        # Load navigations
+        self.scenario.navigations_definition()
 
     def __scale_ramps(self):
         # Get spawners number

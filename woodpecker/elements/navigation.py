@@ -6,14 +6,14 @@ import woodpecker.misc.utils as utils
 from woodpecker.logging.sender import Sender
 
 
-class Test(object):
+class Navigation(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, **kwargs):
-        # Test name, defaults to class name
-        self.name = kwargs.get('test_name', self.__class__.__name__)
+        # Navigation name, defaults to class name
+        self.name = kwargs.get('navigation_name', self.__class__.__name__)
 
-        # Test settings and scenario
+        # Navigation settings and scenario
         self.settings = kwargs.get('settings', {})
         self.scenario_folder = kwargs.get('scenario_folder', os.getcwd())
 
@@ -56,7 +56,7 @@ class Test(object):
         obj_transaction = {
             'name': str_name,
             'path': str_abspath,
-            'class': utils.import_from_path(str_abspath, str_name, {'test_name': self.name}),
+            'class': utils.import_from_path(str_abspath, str_name, {'navigation_name': self.name}),
             'server_address': self.server_address,
             'server_port': self.server_port
         }

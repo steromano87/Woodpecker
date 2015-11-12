@@ -59,7 +59,7 @@ target/
 # IDEA project folders
 .idea/
 
-# Test folder used to store temporary tests written during project development
+# Navigation folder used to store temporary navigations written during project development
 tests/
 
 # Virtual environment folder
