@@ -75,8 +75,7 @@ class HttpTransaction(SimpleTransaction):
                              'requestSpecs': json.dumps(obj_data),
                              'duration': self.thread_variables['_last_response'].elapsed.total_seconds() * 1000,
                              'status': self.thread_variables['_last_response'].status_code,
-                             'responseSize': self.thread_variables['_last_response'].headers.get('content-length',
-                                                                                                 None),
+                             'responseSize': len(self.thread_variables['_last_response'].bytes),
                              'assertionResult': 1
                          })
 
