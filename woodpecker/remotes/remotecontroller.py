@@ -129,8 +129,8 @@ class RemoteController(object):
         click.secho(utils.logify('Spawner created'), fg='green', bold=True)
 
     def __start_scenario(self):
-        self.spawner.start()
         click.secho(utils.logify('Launching Spawner...'), fg='green')
+        self.spawner.start()
 
     def serve_forever(self):
         click.secho(utils.logify('Waiting for controller connection...'), fg='green', bold=True)
