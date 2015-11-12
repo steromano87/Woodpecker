@@ -27,6 +27,7 @@ class Navigation(object):
         self.test_transactions = []
         self.spawn_id = None
         self.iteration = 1
+        self.debug = False
 
     @abc.abstractmethod
     def transactions(self):
@@ -96,5 +97,6 @@ class Navigation(object):
 
         self.iteration += 1
 
-        # This line is printed only for debug purposes
-        print('ID: ' + str(self.spawn_id) + ' Timestamp: ' + utils.get_timestamp())
+        # Print line if in Debug mode
+        if self.debug:
+            print('ID: ' + str(self.spawn_id) + ' Timestamp: ' + utils.get_timestamp())
