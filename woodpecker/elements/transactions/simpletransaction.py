@@ -16,14 +16,14 @@ class SimpleTransaction(object):
         """
         self.iteration = 0
         self.navigation_name = kwargs.get('navigation_name', 'NONAME')
-        self.spawn_id = ''
+        self.pecker_id = ''
         self.settings = {}
         self.thread_variables = {}
 
         # Sender variables
-        self.server_address = kwargs.get('server_address', 'localhost')
-        self.server_port = kwargs.get('server_port', 7878)
-        self.sender = Sender(self.server_address, self.server_port, 'UDP')
+        self.controller_address = kwargs.get('controller_address', 'localhost')
+        self.controller_port = kwargs.get('controller_port', 7878)
+        self.sender = Sender(self.controller_address, self.controller_port, 'UDP')
 
     def configure(self):
         """
@@ -41,22 +41,28 @@ class SimpleTransaction(object):
     def add_setting(self, str_default_key, str_value):
         """
         Add a setting value to the specified key
+        :param str_value:
+        :param str_default_key:
         """
         self.settings[str_default_key] = str_value
 
     def set_variable(self, str_name, str_value):
         """
         Add a variable to the thread variables dict
+        :param str_value:
+        :param str_name:
         """
         self.thread_variables[str_name] = str_value
 
     def get_variable(self, str_name):
         """
         Gets a variable from the thread variables dict
+        :param str_name:
         """
         return self.thread_variables[str_name]
 
-    def think_time(self, int_amount, **kwargs):
+    @staticmethod
+    def think_time(int_amount, **kwargs):
         str_type = kwargs.get('type', 'fixed')
         if str_type == 'fixed':
             time.sleep(int_amount)
@@ -64,7 +70,7 @@ class SimpleTransaction(object):
             time.sleep(abs(random.gauss(int_amount, kwargs.get('std', int_amount * 0.5))))
 
     def run(self, str_spawn_id, int_iteration, dic_settings=None, dic_thread_variables=None):
-        self.spawn_id = str_spawn_id
+        self.pecker_id = str_spawn_id
         self.iteration = int_iteration
 
         if dic_settings:

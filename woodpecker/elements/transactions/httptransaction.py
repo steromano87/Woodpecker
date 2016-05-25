@@ -48,9 +48,9 @@ class HttpTransaction(SimpleTransaction):
             'verify': bool_verify_ssl
         }
 
-        if str_method == 'GET' or str_method == 'DELETE':
+        if str_method in ('GET', 'DELETE'):
             dic_request_kwargs['params'] = obj_data
-        elif str_method == 'POST' or str_method == 'PUT' or str_method == 'PATCH':
+        elif str_method in ('POST', 'PUT', 'PATCH'):
             if self.is_json(obj_data):
                 dic_request_kwargs['json'] = obj_data
             else:
@@ -65,8 +65,8 @@ class HttpTransaction(SimpleTransaction):
         self.sender.send('request',
                          {
                              'hostName': utils.get_ip_address(),
-                             'spawnID': self.spawn_id,
-                             'testName': self.navigation_name,
+                             'peckerID': self.pecker_id,
+                             'navigationName': self.navigation_name,
                              'iteration': self.iteration,
                              'timestamp': str_timestamp,
                              'requestName': str_request_name,
