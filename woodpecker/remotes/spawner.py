@@ -123,7 +123,7 @@ class Spawner(StoppableThread):
             time_elapsed = utils.get_timestamp(False) - self.scenario.scenario_start
             self.elapsed_time = time_elapsed.total_seconds()
 
-            # Cycle through navigations
+            # Cycle through navs
             for str_navigation_name in list_navigations:
                 # Get planned and current spawn number
                 self.scenario.navigations[str_navigation_name]['planned_spawns'] =\

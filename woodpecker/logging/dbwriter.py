@@ -30,21 +30,21 @@ class DBWriter(object):
         # Transactions table
         str_transactions_table_query = 'CREATE TABLE IF NOT EXISTS transactions (' \
                                        'hostName TEXT DEFAULT \'LOCALHOST\',' \
-                                       'spawnID TEXT,' \
-                                       'testName TEXT,' \
+                                       'peckerID TEXT,' \
+                                       'navigationName TEXT,' \
                                        'iteration INTEGER,' \
                                        'transactionName TEXT,' \
                                        'startTimestamp TEXT,' \
                                        'endTimestamp TEXT' \
                                        ');'
         str_transactions_index_query = 'CREATE INDEX IF NOT EXISTS transactions_mainkeys ' \
-                                       'on transactions (hostName, spawnID, testName, iteration, transactionName);'
+                                       'on transactions (hostName, peckerID, navigationName, iteration, transactionName);'
 
         # Requests table
         str_requests_table_query = 'CREATE TABLE IF NOT EXISTS requests (' \
                                    'hostName TEXT DEFAULT \'LOCALHOST\',' \
-                                   'spawnID TEXT,' \
-                                   'testName TEXT,' \
+                                   'peckerID TEXT,' \
+                                   'navigationName TEXT,' \
                                    'iteration INTEGER,' \
                                    'timestamp TEXT,' \
                                    'requestName TEXT,' \
@@ -56,7 +56,7 @@ class DBWriter(object):
                                    'responseSize INTEGER,' \
                                    'assertionResult INTEGER DEFAULT 1);'
         str_requests_main_index_query = 'CREATE INDEX IF NOT EXISTS requests_mainkeys ' \
-                                        'on requests (hostName, spawnID, testName, iteration, requestName);'
+                                        'on requests (hostName, peckerID, navigationName, iteration, requestName);'
         str_requests_timestamp_index_query = 'CREATE INDEX IF NOT EXISTS requests_timestamp ' \
                                              'on requests (timestamp);'
         str_requests_status_code_index_query = 'CREATE INDEX IF NOT EXISTS requests_status ' \
@@ -70,7 +70,7 @@ class DBWriter(object):
         str_spawns_table_query = 'CREATE TABLE IF NOT EXISTS spawns (' \
                                  'hostName TEXT DEFAULT \'LOCALHOST\',' \
                                  'timestamp TEXT,' \
-                                 'testName TEXT,' \
+                                 'navigationName TEXT,' \
                                  'plannedSpawns INTEGER,' \
                                  'runningSpawns INTEGER' \
                                  ');'
@@ -95,14 +95,14 @@ class DBWriter(object):
         # Messages table
         str_messages_table_query = 'CREATE TABLE IF NOT EXISTS messages (' \
                                    'hostName TEXT DEFAULT \'LOCALHOST\',' \
-                                   'spawnID TEXT, ' \
-                                   'testName TEXT, ' \
+                                   'peckerID TEXT, ' \
+                                   'navigationName TEXT, ' \
                                    'iteration INTEGER, ' \
                                    'timestamp TEXT, ' \
                                    'message BLOB' \
                                    ');'
         str_messages_main_index_query = 'CREATE INDEX IF NOT EXISTS messages_mainkeys ' \
-                                        'on messages (hostName, spawnID, testName, iteration);'
+                                        'on messages (hostName, peckerID, navigationName, iteration);'
         str_messages_timestamp_index_query = 'CREATE INDEX IF NOT EXISTS messages_timestamp ' \
                                              'on messages (timestamp);'
 
@@ -138,8 +138,8 @@ class DBWriter(object):
         self.cursor.execute(str_prepared,
                             (
                                 dic_payload.get('hostName'),
-                                dic_payload.get('spawnID'),
-                                dic_payload.get('testName'),
+                                dic_payload.get('peckerID'),
+                                dic_payload.get('navigationName'),
                                 dic_payload.get('iteration'),
                                 dic_payload.get('transactionName'),
                                 dic_payload.get('startTimestamp')
@@ -151,16 +151,16 @@ class DBWriter(object):
         str_prepared = 'UPDATE transactions ' \
                        'SET endTimestamp = ? ' \
                        'WHERE hostName = ? ' \
-                       '    AND spawnID = ? ' \
-                       '    AND testName = ? ' \
+                       '    AND peckerID = ? ' \
+                       '    AND navigationName = ? ' \
                        '    AND iteration = ? ' \
                        '    AND transactionName = ?'
         self.cursor.execute(str_prepared,
                             (
                                 dic_payload.get('endTimestamp'),
                                 dic_payload.get('hostName'),
-                                dic_payload.get('spawnID'),
-                                dic_payload.get('testName'),
+                                dic_payload.get('peckerID'),
+                                dic_payload.get('navigationName'),
                                 dic_payload.get('iteration'),
                                 dic_payload.get('transactionName')
                             )
@@ -173,8 +173,8 @@ class DBWriter(object):
         self.cursor.execute(str_prepared,
                             (
                                 dic_payload.get('hostName'),
-                                dic_payload.get('spawnID'),
-                                dic_payload.get('testName'),
+                                dic_payload.get('peckerID'),
+                                dic_payload.get('navigationName'),
                                 dic_payload.get('iteration'),
                                 dic_payload.get('timestamp'),
                                 dic_payload.get('requestName'),
@@ -196,7 +196,7 @@ class DBWriter(object):
                             (
                                 dic_payload.get('hostName'),
                                 dic_payload.get('timestamp'),
-                                dic_payload.get('testName'),
+                                dic_payload.get('navigationName'),
                                 dic_payload.get('plannedSpawns'),
                                 dic_payload.get('runningSpawns')
                             )
@@ -225,8 +225,8 @@ class DBWriter(object):
         self.cursor.execute(str_prepared,
                             (
                                 dic_payload.get('hostName'),
-                                dic_payload.get('spawnID'),
-                                dic_payload.get('testName'),
+                                dic_payload.get('peckerID'),
+                                dic_payload.get('navigationName'),
                                 dic_payload.get('iteration'),
                                 dic_payload.get('timestamp'),
                                 dic_payload.get('messages')

@@ -18,10 +18,10 @@ __author__ = 'Stefano.Romano'
 class Controller(object):
 
     def __init__(self, str_scenario_name, **kwargs):
-        self.__initialize(str_scenario_name, **kwargs)
+        self._initialize(str_scenario_name, **kwargs)
 
     def __enter__(self, str_scenario_name, **kwargs):
-        self.__initialize(str_scenario_name, **kwargs)
+        self._initialize(str_scenario_name, **kwargs)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         click.secho('Controller closed', fg='red')
@@ -29,7 +29,7 @@ class Controller(object):
     def __del__(self):
         click.secho('Controller closed', fg='red')
 
-    def __initialize(self, str_scenario_name, **kwargs):
+    def _initialize(self, str_scenario_name, **kwargs):
         # Self address
         self.ip_address = kwargs.get('ip_address', utils.get_ip_address())
 
@@ -84,7 +84,7 @@ class Controller(object):
         # Elapsed time since scenario duration
         self.scenario_elapsed_time = 0
 
-    def __load_scenario(self):
+    def _load_scenario(self):
         # Log message
         click.secho(utils.logify('Loading scenario... '), nl=False)
 
@@ -92,13 +92,13 @@ class Controller(object):
         self.scenario = utils.import_from_path(self.scenario_file_path, self.scenario_name,
                                                {'scenario_folder': self.scenario_folder})
 
-        # Load navigations
+        # Load navs
         self.scenario.navigations_definition()
 
         # Fill scenario duration
         self.scenario_duration = self.scenario.get_scenario_duration()
 
-    def __scale_ramps(self):
+    def _scale_ramps(self):
         # Get spawners number
         int_spawners_num = len(self.spawners)
         int_max_spawns = self.scenario.get_max_scenario_spawns()
@@ -114,7 +114,7 @@ class Controller(object):
         # End of message
         click.secho('DONE', fg='green', bold=True)
 
-    def __zip__scenario_folder(self):
+    def _zip__scenario_folder(self):
         # Log message
         click.secho(utils.logify('Zipping scenario... '), nl=False)
 
@@ -134,7 +134,7 @@ class Controller(object):
         # End of message
         click.secho('DONE', fg='green', bold=True)
 
-    def __send_scenario(self):
+    def _send_scenario(self):
         # Cycle through spawners and send serialized scenario class
         for str_spawner_ip in self.spawners.iterkeys():
             click.secho(utils.logify(''.join(('Sending scenario to spawner ', str_spawner_ip, '... '))), nl=False)
@@ -150,10 +150,10 @@ class Controller(object):
             click.secho('DONE', fg='green', bold=True)
 
     def setup_scenario(self):
-        self.__load_scenario()
-        self.__scale_ramps()
-        self.__zip__scenario_folder()
-        self.__send_scenario()
+        self._load_scenario()
+        self._scale_ramps()
+        self._zip__scenario_folder()
+        self._send_scenario()
 
     def start_scenario(self):
         # Start Logcollector and Sysmonitor threads
