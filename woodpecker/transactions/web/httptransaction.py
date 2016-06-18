@@ -6,6 +6,7 @@ import requests
 import woodpecker.misc.utils as utils
 
 from woodpecker.transactions.generic.basetransaction import BaseTransaction
+from woodpecker.options.web.httpoptions import http_options
 
 
 class HttpTransaction(BaseTransaction):
@@ -18,27 +19,31 @@ class HttpTransaction(BaseTransaction):
         if not self.exist_variable('_session'):
             self.set_variable('_session', requests.Session())
 
+    def _default_options(self):
+        super(HttpTransaction, self)._default_options()
+        self.options.update(http_options())
+
     def http_request(self, str_request_name, str_url, **kwargs):
         # Request method
-        str_method = kwargs.get('method', self.get_option('default_request_method', 'GET'))
+        str_method = kwargs.get('method', self.get_option('default_request_method'))
 
         # Request data
         obj_data = kwargs.get('data', {})
 
         # Request headers
-        obj_headers = kwargs.get('headers', self.get_option('default_request_headers', {}))
+        obj_headers = kwargs.get('headers', self.get_option('default_request_headers'))
 
         # Request cookies
-        obj_cookies = kwargs.get('cookies', self.get_option('default_request_cookies', {}))
+        obj_cookies = kwargs.get('cookies', self.get_option('default_request_cookies'))
 
         # Option to follow redirects or not
-        bool_redirects = kwargs.get('allow_redirects', self.get_option('allow_redirects', True))
+        bool_redirects = kwargs.get('allow_redirects', self.get_option('follow_redirects'))
 
         # Option to verify SSL certificates
-        bool_ignore_ssl_errors = kwargs.get('ignore_ssl_errors', self.get_option('ignore_ssl_errors', True))
+        bool_ignore_ssl_errors = kwargs.get('ignore_ssl_errors', self.get_option('ignore_ssl_errors'))
 
         # Proxy settings
-        obj_proxy = kwargs.get('proxy', self.get_option('proxy', {}))
+        obj_proxy = kwargs.get('proxy', self.get_option('proxy'))
 
         # Assertions for the current step
         dic_assertions = kwargs.get('assertions', {})
@@ -66,8 +71,11 @@ class HttpTransaction(BaseTransaction):
 
         # Send unique request with kwargs defined in dict
         str_timestamp = utils.get_timestamp()
-        self.set_variable('_last_response',
-                          self.get_variable('_session').request(str_method, str_url, **dic_request_kwargs))
+        try:
+            self.set_variable('_last_response',
+                              self.get_variable('_session').request(str_method, str_url, **dic_request_kwargs))
+        except requests.exceptions.SSLError:
+            print 'SSL Certificate error'
 
         # Send request data using sender object
         self.add_to_log('steps',
@@ -95,8 +103,3 @@ class HttpTransaction(BaseTransaction):
         except ValueError:
             return False
         return True
-
-    def check_assertions(self, dic_assertions):
-        # TODO: add assertions support
-        obj_response = self.get_variable('_last_response')
-        return None
