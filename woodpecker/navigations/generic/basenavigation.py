@@ -100,18 +100,21 @@ class BaseNavigation(object):
         else:
             self._transactions.append(dic_transaction)
 
-    def run(self):
+    def prepare_for_run(self):
         # First, configure the navigation
         self.configure()
 
         # Then, add transactions
         self.transactions()
 
+    def run_setup(self):
         # If any setup is present, run it
         for dic_setup in self._setup_transactions:
             self._run_transaction(dic_setup)
         time.sleep(self.get_option('think_time_after_setup'))
+        return self.log
 
+    def run_main(self):
         # Start running the transactions in order
         int_max_iterations = self.get_option('max_iterations')
         while self.iteration <= int_max_iterations or not int_max_iterations:
@@ -121,11 +124,14 @@ class BaseNavigation(object):
 
             self.iteration += 1
             time.sleep(self.get_option('think_time_between_iterations'))
+        return self.log
 
+    def run_teardown(self):
         # If any teardown is present, run it
         time.sleep(self.get_option('think_time_before_teardown'))
         for dic_setup in self._teardown_transactions:
             self._run_transaction(dic_setup)
+        return self.log
 
     def _run_transaction(self, dic_transaction):
         # Import the module containing the transaction class
