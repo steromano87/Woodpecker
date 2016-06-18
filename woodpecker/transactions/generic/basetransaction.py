@@ -17,7 +17,7 @@ class BaseTransaction(object):
         self.pecker_variables = kwargs.get('pecker_variables', {})
 
         # Internal iteration counter, can be passed from outside
-        self.iteration = kwargs.get('iteration', 0)
+        self.iteration = kwargs.get('iteration', 1)
 
         # Navigation name
         self.navigation_name = kwargs.get('navigation_name', None)
