@@ -19,8 +19,8 @@ class BaseNavigation(object):
         # Pecker variables shared between transactions
         self.pecker_variables = kwargs.get('pecker_variables', {})
 
-        # Internal iteration counter, can be passed from outside
-        self.iteration = kwargs.get('iteration', 1)
+        # Internal iteration counter
+        self.iteration = 1
 
         # Navigation name
         self.navigation_name = self.__class__.__name__
@@ -114,16 +114,13 @@ class BaseNavigation(object):
         time.sleep(self.get_option('think_time_after_setup'))
         return self.log
 
-    def run_main(self):
-        # Start running the transactions in order
-        int_max_iterations = self.get_option('max_iterations')
-        while self.iteration <= int_max_iterations or not int_max_iterations:
-            for dic_transaction in self._transactions:
-                self._run_transaction(dic_transaction)
-                time.sleep(self.get_option('think_time_between_transactions'))
+    def run_main(self, int_iteration):
+        self.iteration = int_iteration
+        for dic_transaction in self._transactions:
+            self._run_transaction(dic_transaction)
+            time.sleep(self.get_option('think_time_between_transactions'))
 
-            self.iteration += 1
-            time.sleep(self.get_option('think_time_between_iterations'))
+        time.sleep(self.get_option('think_time_between_iterations'))
         return self.log
 
     def run_teardown(self):
@@ -150,4 +147,4 @@ class BaseNavigation(object):
             }
         )
 
-        self.options, self.pecker_variables, self.log = obj_current_transaction.run()
+        self.options, self.pecker_variables, self.log = obj_current_transaction.run(self.iteration)

@@ -16,8 +16,8 @@ class BaseTransaction(object):
         # Pecker variables shared between transactions
         self.pecker_variables = kwargs.get('pecker_variables', {})
 
-        # Internal iteration counter, can be passed from outside
-        self.iteration = kwargs.get('iteration', 1)
+        # Internal iteration counter
+        self.iteration = 1
 
         # Navigation name
         self.navigation_name = kwargs.get('navigation_name', None)
@@ -100,7 +100,9 @@ class BaseTransaction(object):
         # TODO: add assertions support
         return None
 
-    def run(self):
+    def run(self, int_iteration):
+        self.iteration = int_iteration
+
         # First, configure the transaction if some is present
         self.configure()
         self.steps()
