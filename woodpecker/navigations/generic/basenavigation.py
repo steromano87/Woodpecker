@@ -1,14 +1,13 @@
 import abc
-import time
-import random
+
+import woodpecker.misc.utils as utils
 
 
-class BaseTransaction(object):
+class BaseNavigation(object):
     __metaclass__ = abc.ABCMeta
 
-    # Initialization
     def __init__(self, **kwargs):
-        # Transaction settings
+        # Navigation settings
         self.options = kwargs.get('options', {})
 
         # Pecker variables shared between transactions
@@ -21,13 +20,13 @@ class BaseTransaction(object):
         self.max_iterations = kwargs.get('max_iterations', 0)
 
         # Navigation name
-        self.navigation_name = kwargs.get('navigation_name', None)
-
-        # Transaction name
-        self.transaction_name = self.__class__.__name__
+        self.navigation_name = self.__class__.__name__
 
         # Internal pecker ID
         self.pecker_id = kwargs.get('pecker_id', None)
+
+        # Transactions
+        self._transactions = []
 
         # Internal log, used to send data at the end of the navigation
         self.log = kwargs.get('log', {
@@ -63,41 +62,49 @@ class BaseTransaction(object):
     def get_option(self, str_name, mix_default=None):
         return self.options.get(str_name, mix_default)
 
-    # Think times
-    @staticmethod
-    def think_time(dbl_amount, **kwargs):
-        str_type = kwargs.get('type', 'fixed')
-
-        # Determine the amount of time to wait from the type of think time
-        if str_type == 'fixed':
-            dbl_amount_final = dbl_amount
-        elif str_type == 'random_gaussian':
-            dbl_std = kwargs.get('std', 0.5 * dbl_amount)
-            dbl_amount_final = abs(random.gauss(dbl_std))
-        else:
-            dbl_amount_final = dbl_amount
-
-        # Now, wait
-        time.sleep(dbl_amount_final)
-
-    # Add step or event to local log
-    def add_to_log(self, str_log_category, mix_log_content):
-        if str_log_category in self.log.keys():
-            self.log[str_log_category].append(mix_log_content)
-
-    # Configuration of transaction
+    # Configuration
     def configure(self):
         pass
 
+    # Transaction methods
     @abc.abstractmethod
-    def steps(self):
+    def transactions(self):
+        """
+        Insert here the transactions to be included in the test,
+        in the execution order
+        """
         pass
 
+    def add_transaction(self, str_name, str_path):
+        self._transactions.append({
+            'name': str_name,
+            'path': str_path
+        })
+
     def run(self):
-        # First, configure the transaction if some is present
+        # First, configure the navigation
         self.configure()
 
-        # If the iteration counter is lower or equal to the current counter, reproduce the steps
-        if self.iteration <= self.max_iterations or self.max_iterations == 0:
-            self.steps()
-            return self.options, self.pecker_variables, self.log
+        # Then, add transactions
+        self.transactions()
+
+        # Then, start running the transactions in order
+        while self.iteration <= self.max_iterations or self.max_iterations == 0:
+            for dic_transaction in self._transactions:
+                obj_current_transaction = utils.import_from_path(
+                    dic_transaction['path'],
+                    dic_transaction['name'],
+                    {
+                        'options': self.options,
+                        'pecker_variables': self.pecker_variables,
+                        'iteration': self.iteration,
+                        'max_iterations': self.max_iterations,
+                        'navigation_name': self.navigation_name,
+                        'pecker_id': self.pecker_id,
+                        'log': self.log
+                    }
+                )
+
+                self.options, self.pecker_variables, self.log = obj_current_transaction.run()
+
+            self.iteration += 1

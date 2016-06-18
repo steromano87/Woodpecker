@@ -13,12 +13,12 @@ __author__ = 'Stefano'
 class HarConverter(object):
 
     def __init__(self, **kwargs):
-        self.__initialize(**kwargs)
+        self._initialize(**kwargs)
 
     def __enter__(self, **kwargs):
-        self.__initialize(**kwargs)
+        self._initialize(**kwargs)
 
-    def __initialize(self, **kwargs):
+    def _initialize(self, **kwargs):
         # Thresholds
         self.transaction_threshold = kwargs.get('transaction_threshold', 5)
         self.think_time_threshold = kwargs.get('think_time_threshold', 1)
@@ -32,7 +32,7 @@ class HarConverter(object):
         # Placeholder for transactions
         self.transactions = []
 
-    def __load_har(self, str_filepath):
+    def _load_har(self, str_filepath):
         # Open file and import raw data
         with open(str_filepath, 'r') as obj_fp:
             self.raw_data = obj_fp.read()
@@ -42,7 +42,7 @@ class HarConverter(object):
         self.data = json.loads(self.raw_data[skip:])
         self.raw_data = None
 
-    def __parse_har(self):
+    def _parse_har(self):
         # Cycle through all requests and parse them into a more concise structure
         arr_current_transaction = []
         date_last_request_time = None
@@ -133,7 +133,7 @@ class HarConverter(object):
         if len(arr_current_transaction) > 0:
             self.transactions.append(arr_current_transaction)
 
-    def __write_transactions(self, str_transactions_folder=os.getcwd()):
+    def _write_transactions(self, str_transactions_folder=os.getcwd()):
         int_transaction_counter = 1
         for arr_transaction in self.transactions:
             str_filepath = os.path.join(str_transactions_folder,
@@ -167,7 +167,7 @@ class HarConverter(object):
                         obj_fp.write(str_transaction)
 
                     elif dic_entry['eventType'] == 'think_time':
-                        str_think_time = self.__generate_think_time(dic_entry['payload'])
+                        str_think_time = self._generate_think_time(dic_entry['payload'])
                         obj_fp.write(str_think_time)
 
             # Update transaction counter
@@ -214,13 +214,13 @@ class HarConverter(object):
                       ' ' * 2 * self.tab_size,
                       str_request.replace('\t', ' ' * int_arguments_indent))
 
-    def __generate_think_time(self, dic_payload):
+    def _generate_think_time(self, dic_payload):
         # One-line think time generator
         str_think_time = ''.join(('\t\tself.think_time(', str(dic_payload['amount']),
                                   ', type=\'', dic_payload['type'], '\')\n\n'))
         return str_think_time.replace('\t', ' ' * self.tab_size)
 
     def convert(self, str_filepath, str_destination_folder=os.getcwd()):
-        self.__load_har(str_filepath)
-        self.__parse_har()
-        self.__write_transactions(str_destination_folder)
+        self._load_har(str_filepath)
+        self._parse_har()
+        self._write_transactions(str_destination_folder)
