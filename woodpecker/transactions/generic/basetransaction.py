@@ -2,6 +2,8 @@ import abc
 import time
 import random
 
+from woodpecker.options.generic.baseoptions import base_options
+
 
 class BaseTransaction(object):
     __metaclass__ = abc.ABCMeta
@@ -16,9 +18,6 @@ class BaseTransaction(object):
 
         # Internal iteration counter, can be passed from outside
         self.iteration = kwargs.get('iteration', 0)
-
-        # Maximum iterations number
-        self.max_iterations = kwargs.get('max_iterations', 0)
 
         # Navigation name
         self.navigation_name = kwargs.get('navigation_name', None)
@@ -38,6 +37,10 @@ class BaseTransaction(object):
             'transactions': [],
             'sla': []
         })
+
+    # Options method to set default options for specific subclass
+    def _default_options(self):
+        self.options = base_options()
 
     # Variables methods
     def set_variable(self, str_name, mix_value):
@@ -93,11 +96,13 @@ class BaseTransaction(object):
     def steps(self):
         pass
 
+    def check_assertions(self, dic_assertions):
+        # TODO: add assertions support
+        return None
+
     def run(self):
         # First, configure the transaction if some is present
         self.configure()
+        self.steps()
 
-        # If the iteration counter is lower or equal to the current counter, reproduce the steps
-        if self.iteration <= self.max_iterations or self.max_iterations == 0:
-            self.steps()
-            return self.options, self.pecker_variables, self.log
+        return self.options, self.pecker_variables, self.log
