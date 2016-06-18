@@ -5,6 +5,5 @@ def base_options():
         'think_time_after_setup': 0,
         'think_time_between_transactions': 0,
         'think_time_before_teardown': 0,
-        'think_time_between_iterations': 0,
-        'max_iterations': None
+        'think_time_between_iterations': 0
     }
