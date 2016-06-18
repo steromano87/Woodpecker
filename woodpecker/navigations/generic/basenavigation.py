@@ -1,6 +1,8 @@
 import abc
+import importlib
+import time
 
-import woodpecker.misc.utils as utils
+from woodpecker.options.generic.baseoptions import base_options
 
 
 class BaseNavigation(object):
@@ -8,16 +10,17 @@ class BaseNavigation(object):
 
     def __init__(self, **kwargs):
         # Navigation settings
-        self.options = kwargs.get('options', {})
+        if 'options' in kwargs.keys():
+            self.options = kwargs.get('options')
+        else:
+            self.options = {}
+            self._default_options()
 
         # Pecker variables shared between transactions
         self.pecker_variables = kwargs.get('pecker_variables', {})
 
         # Internal iteration counter, can be passed from outside
-        self.iteration = kwargs.get('iteration', 0)
-
-        # Maximum iterations number
-        self.max_iterations = kwargs.get('max_iterations', 0)
+        self.iteration = kwargs.get('iteration', 1)
 
         # Navigation name
         self.navigation_name = self.__class__.__name__
@@ -28,6 +31,12 @@ class BaseNavigation(object):
         # Transactions
         self._transactions = []
 
+        # Setup transactions
+        self._setup_transactions = []
+
+        # TearDown transactions
+        self._teardown_transactions = []
+
         # Internal log, used to send data at the end of the navigation
         self.log = kwargs.get('log', {
             'steps': [],
@@ -37,6 +46,10 @@ class BaseNavigation(object):
             'transactions': [],
             'sla': []
         })
+
+    # Options method to set default options for specific subclass
+    def _default_options(self):
+        self.options = base_options()
 
     # Variables methods
     def set_variable(self, str_name, mix_value):
@@ -75,11 +88,17 @@ class BaseNavigation(object):
         """
         pass
 
-    def add_transaction(self, str_name, str_path):
-        self._transactions.append({
+    def add_transaction(self, str_name, str_file, **kwargs):
+        dic_transaction = {
             'name': str_name,
-            'path': str_path
-        })
+            'file': str_file
+        }
+        if kwargs.get('type', None) == 'setup':
+            self._setup_transactions.append(dic_transaction)
+        elif kwargs.get('type', None) == 'teardown':
+            self._teardown_transactions.append(dic_transaction)
+        else:
+            self._transactions.append(dic_transaction)
 
     def run(self):
         # First, configure the navigation
@@ -88,23 +107,41 @@ class BaseNavigation(object):
         # Then, add transactions
         self.transactions()
 
-        # Then, start running the transactions in order
-        while self.iteration <= self.max_iterations or self.max_iterations == 0:
-            for dic_transaction in self._transactions:
-                obj_current_transaction = utils.import_from_path(
-                    dic_transaction['path'],
-                    dic_transaction['name'],
-                    {
-                        'options': self.options,
-                        'pecker_variables': self.pecker_variables,
-                        'iteration': self.iteration,
-                        'max_iterations': self.max_iterations,
-                        'navigation_name': self.navigation_name,
-                        'pecker_id': self.pecker_id,
-                        'log': self.log
-                    }
-                )
+        # If any setup is present, run it
+        for dic_setup in self._setup_transactions:
+            self._run_transaction(dic_setup)
+        time.sleep(self.get_option('think_time_after_setup'))
 
-                self.options, self.pecker_variables, self.log = obj_current_transaction.run()
+        # Start running the transactions in order
+        int_max_iterations = self.get_option('max_iterations')
+        while self.iteration <= int_max_iterations or not int_max_iterations:
+            for dic_transaction in self._transactions:
+                self._run_transaction(dic_transaction)
+                time.sleep(self.get_option('think_time_between_transactions'))
 
             self.iteration += 1
+            time.sleep(self.get_option('think_time_between_iterations'))
+
+        # If any teardown is present, run it
+        time.sleep(self.get_option('think_time_before_teardown'))
+        for dic_setup in self._teardown_transactions:
+            self._run_transaction(dic_setup)
+
+    def _run_transaction(self, dic_transaction):
+        # Import the module containing the transaction class
+        obj_transaction_module = importlib.import_module(''.join(('.', dic_transaction['file'])),
+                                                         'tests.scenario_test_new.transactions')
+
+        # Get an instance of the transaction class
+        obj_current_transaction = getattr(obj_transaction_module, dic_transaction['name'])(
+            **{
+                'options': self.options,
+                'pecker_variables': self.pecker_variables,
+                'iteration': self.iteration,
+                'navigation_name': self.navigation_name,
+                'pecker_id': self.pecker_id,
+                'log': self.log
+            }
+        )
+
+        self.options, self.pecker_variables, self.log = obj_current_transaction.run()
