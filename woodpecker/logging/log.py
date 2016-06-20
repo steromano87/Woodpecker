@@ -8,6 +8,9 @@ class Log(object):
         # Internal data storage
         self._data = self._get_clean_log()
 
+        # Internal data count, used to provide faster access to data size
+        self._data_count = 0
+
         # Internal options
         self._options = kwargs.get('options', Options())
 
@@ -29,15 +32,14 @@ class Log(object):
 
     def append_to(self, str_section, dic_value):
         self._data[str_section].append(dic_value)
+        self._data_count += 1
         # Automatic data flushing
-        if self.get_record_count() > self._options.get('logging', 'max_entries_before_flush'):
+        if self._data_count > self._options.get('logging', 'max_entries_before_flush'):
             self.flush()
-
-    def get_record_count(self):
-        return sum([len(lst_section) for lst_section in self._data.iterkeys()])
 
     def flush(self):
         # Send data with sender
         self._sender.send('log', self._data)
         # Clean log
         self._data = self._get_clean_log()
+        self._data_count = 0
