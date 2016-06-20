@@ -39,7 +39,7 @@ class Options(object):
                 'controller_protocol': 'TCP'
             },
             'logging': {
-                'max_entries_before_flush': 1000,
+                'max_entries_before_flush': 100,
                 'logger_host': 'localhost',
                 'logger_port': 7878,
                 'logger_protocol': 'UDP'
