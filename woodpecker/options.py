@@ -19,11 +19,11 @@ class Options(object):
         return {
             'generic': {
                 'skip_think_time': False,
-                'max_think_time': 5,
-                'think_time_after_setup': 0,
-                'think_time_between_transactions': 0,
-                'think_time_before_teardown': 0,
-                'think_time_between_iterations': 0
+                'max_think_time': 5.0,
+                'think_time_after_setup': 0.0,
+                'think_time_between_transactions': 0.0,
+                'think_time_before_teardown': 0.0,
+                'think_time_between_iterations': 0.0
             },
             'http': {
                 'ignore_ssl_errors': True,
