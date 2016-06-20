@@ -34,25 +34,6 @@ class BasePecker(object):
     def _default_options(self):
         self.options = pecker_options()
 
-    @abc.abstractmethod
-    def mark_for_stop(self):
-        pass
-
-    @abc.abstractmethod
-    def restore_stop_mark(self):
-        pass
-
-    def restore(self):
-        self.restore_stop_mark()
-        self.log = {
-            'steps': [],
-            'events': [],
-            'peckers': [],
-            'sysmonitor': [],
-            'transactions': [],
-            'sla': []
-        }
-
     def set_navigation(self, str_name, str_file):
         obj_navigation_module = importlib.import_module(''.join(('.', str_file)),
                                                         'tests.scenario_test_new.navigations')
