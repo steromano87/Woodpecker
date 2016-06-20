@@ -25,3 +25,7 @@ class BaseRamp(object):
 
     def rescale_by_ratio(self, dbl_ratio):
         self.peckers *= dbl_ratio
+
+    @abc.abstractmethod
+    def get_pecker_schedule(self):
+        pass
