@@ -3,6 +3,7 @@ import time
 import random
 
 from woodpecker.options import Options
+from woodpecker.logging.log import Log
 
 
 class BaseTransaction(object):
@@ -29,14 +30,7 @@ class BaseTransaction(object):
         self.pecker_id = kwargs.get('pecker_id', None)
 
         # Internal log, used to send data at the end of the navigation
-        self.log = kwargs.get('log', {
-            'steps': [],
-            'events': [],
-            'peckers': [],
-            'sysmonitor': [],
-            'transactions': [],
-            'sla': []
-        })
+        self.log = kwargs.get('log', Log())
 
     # Variables methods
     def set_variable(self, str_name, mix_value):
@@ -71,11 +65,6 @@ class BaseTransaction(object):
 
         # Now, wait
         time.sleep(dbl_amount_final)
-
-    # Add step or event to local log
-    def add_to_log(self, str_log_category, mix_log_content):
-        if str_log_category in self.log.keys():
-            self.log[str_log_category].append(mix_log_content)
 
     # Configuration of transaction
     def configure(self):

@@ -73,23 +73,23 @@ class HttpTransaction(BaseTransaction):
             print 'SSL Certificate error'
 
         # Send request data using sender object
-        self.add_to_log('steps',
-                        {
-                            'hostName': utils.get_ip_address(),
-                            'peckerID': self.pecker_id,
-                            'navigationName': self.navigation_name,
-                            'transactionName': self.transaction_name,
-                            'iteration': self.iteration,
-                            'timestamp': str_timestamp,
-                            'stepName': str_request_name,
-                            'stepType': '_'.join(('HTTP', str_method)),
-                            'stepSkeleton': str_url,
-                            'stepData': json.dumps(obj_data),
-                            'elapsed': self.get_variable('_last_response').elapsed.total_seconds() * 1000,
-                            'status': self.get_variable('_last_response').status_code,
-                            'responseSize': len(self.get_variable('_last_response').content),
-                            'assertionsResult': self.check_assertions(dic_assertions)
-                        })
+        self.log.append_to('steps',
+                           {
+                               'hostName': utils.get_ip_address(),
+                               'peckerID': self.pecker_id,
+                               'navigationName': self.navigation_name,
+                               'transactionName': self.transaction_name,
+                               'iteration': self.iteration,
+                               'timestamp': str_timestamp,
+                               'stepName': str_request_name,
+                               'stepType': '_'.join(('HTTP', str_method)),
+                               'stepSkeleton': str_url,
+                               'stepData': json.dumps(obj_data),
+                               'elapsed': self.get_variable('_last_response').elapsed.total_seconds() * 1000,
+                               'status': self.get_variable('_last_response').status_code,
+                               'responseSize': len(self.get_variable('_last_response').content),
+                               'assertionsResult': self.check_assertions(dic_assertions)
+                           })
 
     @staticmethod
     def is_json(str_json):
