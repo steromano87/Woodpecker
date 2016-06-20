@@ -48,7 +48,7 @@ class Options(object):
                     self._data.update({str_option: str_value
                                        for str_option, str_value in obj_conf_parser.get(str_section, str_option)})
         else:
-            self._set_default_options()
+            self._data.update(self._set_default_options())
 
     def get(self, str_section, str_option):
         return self._data.get(str_section, {}).get(str_option, None)
