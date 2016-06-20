@@ -17,11 +17,11 @@ class BaseRamp(object):
     def get_planned_peckers_at(self, dbl_elapsed_time):
         pass
 
-    def get_overall_duration(self):
+    def get_duration(self):
         return self.initial_delay + self.ramp_up_duration + self.load_duration + self.ramp_down_duration
 
     def get_max_peckers(self):
         return self.peckers
 
-    def rescale_by_factor(self, dbl_factor):
-        self.peckers *= dbl_factor
+    def rescale_by_ratio(self, dbl_ratio):
+        self.peckers *= dbl_ratio
