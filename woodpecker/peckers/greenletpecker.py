@@ -5,9 +5,9 @@ from woodpecker.peckers.basepecker import BasePecker
 
 class GreenletPecker(gevent.Greenlet, BasePecker):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         gevent.Greenlet.__init__(self)
-        BasePecker.__init__(self)
+        BasePecker.__init__(self, **kwargs)
         self._marked_for_stop = False
 
     def mark_for_stop(self):
