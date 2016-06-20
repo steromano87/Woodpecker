@@ -1,5 +1,5 @@
 import socket
-import json
+import msgpack
 
 __author__ = 'Stefano.Romano'
 
@@ -7,20 +7,17 @@ __author__ = 'Stefano.Romano'
 class Sender(object):
 
     def __init__(self, str_receiver_url, int_receiver_port, str_protocol):
-        self.__initialize(str_receiver_url, int_receiver_port, str_protocol)
-
-    def __enter__(self, str_receiver_url, int_receiver_port, str_protocol):
-        self.__initialize(str_receiver_url, int_receiver_port, str_protocol)
-
-    def __initialize(self, str_receiver_url, int_receiver_port, str_protocol):
         self.receiver_url = str_receiver_url
         self.receiver_port = int_receiver_port
         self.protocol = str_protocol
         self.socket = None
 
+    def __enter__(self, str_receiver_url, int_receiver_port, str_protocol):
+        self.__init__(str_receiver_url, int_receiver_port, str_protocol)
+
     def send(self, str_data_type, dic_data):
         dic_payload = {'dataType': str_data_type, 'payload': dic_data}
-        str_payload = json.dumps(dic_payload)
+        str_payload = msgpack.packb(dic_payload)
 
         # Connects and send data
         try:
