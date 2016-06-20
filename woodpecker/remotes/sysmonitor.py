@@ -4,7 +4,7 @@ import time
 
 import woodpecker.misc.utils as utils
 
-from woodpecker.misc.stoppablethread import StoppableThread
+from woodpecker.misc.stoppablethread_old import StoppableThread
 from woodpecker.logging.sender import Sender
 
 __author__ = 'Stefano'

@@ -2,19 +2,15 @@ import abc
 import importlib
 import time
 
-from woodpecker.options.generic.baseoptions import base_options
+from woodpecker.options import Options
 
 
-class BaseNavigation(object):
+class Navigation(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, **kwargs):
         # Navigation settings
-        if 'options' in kwargs.keys():
-            self.options = kwargs.get('options')
-        else:
-            self.options = {}
-            self._default_options()
+        self.options = kwargs.get('options', None) or Options()
 
         # Pecker variables shared between transactions
         self.pecker_variables = kwargs.get('pecker_variables', {})
@@ -47,10 +43,6 @@ class BaseNavigation(object):
             'sla': []
         })
 
-    # Options method to set default options for specific subclass
-    def _default_options(self):
-        self.options = base_options()
-
     # Variables methods
     def set_variable(self, str_name, mix_value):
         self.pecker_variables[str_name] = mix_value
@@ -67,13 +59,6 @@ class BaseNavigation(object):
     def import_variable_from_file(self, str_file_path, **kwargs):
         # TODO: add variable retrieval from file (like LoadRunner's parameters)
         pass
-
-    # Options methods
-    def set_option(self, str_name, str_value):
-        self.options[str_name] = str_value
-
-    def get_option(self, str_name, mix_default=None):
-        return self.options.get(str_name, mix_default)
 
     # Configuration
     def configure(self):
@@ -111,21 +96,21 @@ class BaseNavigation(object):
         # If any setup is present, run it
         for dic_setup in self._setup_transactions:
             self._run_transaction(dic_setup)
-        time.sleep(self.get_option('think_time_after_setup'))
+        time.sleep(self.options.get('generic', 'think_time_after_setup'))
         return self.log
 
     def run_main(self, int_iteration):
         self.iteration = int_iteration
         for dic_transaction in self._transactions:
             self._run_transaction(dic_transaction)
-            time.sleep(self.get_option('think_time_between_transactions'))
+            time.sleep(self.options.get('generic', 'think_time_between_transactions'))
 
-        time.sleep(self.get_option('think_time_between_iterations'))
+        time.sleep(self.options.get('generic', 'think_time_between_iterations'))
         return self.log
 
     def run_teardown(self):
         # If any teardown is present, run it
-        time.sleep(self.get_option('think_time_before_teardown'))
+        time.sleep(self.options.get('generic', 'think_time_before_teardown'))
         for dic_setup in self._teardown_transactions:
             self._run_transaction(dic_setup)
         return self.log

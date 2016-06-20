@@ -1,7 +1,7 @@
 import abc
 import importlib
 
-from woodpecker.options.peckers.peckeroptions import pecker_options
+from woodpecker.options import Options
 
 
 class BasePecker(object):
@@ -10,6 +10,9 @@ class BasePecker(object):
     def __init__(self, **kwargs):
         # Iteration
         self.iteration = 1
+
+        # Max iterations for the given navigation
+        self.max_iterations = kwargs.get('max_iterations', None)
 
         # Internal log
         self.log = {
@@ -22,17 +25,10 @@ class BasePecker(object):
         }
 
         # Pecker options
-        if 'options' in kwargs.keys():
-            self.options = kwargs.get('options')
-        else:
-            self.options = {}
-            self._default_options()
+        self.options = kwargs.get('options', None) or Options()
 
         # Internal navigation storage
         self._navigation = None
-
-    def _default_options(self):
-        self.options = pecker_options()
 
     @abc.abstractmethod
     def mark_for_stop(self):
@@ -55,8 +51,7 @@ class BasePecker(object):
         self._navigation.run_setup()
 
         # While the iteration is valid (or no limit is set), execute the main transactions
-        int_max_iterations = self.options.get('max_iterations')
-        while not int_max_iterations or self.iteration <= int_max_iterations:
+        while not self.max_iterations or self.iteration <= self.max_iterations:
             if not self._check_for_stop():
                 self._navigation.run_main(self.iteration)
                 self.iteration += 1

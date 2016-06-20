@@ -52,10 +52,10 @@ class Scenario(object):
 
     def add_ramp(self, str_navigation_name, **kwargs):
         int_initial_delay = kwargs.get('initial_delay', 0)
-        int_ramp_up = kwargs.get('ramp_up', 30)
+        int_ramp_up = kwargs.get('ramp_up_duration', 30)
         int_spawns = kwargs.get('spawns', 1)
         int_load_duration = kwargs.get('load_duration', 120)
-        int_ramp_down = kwargs.get('ramp_down', 10)
+        int_ramp_down = kwargs.get('ramp_down_duration', 10)
         obj_ramp = Ramp(initial_delay=int_initial_delay,
                         spawns=int_spawns,
                         load_duration=int_load_duration,

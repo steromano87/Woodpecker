@@ -5,7 +5,7 @@ import woodpecker.misc.utils as utils
 
 from woodpecker.remotes.spawn import Spawn
 from woodpecker.logging.sender import Sender
-from woodpecker.misc.stoppablethread import StoppableThread
+from woodpecker.misc.stoppablethread_old import StoppableThread
 from woodpecker.remotes.sysmonitor import Sysmonitor
 
 __author__ = 'Stefano.Romano'

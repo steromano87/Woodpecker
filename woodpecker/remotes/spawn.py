@@ -1,6 +1,6 @@
 import woodpecker.misc.utils as utils
 
-from woodpecker.misc.stoppablethread import StoppableThread
+from woodpecker.misc.stoppablethread_old import StoppableThread
 
 __author__ = 'Stefano.Romano'
 

@@ -2,7 +2,7 @@ import abc
 import time
 import random
 
-from woodpecker.options.generic.baseoptions import base_options
+from woodpecker.options import Options
 
 
 class BaseTransaction(object):
@@ -10,8 +10,8 @@ class BaseTransaction(object):
 
     # Initialization
     def __init__(self, **kwargs):
-        # Transaction settings
-        self.options = kwargs.get('options', {})
+        # Navigation settings
+        self.options = kwargs.get('options', None) or Options()
 
         # Pecker variables shared between transactions
         self.pecker_variables = kwargs.get('pecker_variables', {})
@@ -38,10 +38,6 @@ class BaseTransaction(object):
             'sla': []
         })
 
-    # Options method to set default options for specific subclass
-    def _default_options(self):
-        self.options = base_options()
-
     # Variables methods
     def set_variable(self, str_name, mix_value):
         self.pecker_variables[str_name] = mix_value
@@ -58,13 +54,6 @@ class BaseTransaction(object):
     def import_variable_from_file(self, str_file_path, **kwargs):
         # TODO: add variable retrieval from file (like LoadRunner's parameters)
         pass
-
-    # Options methods
-    def set_option(self, str_name, str_value):
-        self.options[str_name] = str_value
-
-    def get_option(self, str_name, mix_default=None):
-        return self.options.get(str_name, mix_default)
 
     # Think times
     @staticmethod

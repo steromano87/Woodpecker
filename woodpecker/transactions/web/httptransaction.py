@@ -6,7 +6,6 @@ import requests
 import woodpecker.misc.utils as utils
 
 from woodpecker.transactions.generic.basetransaction import BaseTransaction
-from woodpecker.options.web.httpoptions import http_options
 
 
 class HttpTransaction(BaseTransaction):
@@ -19,31 +18,27 @@ class HttpTransaction(BaseTransaction):
         if not self.exist_variable('_session'):
             self.set_variable('_session', requests.Session())
 
-    def _default_options(self):
-        super(HttpTransaction, self)._default_options()
-        self.options.update(http_options())
-
     def http_request(self, str_request_name, str_url, **kwargs):
         # Request method
-        str_method = kwargs.get('method', self.get_option('default_request_method'))
+        str_method = kwargs.get('method', self.options.get('http', 'default_request_method'))
 
         # Request data
         obj_data = kwargs.get('data', {})
 
         # Request headers
-        obj_headers = kwargs.get('headers', self.get_option('default_request_headers'))
+        obj_headers = kwargs.get('headers', self.options.get('http', 'default_request_headers'))
 
         # Request cookies
-        obj_cookies = kwargs.get('cookies', self.get_option('default_request_cookies'))
+        obj_cookies = kwargs.get('cookies', self.options.get('http', 'default_request_cookies'))
 
         # Option to follow redirects or not
-        bool_redirects = kwargs.get('allow_redirects', self.get_option('follow_redirects'))
+        bool_redirects = kwargs.get('allow_redirects', self.options.get('http', 'follow_redirects'))
 
         # Option to verify SSL certificates
-        bool_ignore_ssl_errors = kwargs.get('ignore_ssl_errors', self.get_option('ignore_ssl_errors'))
+        bool_ignore_ssl_errors = kwargs.get('ignore_ssl_errors', self.options.get('http', 'ignore_ssl_errors'))
 
         # Proxy settings
-        obj_proxy = kwargs.get('proxy', self.get_option('proxy'))
+        obj_proxy = kwargs.get('proxy', self.options.get('http', 'proxy'))
 
         # Assertions for the current step
         dic_assertions = kwargs.get('assertions', {})

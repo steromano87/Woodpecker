@@ -9,8 +9,8 @@ class Ramp(object):
         self.initial_delay = kwargs.get('initial_delay', 0)
         self.spawns = kwargs.get('spawns', 1)
         self.load_duration = kwargs.get('load_duration', 120)
-        self.ramp_up = kwargs.get('ramp_up', 30)
-        self.ramp_down = kwargs.get('ramp_down', 10)
+        self.ramp_up = kwargs.get('ramp_up_duration', 30)
+        self.ramp_down = kwargs.get('ramp_down_duration', 10)
 
     def rescale_by_factor(self, dbl_scaling_factor):
         self.spawns = self.spawns * dbl_scaling_factor
