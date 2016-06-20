@@ -1,14 +1,14 @@
 import abc
-import os
-import ConfigParser
+
+from woodpecker.options import Options
 
 
 class Scenario(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, **kwargs):
+    def __init__(self, str_peckerfile=None):
         # Options, retrieved from file if present
-        self.options = self._retrieve_options(kwargs.get('peckerfile', None))
+        self.options = Options(str_peckerfile)
 
         # Navigations
         self._navigations = {}
@@ -19,32 +19,17 @@ class Scenario(object):
         # Overall peckers
         self.total_peckers = 0
 
-        # Default options name, defaults to 'Peckerfile'
-        self._options_file_name = 'Peckerfile'
-
-    def _retrieve_options(self, str_file_path=None):
-        str_file_path = self._options_file_name if not str_file_path else str_file_path
-
-        if os.path.isfile('/'.join((os.getcwd(), str_file_path))):
-            obj_conf_parser = ConfigParser.ConfigParser()
-            obj_conf_parser.readfp(open(str_file_path))
-            for str_section in obj_conf_parser.sections():
-                for str_option in obj_conf_parser.options(str_section):
-                    return {str_option: str_value
-                            for str_option, str_value in obj_conf_parser.get(str_section, str_option)}
-        else:
-            return {}
-
     def configure(self):
         pass
 
     def add_navigation(self, str_name, str_file, **kwargs):
         arr_ramps = kwargs.get('ramps', [])
+        int_max_iterations = kwargs.get('max_iterations', None)
 
         self._navigations[str_name] = {
             'file': str_file,
             'ramps': arr_ramps,
-            'max_iterations': None
+            'max_iterations': int_max_iterations
         }
 
     def get_navigations(self):
