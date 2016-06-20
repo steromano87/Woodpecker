@@ -34,7 +34,15 @@ class Options(object):
                 'proxy': {}
             },
             'execution': {
-                'spawning_method': 'threads'
+                'spawning_method': 'threads',
+                'controller_port': 7877,
+                'controller_protocol': 'TCP'
+            },
+            'logging': {
+                'max_entries_before_flush': 1000,
+                'logger_host': 'localhost',
+                'logger_port': 7878,
+                'logger_protocol': 'UDP'
             }
         }
 
