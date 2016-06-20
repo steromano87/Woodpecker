@@ -1,3 +1,4 @@
+gevent
 python-dateutil
 colorama
 click
