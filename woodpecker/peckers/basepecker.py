@@ -2,6 +2,7 @@ import abc
 import importlib
 
 from woodpecker.options import Options
+from woodpecker.logging.log import Log
 
 
 class BasePecker(object):
@@ -15,14 +16,7 @@ class BasePecker(object):
         self.max_iterations = kwargs.get('max_iterations', None)
 
         # Internal log
-        self.log = {
-            'steps': [],
-            'events': [],
-            'peckers': [],
-            'sysmonitor': [],
-            'transactions': [],
-            'sla': []
-        }
+        self.log = Log()
 
         # Pecker options
         self.options = kwargs.get('options', None) or Options()
