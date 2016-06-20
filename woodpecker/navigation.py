@@ -3,6 +3,7 @@ import importlib
 import time
 
 from woodpecker.options import Options
+from woodpecker.logging.log import Log
 
 
 class Navigation(object):
@@ -34,14 +35,7 @@ class Navigation(object):
         self._teardown_transactions = []
 
         # Internal log, used to send data at the end of the navigation
-        self.log = kwargs.get('log', {
-            'steps': [],
-            'events': [],
-            'peckers': [],
-            'sysmonitor': [],
-            'transactions': [],
-            'sla': []
-        })
+        self.log = kwargs.get('log', Log())
 
     # Variables methods
     def set_variable(self, str_name, mix_value):
