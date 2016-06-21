@@ -39,7 +39,10 @@ class Options(object):
                 'pecker_status_active_polling_interval': 0.1,
                 'controller_port': 7877,
                 'controller_protocol': 'TCP',
-                'controller_socket_max_pending_connections': 4
+                'controller_socket_max_pending_connections': 4,
+                'spawners': [
+                    'localhost'
+                ]
             },
             'logging': {
                 'max_entries_before_flush': 100,
