@@ -16,7 +16,7 @@ class Sender(object):
         self.__init__(str_receiver_url, int_receiver_port, str_protocol)
 
     def send(self, str_data_type, dic_data):
-        dic_payload = {'dataType': str_data_type, 'payload': dic_data}
+        dic_payload = {'type': str_data_type, 'payload': dic_data}
         str_payload = msgpack.packb(dic_payload)
 
         # Connects and send data
