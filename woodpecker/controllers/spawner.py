@@ -23,11 +23,14 @@ class Spawner(StoppableThread):
         # Peckers list
         self._peckers = {}
 
+        # Schedule list (only if in passive mode)
+        self._schedules = {}
+
         # Elapsed time counter
         self.elapsed_time = 0.0
 
         # Spawning mode, to choose between threads and greenlet
-        self.spawning_mode = kwargs.get('spawning_method', self.options.get('execution', 'spawning_method'))
+        self.spawning_mode = kwargs.get('spawning_mdoe', self.options.get('execution', 'spawning_mode'))
         if self.spawning_mode == 'threads':
             self.pecker_class = getattr(importlib.import_module('woodpecker.peckers.threadedpecker'), 'ThreadedPecker')
         elif self.spawning_mode == 'greenlet':
@@ -37,14 +40,22 @@ class Spawner(StoppableThread):
         self.pecker_handling_mode = kwargs.get('pecker_handling_mode',
                                                self.options.get('execution', 'pecker_handling_mode'))
 
-    def _initialize_peckers_list(self):
+    def initialize_peckers_list(self):
         for str_nav_name in self._scenario.get_navigation_names():
             self._peckers[str_nav_name] = []
+            if self.pecker_handling_mode == 'passive':
+                self._schedules[str_nav_name] = self._scenario.get_navigation_pecker_schedule(str_nav_name)
 
     def start_pecker_for(self, str_nav_name):
         dic_navigation = self._scenario.get_navigation(str_nav_name)
         obj_pecker = self.pecker_class(dic_navigation.get('max_iterations', None),
                                        pecker_handling_mode=self.pecker_handling_mode)
+
+        if self.pecker_handling_mode == 'passive':
+            obj_pecker.set_schedule(self._schedules[str_nav_name]['scheduled_start'],
+                                    self._schedules[str_nav_name]['scheduled_stop'])
+            self._schedules.pop(0)
+
         obj_pecker.set_navigation(str_nav_name, dic_navigation.get('file'))
         self._peckers[str_nav_name].append(obj_pecker)
         self._peckers[str_nav_name][-1].start()
@@ -70,3 +81,10 @@ class Spawner(StoppableThread):
         elif int_peckers_diff < 0:
             for int_counter in range(1, -int_peckers_diff):
                 self.stop_pecker_for(str_nav_name)
+
+    def run(self):
+        while True:
+            if not self.is_marked_for_stop():
+                self.check_running_peckers()
+            else:
+                break
