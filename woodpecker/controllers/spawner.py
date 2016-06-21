@@ -48,13 +48,13 @@ class Spawner(StoppableThread):
 
     def start_pecker_for(self, str_nav_name):
         dic_navigation = self._scenario.get_navigation(str_nav_name)
-        obj_pecker = self.pecker_class(dic_navigation.get('max_iterations', None),
+        obj_pecker = self.pecker_class(max_iterations=dic_navigation.get('max_iterations', None),
                                        pecker_handling_mode=self.pecker_handling_mode)
 
         if self.pecker_handling_mode == 'passive':
-            obj_pecker.set_schedule(self._schedules[str_nav_name]['scheduled_start'],
-                                    self._schedules[str_nav_name]['scheduled_stop'])
-            self._schedules.pop(0)
+            dic_schedule = self._schedules[str_nav_name].pop(0)[0]
+            obj_pecker.set_schedule(dic_schedule['scheduled_start'],
+                                    dic_schedule['scheduled_stop'])
 
         obj_pecker.set_navigation(str_nav_name, dic_navigation.get('file'))
         self._peckers[str_nav_name].append(obj_pecker)
@@ -69,6 +69,9 @@ class Spawner(StoppableThread):
             for str_nav_name in self._scenario.get_navigation_names():
                 self._check_running_peckers_active(str_nav_name)
             time.sleep(self.options.get('execution', 'pecker_status_active_polling_interval'))
+        elif self.pecker_handling_mode == 'passive':
+            for str_nav_name in self._scenario.get_navigation_names():
+                self._check_running_peckers_passive(str_nav_name)
 
     def _check_running_peckers_active(self, str_nav_name):
         int_scheduled_peckers = self._scenario.get_navigation_planned_peckers_at(self.elapsed_time)
@@ -76,15 +79,25 @@ class Spawner(StoppableThread):
         int_peckers_diff = int_scheduled_peckers - int_running_peckers
 
         if int_peckers_diff > 0:
-            for int_counter in range(1, int_peckers_diff):
+            for int_counter in range(0, int_peckers_diff):
                 self.start_pecker_for(str_nav_name)
         elif int_peckers_diff < 0:
-            for int_counter in range(1, -int_peckers_diff):
+            for int_counter in range(0, -int_peckers_diff):
                 self.stop_pecker_for(str_nav_name)
+
+    def _check_running_peckers_passive(self, str_nav_name):
+        # Run only if there are some unscheduled peckers
+        if len(self._schedules[str_nav_name]) > 0:
+            int_max_peckers = self._scenario.get_navigation_max_peckers(str_nav_name)
+            for int_counter in range(0, int_max_peckers):
+                self.start_pecker_for(str_nav_name)
 
     def run(self):
         while True:
             if not self.is_marked_for_stop():
                 self.check_running_peckers()
             else:
+                for str_nav_name in self._scenario.get_navigation_names():
+                    for obj_pecker in self._peckers[str_nav_name]:
+                        obj_pecker.mark_for_stop()
                 break
