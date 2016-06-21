@@ -39,6 +39,12 @@ class Scenario(object):
     def get_navigations(self):
         return self._navigations
 
+    def get_navigation_names(self):
+        return self._navigations.iterkeys()
+
+    def get_navigation(self, str_nav_name):
+        return self._navigations[str_nav_name]
+
     def add_ramp(self, str_nav_name, mix_ramp):
         if isinstance(mix_ramp, list):
             self._navigations[str_nav_name]['ramps'] += mix_ramp
