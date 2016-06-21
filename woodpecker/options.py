@@ -34,8 +34,8 @@ class Options(object):
                 'proxy': {}
             },
             'execution': {
-                'spawning_method': 'threads',
-                'pecker_handling_mode': 'active',
+                'spawning_mode': 'threads',
+                'pecker_handling_mode': 'passive',
                 'pecker_status_active_polling_interval': 0.1,
                 'controller_port': 7877,
                 'controller_protocol': 'TCP'
