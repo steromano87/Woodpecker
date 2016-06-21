@@ -10,7 +10,7 @@ from woodpecker.options import Options
 
 class Spawner(StoppableThread):
 
-    def __init__(self, obj_scenario, **kwargs):
+    def __init__(self, **kwargs):
         super(Spawner, self).__init__()
 
         # Internal log
@@ -20,7 +20,7 @@ class Spawner(StoppableThread):
         self.options = kwargs.get('options', Options())
 
         # Loaded scenario
-        self._scenario = obj_scenario
+        self._scenario = None
 
         # Peckers list
         self._peckers = {}
@@ -44,6 +44,10 @@ class Spawner(StoppableThread):
                                                self.options.get('execution', 'pecker_handling_mode'))
 
         # Save total scenario duration
+        self._scenario_duration = None
+
+    def attach_scenario(self, obj_scenario):
+        self._scenario = obj_scenario
         self._scenario_duration = self._scenario.get_scenario_duration()
 
     def set_elapsed_time(self):
