@@ -39,6 +39,9 @@ class BasePecker(object):
         self._elapsed_time = 0.0
         self._start_time = None
 
+        # Pecker status
+        self.status = 'Initialized'
+
     @abc.abstractmethod
     def mark_for_stop(self):
         pass
@@ -47,6 +50,7 @@ class BasePecker(object):
         obj_navigation_module = importlib.import_module(''.join(('.', str_file)),
                                                         'tests.scenario_test_new.navigations')
         self._navigation = getattr(obj_navigation_module, str_name)()
+        self.status = 'Ready'
 
     def set_schedule(self, dbl_elapsed_start, dbl_elapsed_stop):
         self._scheduled_start = dbl_elapsed_start
@@ -71,12 +75,14 @@ class BasePecker(object):
 
         # If handling mode is set to passive, wait until the start elapsed time is reached
         if self._handling_mode == 'passive':
+            self.status = 'Waiting to start'
             while True:
                 self.set_elapsed_time()
                 if self._elapsed_time >= self._scheduled_start:
                     break
 
         # Execute navigation setup
+        self.status = 'Starting'
         self._navigation.run_setup()
         self.set_elapsed_time()
 
@@ -85,11 +91,14 @@ class BasePecker(object):
             self._handling_mode == 'passive' and self._elapsed_time < self._scheduled_stop
         ):
             if not self._check_for_stop():
+                self.status = 'Running'
                 self._navigation.run_main(self.iteration)
                 self.iteration += 1
                 self.set_elapsed_time()
             else:
+                self.status = 'Stopping'
                 break
 
         # Finally, execute teardown transactions
         self._navigation.run_teardown()
+        self.status = 'Stopped'
