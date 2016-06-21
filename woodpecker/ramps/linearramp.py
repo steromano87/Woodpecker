@@ -40,10 +40,11 @@ class LinearRamp(BaseRamp):
 
     def get_pecker_schedule(self):
         lst_peckers = []
-        for int_pecker_index in range(0, self.get_max_peckers() - 1):
+        for int_pecker_index in range(0, self.get_max_peckers()):
             lst_peckers.append({
                 'scheduled_start': self.ramp_up_duration / self.get_max_peckers() * int_pecker_index,
                 'scheduled_stop':
                     self.ramp_down_duration + self.load_duration +
                     self.ramp_down_duration / self.get_max_peckers() * int_pecker_index
             })
+        return lst_peckers
