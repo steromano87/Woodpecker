@@ -43,3 +43,6 @@ class Log(object):
         # Clean log
         self._data = self._get_clean_log()
         self._data_count = 0
+
+    def __del__(self):
+        self.flush()
