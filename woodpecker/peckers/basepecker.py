@@ -56,6 +56,10 @@ class BasePecker(object):
     def _check_for_stop(self):
         pass
 
+    @abc.abstractmethod
+    def get_name(self):
+        pass
+
     def set_elapsed_time(self):
         self._elapsed_time = (utils.get_timestamp(False) - self._start_time).total_seconds()
 
