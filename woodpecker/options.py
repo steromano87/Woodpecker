@@ -38,7 +38,8 @@ class Options(object):
                 'pecker_handling_mode': 'passive',
                 'pecker_status_active_polling_interval': 0.1,
                 'controller_port': 7877,
-                'controller_protocol': 'TCP'
+                'controller_protocol': 'TCP',
+                'controller_socket_max_pending_connections': 4
             },
             'logging': {
                 'max_entries_before_flush': 100,
