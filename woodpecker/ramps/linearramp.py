@@ -9,7 +9,9 @@ class LinearRamp(BaseRamp):
         super(LinearRamp, self).__init__(**kwargs)
 
     def get_planned_peckers_at(self, dbl_elapsed_time):
-        if dbl_elapsed_time < self.initial_delay:
+        if dbl_elapsed_time < self.initial_delay \
+                or dbl_elapsed_time >= self.initial_delay + self.ramp_up_duration + \
+                self.load_duration + self.ramp_down_duration:
             int_result = 0
 
         elif self.initial_delay <= dbl_elapsed_time < \
@@ -31,12 +33,8 @@ class LinearRamp(BaseRamp):
             int_result = self.peckers - self.peckers / self.ramp_down_duration * (
                 dbl_elapsed_time - self.initial_delay - self.ramp_up_duration - self.load_duration)
 
-        elif dbl_elapsed_time >= self.initial_delay + self.ramp_up_duration + \
-                self.load_duration + self.ramp_down_duration:
-            int_result = 0
-
         else:
-            int_result = False
+            int_result = None
 
         return int(round(int_result))
 
