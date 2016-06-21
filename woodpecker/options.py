@@ -35,6 +35,7 @@ class Options(object):
             },
             'execution': {
                 'spawning_method': 'threads',
+                'pecker_handling_mode': 'active',
                 'controller_port': 7877,
                 'controller_protocol': 'TCP'
             },
