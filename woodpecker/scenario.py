@@ -66,7 +66,7 @@ class Scenario(object):
     def get_navigation_pecker_schedule(self, str_nav_name):
         lst_schedule_merged = []
         for obj_ramp in self._navigations[str_nav_name]['ramps']:
-            lst_schedule_merged.append(obj_ramp.get_pecker_schedule())
+            lst_schedule_merged.extend(obj_ramp.get_pecker_schedule())
         return lst_schedule_merged
 
     def get_scenario_max_peckers(self):

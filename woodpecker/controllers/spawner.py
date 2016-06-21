@@ -52,7 +52,7 @@ class Spawner(StoppableThread):
                                        pecker_handling_mode=self.pecker_handling_mode)
 
         if self.pecker_handling_mode == 'passive':
-            dic_schedule = self._schedules[str_nav_name].pop(0)[0]
+            dic_schedule = self._schedules[str_nav_name].pop(0)
             obj_pecker.set_schedule(dic_schedule['scheduled_start'],
                                     dic_schedule['scheduled_stop'])
 
