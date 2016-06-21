@@ -22,6 +22,10 @@ class Scenario(object):
     def configure(self):
         pass
 
+    @abc.abstractmethod
+    def navigations(self):
+        pass
+
     def add_navigation(self, str_name, str_file, **kwargs):
         arr_ramps = kwargs.get('ramps', [])
         int_max_iterations = kwargs.get('max_iterations', None)
