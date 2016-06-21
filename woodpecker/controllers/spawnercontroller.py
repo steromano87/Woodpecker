@@ -15,7 +15,7 @@ from woodpecker.logging.sysmonitor import Sysmonitor
 from woodpecker.controllers.spawner import Spawner
 
 
-class GeneratorController(object):
+class SpawnerController(object):
 
     def __init__(self, **kwargs):
         # Options file
@@ -25,7 +25,7 @@ class GeneratorController(object):
         self._log = kwargs.get('log', Log())
 
         # Sysmonitor
-        self._sysmonitor = Sysmonitor('generator')
+        self._sysmonitor = Sysmonitor('spawner')
 
         # Spawner
         self._spawner = Spawner()
