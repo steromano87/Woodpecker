@@ -1,6 +1,8 @@
 import importlib
 import time
 
+import woodpecker.misc.utils as utils
+
 from woodpecker.logging.log import Log
 from woodpecker.misc.stoppablethread import StoppableThread
 from woodpecker.options import Options
@@ -26,8 +28,9 @@ class Spawner(StoppableThread):
         # Schedule list (only if in passive mode)
         self._schedules = {}
 
-        # Elapsed time counter
-        self.elapsed_time = 0.0
+        # Internal elapsed time counter
+        self._elapsed_time = 0.0
+        self._start_time = None
 
         # Spawning mode, to choose between threads and greenlet
         self.spawning_mode = kwargs.get('spawning_mdoe', self.options.get('execution', 'spawning_mode'))
@@ -39,6 +42,12 @@ class Spawner(StoppableThread):
         # Pecker handling mode, it may be active or passive
         self.pecker_handling_mode = kwargs.get('pecker_handling_mode',
                                                self.options.get('execution', 'pecker_handling_mode'))
+
+        # Save total scenario duration
+        self._scenario_duration = self._scenario.get_scenario_duration()
+
+    def set_elapsed_time(self):
+        self._elapsed_time = (utils.get_timestamp(False) - self._start_time).total_seconds()
 
     def initialize_peckers_list(self):
         for str_nav_name in self._scenario.get_navigation_names():
@@ -74,7 +83,7 @@ class Spawner(StoppableThread):
                 self._check_running_peckers_passive(str_nav_name)
 
     def _check_running_peckers_active(self, str_nav_name):
-        int_scheduled_peckers = self._scenario.get_navigation_planned_peckers_at(self.elapsed_time)
+        int_scheduled_peckers = self._scenario.get_navigation_planned_peckers_at(self._elapsed_time)
         int_running_peckers = len(self._peckers[str_nav_name])
         int_peckers_diff = int_scheduled_peckers - int_running_peckers
 
@@ -93,8 +102,10 @@ class Spawner(StoppableThread):
                 self.start_pecker_for(str_nav_name)
 
     def run(self):
+        self._start_time = utils.get_timestamp(False)
         while True:
-            if not self.is_marked_for_stop():
+            self.set_elapsed_time()
+            if not self.is_marked_for_stop() and self._elapsed_time <= self._scenario_duration:
                 self.check_running_peckers()
             else:
                 for str_nav_name in self._scenario.get_navigation_names():
