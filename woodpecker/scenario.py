@@ -6,9 +6,9 @@ from woodpecker.options import Options
 class Scenario(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, str_peckerfile=None):
+    def __init__(self, **kwargs):
         # Options, retrieved from file if present
-        self.options = Options(str_peckerfile)
+        self.options = kwargs.get('options', Options())
 
         # Navigations
         self._navigations = {}
