@@ -4,10 +4,17 @@ engines:
     config:
       python_version: 2
       threshold: C
+  pep8:
+    enabled: true
   fixme:
     enabled: true
   duplication:
     enabled: true
     config:
       languages:
-      - python
+        python:
+          config:
+            mass_threshold: 50
+ratings:
+  paths:
+    - "**.py"
