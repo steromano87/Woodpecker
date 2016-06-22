@@ -48,6 +48,8 @@ class Spawner(StoppableThread):
 
     def attach_scenario(self, obj_scenario):
         self._scenario = obj_scenario
+        self._scenario.configure()
+        self._scenario.navigations()
         self._scenario_duration = self._scenario.get_scenario_duration()
 
     def set_elapsed_time(self):
