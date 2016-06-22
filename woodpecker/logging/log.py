@@ -34,7 +34,8 @@ class Log(object):
         self._data[str_section].append(dic_value)
         self._data_count += 1
         # Automatic data flushing
-        if self._data_count > self._options.get('logging', 'max_entries_before_flush'):
+        if self._data_count > self._options.get('logging',
+                                                'max_entries_before_flush'):
             self.flush()
 
     def flush(self):

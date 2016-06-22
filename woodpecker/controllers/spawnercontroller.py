@@ -51,20 +51,27 @@ class SpawnerController(object):
         if self._options.get('execution', 'controller_protocol') == 'TCP':
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         elif self._options.get('execution', 'controller_protocol') == 'UDP':
-            pass
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
         # Bind socket and start listening
         self._socket.bind(('', self._socket_listening_port))
-        self._socket.listen(self._options.get('execution', 'controller_socket_max_pending_connections'))
+        self._socket.listen(
+            self._options.get('execution',
+                              'controller_socket_max_pending_connections')
+        )
 
     def run(self):
         # Run until marked for stop
         while True:
             if not self.is_marked_for_stop:
-                self._socket_connection, self._socket_controller_address = self._socket.accept()
+                self._socket_connection, \
+                    self._socket_controller_address = self._socket.accept()
                 # Correct the controller IP address
-                self._socket_controller_address = self._socket_controller_address[0]
-                self._socket_data = self._socket_connection.recv(self._socket_buffer_size)
+                self._socket_controller_address = \
+                    self._socket_controller_address[0]
+                self._socket_data = self._socket_connection.recv(
+                    self._socket_buffer_size
+                )
                 self.handle_data()
             else:
                 self._socket_connection.close()
