@@ -48,7 +48,8 @@ class Options(object):
                 'max_entries_before_flush': 100,
                 'logger_host': 'localhost',
                 'logger_port': 7878,
-                'logger_protocol': 'UDP'
+                'logger_protocol': 'UDP',
+                'logger_socket_max_pending_connections': 5
             }
         }
 
