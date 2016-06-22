@@ -1,3 +1,5 @@
+msgpack-python
+gevent
 python-dateutil
 colorama
 click

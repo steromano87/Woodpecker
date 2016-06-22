@@ -3,7 +3,7 @@ import json
 import socket
 
 from woodpecker.logging.dbwriter import DBWriter
-from woodpecker.misc.stoppablethread import StoppableThread
+from woodpecker.misc.stoppablethread_old import StoppableThread
 
 __author__ = 'Stefano'
 
