@@ -3,6 +3,7 @@ import socket
 import msgpack
 import importlib
 import tempfile
+import shutil
 
 import woodpecker.misc.utils as utils
 
@@ -102,7 +103,7 @@ class SpawnerController(object):
         obj_zipfile = ZipFile(obj_scenario_zipped_folder, 'r')
 
         # Extract the zipped folder into temp folder
-        self.scenario_folder = tempfile.mkdtemp('woodpecker-')
+        self.scenario_folder = tempfile.mkdtemp(prefix='woodpecker-')
         obj_zipfile.extractall(self.scenario_folder)
 
     def _scenario_setup(self, dic_data):
@@ -129,3 +130,7 @@ class SpawnerController(object):
         self._stop()
         self._log.flush()
         self.is_marked_for_stop = True
+
+    def __del__(self):
+        if self.scenario_folder and os.path.isdir(self.scenario_folder):
+            shutil.rmtree(self.scenario_folder)
