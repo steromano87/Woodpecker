@@ -13,8 +13,7 @@ engines:
     config:
       languages:
         python:
-          config:
-            mass_threshold: 50
+          mass_threshold: 50
 ratings:
   paths:
     - "**.py"
