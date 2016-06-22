@@ -71,6 +71,12 @@ def import_from_path(str_path, str_class_name, dic_kwargs=None):
     return class_inst
 
 
+def create_class_from(str_class_name, str_module_name, str_module_path, *args, **kwargs):
+    obj_file, str_filename, str_description = imp.find_module(str_module_name, [str_module_path])
+    obj_package = imp.load_module(str_module_name, obj_file, str_filename, str_description)
+    return getattr(obj_package, str_class_name)(*args, **kwargs)
+
+
 def get_abs_path(str_path, str_cwd=None):
     if not str_cwd:
         str_cwd = os.getcwd()
