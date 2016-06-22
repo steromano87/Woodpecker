@@ -88,13 +88,13 @@ class SpawnerController(object):
         elif dic_payload['command'] == 'scenario_setup':
             self._scenario_setup(dic_payload['data'])
         elif dic_payload['command'] == 'start':
-            pass
+            self._start()
         elif dic_payload['command'] == 'stop':
-            pass
+            self._stop()
         elif dic_payload['command'] == 'emergency_stop':
             pass
         elif dic_payload['command'] == 'shutdown':
-            pass
+            self._shutdown()
 
     def _scenario_unpack(self, dic_data):
         # Get zipped scenario folder
@@ -125,7 +125,7 @@ class SpawnerController(object):
         self._sysmonitor.mark_for_stop()
         self._spawner.mark_for_stop()
 
-    def shutdown(self):
+    def _shutdown(self):
         self._stop()
         self._log.flush()
         self.is_marked_for_stop = True
