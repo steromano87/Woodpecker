@@ -1,6 +1,8 @@
 import abc
-import importlib
 import time
+import os
+
+import woodpecker.misc.utils as utils
 
 from woodpecker.options import Options
 from woodpecker.logging.log import Log
@@ -15,6 +17,9 @@ class Navigation(object):
 
         # Pecker variables shared between transactions
         self.pecker_variables = kwargs.get('pecker_variables', {})
+
+        # Scenario folder
+        self._scenario_folder = kwargs.get('scenario_folder', os.getcwd())
 
         # Internal iteration counter
         self.iteration = 1
@@ -110,20 +115,14 @@ class Navigation(object):
         return self.log
 
     def _run_transaction(self, dic_transaction):
-        # Import the module containing the transaction class
-        obj_transaction_module = importlib.import_module(''.join(('.', dic_transaction['file'])),
-                                                         'tests.scenario_test_new.transactions')
-
         # Get an instance of the transaction class
-        obj_current_transaction = getattr(obj_transaction_module, dic_transaction['name'])(
-            **{
-                'options': self.options,
-                'pecker_variables': self.pecker_variables,
-                'iteration': self.iteration,
-                'navigation_name': self.navigation_name,
-                'pecker_id': self.pecker_id,
-                'log': self.log
-            }
-        )
+        obj_current_transaction = utils.create_class_from(dic_transaction['name'], dic_transaction['file'],
+                                                          self._scenario_folder,
+                                                          options=self.options,
+                                                          pecker_varriables=self.pecker_variables,
+                                                          iteration=self.iteration,
+                                                          navigation_name=self.navigation_name,
+                                                          pecker_id=self.pecker_id,
+                                                          log=self.log)
 
         self.options, self.pecker_variables, self.log = obj_current_transaction.run(self.iteration)
