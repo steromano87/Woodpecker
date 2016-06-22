@@ -98,7 +98,7 @@ class SpawnerController(object):
 
     def _scenario_unpack(self, dic_data):
         # Get zipped scenario folder
-        obj_scenario_zipped_folder = StringIO(dic_data['zipped_scenario_folder'])
+        obj_scenario_zipped_folder = StringIO(dic_data['compressed_scenario_folder'])
         obj_zipfile = ZipFile(obj_scenario_zipped_folder, 'r')
 
         # Extract the zipped folder into temp folder
