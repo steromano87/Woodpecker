@@ -6,6 +6,11 @@ def readme():
         return f.read()
 
 
+def requirements():
+    with open('requirements.txt') as f:
+        return f.readlines()
+
+
 setup(
     name='woodpecker',
     version='0.0.1',
@@ -14,7 +19,8 @@ setup(
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Information Technology',
-        'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
+        ' '.join(('License :: OSI Approved ::',
+                  'GNU Lesser General Public License v3 (LGPLv3)')),
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
         'Topic :: Software Development :: Quality Assurance',
@@ -27,13 +33,8 @@ setup(
     author_email='rumix87@gmail.com',
     license='LGPLv3',
     packages=['woodpecker'],
-    install_requires=[
-        'python-dateutil',
-        'colorama',
-        'click',
-        'psutil',
-        'requests'
-    ],
+    package_data={'': ['*.sql']},
+    install_requires=requirements(),
     include_package_data=True,
     zip_safe=False
 )
