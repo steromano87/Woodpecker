@@ -2,8 +2,9 @@ from __future__ import division
 
 import os
 import importlib
-import msgpack
 import zipfile
+
+import woodpecker.misc.utils as utils
 
 from StringIO import StringIO
 
@@ -39,17 +40,18 @@ class MainController(object):
         # Log collector
         self._log_collector = None
 
+        # Scenario folder
+        self._scenario_folder = os.path.abspath(kwargs.get('scenario_folder', os.getcwd()))
+
         # Scenario
-        self._scenario = getattr(importlib.import_module('.scenario', 'tests.scenario_test_new'), str_scenario_name)()
+        self._scenario = utils.create_class_from(str_scenario_name, 'scenario', self._scenario_folder,
+                                                 options=self._options)
         self._scenario_name = str_scenario_name
         self._scenario.configure()
         self._scenario.navigations()
 
         # Scenario duration
         self._scenario_duration = self._scenario.get_scenario_duration()
-
-        # Scenario folder
-        self._scenario_folder = os.path.abspath(kwargs.get('scenario_folder', os.getcwd()))
 
         # Compressed scenario
         self._compressed_scenario = None

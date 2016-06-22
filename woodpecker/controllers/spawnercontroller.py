@@ -1,7 +1,6 @@
 import os
 import socket
 import msgpack
-import importlib
 import tempfile
 import shutil
 
@@ -107,9 +106,8 @@ class SpawnerController(object):
         obj_zipfile.extractall(self.scenario_folder)
 
     def _scenario_setup(self, dic_data):
-        # Change current dir to scenario folder
-        os.chdir(self.scenario_folder)
-        obj_scenario = getattr(importlib.import_module('scenario'), dic_data['scenario_name'])()
+        # Dynamically load scenario from file
+        obj_scenario = utils.create_class_from(dic_data['scenario_name'], 'scenario', self.scenario_folder)
 
         # Get rescale ratio and resize the whole pecker pool accordingly
         dbl_rescale_ratio = dic_data['rescale_ratio']

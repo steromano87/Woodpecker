@@ -64,7 +64,8 @@ class Spawner(StoppableThread):
     def start_pecker_for(self, str_nav_name):
         dic_navigation = self._scenario.get_navigation(str_nav_name)
         obj_pecker = self.pecker_class(max_iterations=dic_navigation.get('max_iterations', None),
-                                       pecker_handling_mode=self.pecker_handling_mode)
+                                       pecker_handling_mode=self.pecker_handling_mode,
+                                       options=self.options)
 
         if self.pecker_handling_mode == 'passive':
             dic_schedule = self._schedules[str_nav_name].pop(0)

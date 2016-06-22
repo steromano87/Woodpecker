@@ -1,5 +1,5 @@
 import abc
-import importlib
+import os
 
 import woodpecker.misc.utils as utils
 
@@ -26,6 +26,9 @@ class BasePecker(object):
         # Internal navigation storage
         self._navigation = None
 
+        # Scenario folder
+        self._scenario_folder = kwargs.get('scenario_folder', os.getcwd())
+
         # Handling mode (active or passive)
         # If active, the spawner continuously checks if the peckers are running
         # If passive, the peckers are scheduled for start and stop one for all
@@ -47,9 +50,9 @@ class BasePecker(object):
         pass
 
     def set_navigation(self, str_name, str_file):
-        obj_navigation_module = importlib.import_module(''.join(('.', str_file)),
-                                                        'tests.scenario_test_new.navigations')
-        self._navigation = getattr(obj_navigation_module, str_name)()
+        self._navigation = utils.create_class_from(str_name, str_file, self._scenario_folder,
+                                                   options=self.options,
+                                                   log=self.log)
         self.status = 'Ready'
 
     def set_schedule(self, dbl_elapsed_start, dbl_elapsed_stop):
