@@ -49,7 +49,9 @@ class Options(object):
                 'logger_host': 'localhost',
                 'logger_port': 7878,
                 'logger_protocol': 'UDP',
-                'logger_socket_max_pending_connections': 5
+                'logger_socket_max_pending_connections': 5,
+                'results_file': 'results',
+                'sysmonitor_polling_interval': 5.0
             }
         }
 
