@@ -16,6 +16,9 @@ class DBWriter(object):
             pkg_resources.resource_string('woodpecker.logging',
                                           'db_creation.sql')
 
+        # Initialize DB
+        self._initialize_db()
+
     def _initialize_db(self):
         self.cursor.executescript(self._db_creation_script)
 
