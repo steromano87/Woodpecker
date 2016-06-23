@@ -22,8 +22,10 @@ class Sysmonitor(StoppableThread):
         self._log = kwargs.get('log', Log())
 
         # Polling interval
-        self.polling_interval = kwargs.get('sysmonitor_polling_interval',
-                                           self._options.get('logging', 'sysmonitor_polling_interval'))
+        self.polling_interval = kwargs.get(
+            'sysmonitor_polling_interval',
+            self._options.get('logging', 'sysmonitor_polling_interval')
+        )
 
         # CPU Percent class
         self.cpu_percent = CpuPercent()
