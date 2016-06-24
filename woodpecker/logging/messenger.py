@@ -4,7 +4,7 @@ import msgpack
 
 class Messenger(object):
 
-    def __init__(self, int_port, str_protocol, lng_buffer_size,
+    def __init__(self, int_port, str_protocol,
                  int_max_pending_connections=None):
         # Inner socket object
         self._socket = None
@@ -16,7 +16,7 @@ class Messenger(object):
         self._protocol = str_protocol
 
         # Buffer size
-        self._buffer_size = lng_buffer_size
+        self._buffer_size = long(2 ** 30)
 
         # Socket connection (only for TCP connections)
         self._connection = None
@@ -68,7 +68,9 @@ class Messenger(object):
         return int_sent_bytes
 
     def reply(self, str_msgtype, dic_data):
-        return self.send(self.last_remote_address, str_msgtype, dic_data)
+        if self.last_remote_address:
+            return self.send(self.last_remote_address, str_msgtype, dic_data)
+        self.last_remote_address = None
 
     def __del__(self):
         if self._protocol == 'TCP':
