@@ -24,7 +24,8 @@ class StoppableThread(threading.Thread):
         """raises the exception, performs cleanup if needed"""
         if not inspect.isclass(exctype):
             raise TypeError("Only types can be raised (not instances)")
-        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+            tid, ctypes.py_object(exctype))
         if res == 0:
             raise ValueError("invalid thread id")
         elif res != 1:
@@ -51,7 +52,9 @@ class StoppableThread(threading.Thread):
         raise AssertionError("could not determine the thread's id")
 
     def raise_exc(self, exctype):
-        """raises the given exception type in the context of this thread"""
+        """raises the given exception type in the context of this thread
+        :param exctype: Exception
+        """
         self._async_raise(self._get_my_tid(), exctype)
 
     def terminate(self):

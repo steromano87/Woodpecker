@@ -20,22 +20,33 @@ class HttpTransaction(BaseTransaction):
 
     def http_request(self, str_request_name, str_url, **kwargs):
         # Request method
-        str_method = kwargs.get('method', self.options.get('http', 'default_request_method'))
+        str_method = kwargs.get('method',
+                                self.options.get('http',
+                                                 'default_request_method'))
 
         # Request data
         obj_data = kwargs.get('data', {})
 
         # Request headers
-        obj_headers = kwargs.get('headers', self.options.get('http', 'default_request_headers'))
+        obj_headers = kwargs.get('headers',
+                                 self.options.get('http',
+                                                  'default_request_headers'))
 
         # Request cookies
-        obj_cookies = kwargs.get('cookies', self.options.get('http', 'default_request_cookies'))
+        obj_cookies = kwargs.get('cookies',
+                                 self.options.get('http',
+                                                  'default_request_cookies'))
 
         # Option to follow redirects or not
-        bool_redirects = kwargs.get('allow_redirects', self.options.get('http', 'follow_redirects'))
+        bool_redirects = kwargs.get('allow_redirects',
+                                    self.options.get('http',
+                                                     'follow_redirects'))
 
         # Option to verify SSL certificates
-        bool_ignore_ssl_errors = kwargs.get('ignore_ssl_errors', self.options.get('http', 'ignore_ssl_errors'))
+        bool_ignore_ssl_errors = kwargs.get('ignore_ssl_errors',
+                                            self.options.get('http',
+                                                             'ignore_ssl_errors'
+                                                             ))
 
         # Proxy settings
         obj_proxy = kwargs.get('proxy', self.options.get('http', 'proxy'))
@@ -43,7 +54,8 @@ class HttpTransaction(BaseTransaction):
         # Assertions for the current step
         dic_assertions = kwargs.get('assertions', {})
 
-        # If the Ignore SSL errors option is set to true, disables the urllib InsecureRequestWarning message
+        # If the Ignore SSL errors option is set to true,
+        # disables the urllib InsecureRequestWarning message
         if bool_ignore_ssl_errors:
             requests.packages.urllib3.disable_warnings()
 
@@ -67,29 +79,35 @@ class HttpTransaction(BaseTransaction):
         # Send unique request with kwargs defined in dict
         str_timestamp = utils.get_timestamp()
         try:
-            self.set_variable('_last_response',
-                              self.get_variable('_session').request(str_method, str_url, **dic_request_kwargs))
+            self.set_variable(
+                '_last_response',
+                self.get_variable('_session').request(str_method, str_url,
+                                                      **dic_request_kwargs))
         except requests.exceptions.SSLError:
             print 'SSL Certificate error'
 
         # Send request data using sender object
-        self.log.append_to('steps',
-                           {
-                               'hostName': utils.get_ip_address(),
-                               'peckerID': self.pecker_id,
-                               'navigationName': self.navigation_name,
-                               'transactionName': self.transaction_name,
-                               'iteration': self.iteration,
-                               'timestamp': str_timestamp,
-                               'stepName': str_request_name,
-                               'stepType': '_'.join(('HTTP', str_method)),
-                               'stepSkeleton': str_url,
-                               'stepData': json.dumps(obj_data),
-                               'elapsed': self.get_variable('_last_response').elapsed.total_seconds() * 1000,
-                               'status': self.get_variable('_last_response').status_code,
-                               'responseSize': len(self.get_variable('_last_response').content),
-                               'assertionsResult': self.check_assertions(dic_assertions)
-                           })
+        self.log.append_to(
+            'steps',
+            {
+                'hostName': utils.get_ip_address(),
+                'peckerID': self.pecker_id,
+                'navigationName': self.navigation_name,
+                'transactionName': self.transaction_name,
+                'iteration': self.iteration,
+                'timestamp': str_timestamp,
+                'stepName': str_request_name,
+                'stepType': '_'.join(('HTTP', str_method)),
+                'stepSkeleton': str_url,
+                'stepData': json.dumps(obj_data),
+                'elapsed': self.get_variable(
+                    '_last_response').elapsed.total_seconds() * 1000,
+                'status': self.get_variable('_last_response').status_code,
+                'responseSize': len(
+                    self.get_variable('_last_response').content),
+                'assertionsResult': self.check_assertions(dic_assertions)
+            }
+        )
 
     @staticmethod
     def is_json(str_json):

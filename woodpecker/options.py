@@ -4,14 +4,15 @@ import ConfigParser
 
 class Options(object):
 
-    def __init__(self, str_peckerfile=None):
+    def __init__(self, str_peckerfile='Peckerfile'):
         # Inner options container
         self._data = {}
 
         # Configuration file, defaults to 'Peckerfile'
-        self._peckerfile = str_peckerfile or 'Peckerfile'
+        self._peckerfile = str_peckerfile
 
-        # Automatically updates options from file (if present) or load default values
+        # Automatically updates options from file (if present)
+        # or load default values
         self._retrieve_options()
 
     @staticmethod
@@ -63,8 +64,11 @@ class Options(object):
 
             for str_section in obj_conf_parser.sections():
                 for str_option in obj_conf_parser.options(str_section):
-                    self._data.update({str_option: str_value
-                                       for str_option, str_value in obj_conf_parser.get(str_section, str_option)})
+                    self._data.update(
+                        {str_option: str_value
+                         for str_option, str_value in
+                         obj_conf_parser.get(str_section, str_option)}
+                    )
         else:
             self._data.update(self._set_default_options())
 

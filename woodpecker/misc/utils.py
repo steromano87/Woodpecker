@@ -50,30 +50,12 @@ def get_ip_address():
     return socket.gethostbyname(socket.gethostname())
 
 
-def import_from_path(str_path, str_class_name, dic_kwargs=None):
-    class_inst = None
-    py_mod = None
-
-    if not dic_kwargs:
-        dic_kwargs = {}
-
-    mod_name, file_ext = os.path.splitext(os.path.split(str_path)[-1])
-
-    if file_ext.lower() == '.py':
-        py_mod = imp.load_source(mod_name, str_path)
-
-    elif file_ext.lower() == '.pyc':
-        py_mod = imp.load_compiled(mod_name, str_path)
-
-    if hasattr(py_mod, str_class_name):
-        class_inst = getattr(py_mod, str_class_name)(**dic_kwargs)
-
-    return class_inst
-
-
-def create_class_from(str_class_name, str_module_name, str_module_path, *args, **kwargs):
-    obj_file, str_filename, str_description = imp.find_module(str_module_name, [str_module_path])
-    obj_package = imp.load_module(str_module_name, obj_file, str_filename, str_description)
+def create_class_from(str_class_name, str_module_name, str_module_path,
+                      *args, **kwargs):
+    obj_file, str_filename, str_description = \
+        imp.find_module(str_module_name, [str_module_path])
+    obj_package = imp.load_module(str_module_name, obj_file,
+                                  str_filename, str_description)
     return getattr(obj_package, str_class_name)(*args, **kwargs)
 
 
@@ -88,14 +70,9 @@ def get_abs_path(str_path, str_cwd=None):
         return os.path.normpath(''.join(tpl_scenario_path))
 
 
-def logify(str_message, str_submodule='MAIN'):
-    return ''.join(('[', get_timestamp(), ']',
-                    '\t', '[', str_submodule, ']',
-                    '\t', str_message))
-
-
 def unicode2ascii(mix_input):
     if isinstance(mix_input, basestring):
-        return unicodedata.normalize('NFKD', mix_input).encode('ascii', 'ignore')
+        return unicodedata.normalize('NFKD', mix_input).encode('ascii',
+                                                               'ignore')
     else:
         return mix_input

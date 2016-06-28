@@ -69,13 +69,16 @@ class CpuPercent:
         self.last = psutil.cpu_times()
 
     def update(self):
-        """CPU usage is specific CPU time passed divided by total CPU time passed."""
+        """CPU usage is specific CPU time
+        passed divided by total CPU time passed."""
 
         last = self.last
         current = psutil.cpu_times()
 
-        total_time_passed = sum([current.__dict__.get(key, 0) - last.__dict__.get(key, 0)
-                                 for key in current.__dict__.iterkeys()])
+        total_time_passed = sum(
+            [current.__dict__.get(key, 0) - last.__dict__.get(key, 0)
+             for key in current.__dict__.iterkeys()]
+        )
 
         # only keeping track of system and user time
         sys_time = current.system - last.system

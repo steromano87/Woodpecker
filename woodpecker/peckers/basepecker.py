@@ -32,9 +32,13 @@ class BasePecker(object):
         # Handling mode (active or passive)
         # If active, the spawner continuously checks if the peckers are running
         # If passive, the peckers are scheduled for start and stop one for all
-        self._handling_mode = kwargs.get('pecker_handling_mode', self.options.get('execution', 'pecker_handling_mode'))
+        self._handling_mode = kwargs.get(
+            'pecker_handling_mode',
+            self.options.get('execution',
+                             'pecker_handling_mode')
+        )
 
-        # Scheduled start and stop based on elapsed time (used only in passive mode)
+        # Scheduled start and stop based on elapsed time (only in passive mode)
         self._scheduled_start = None
         self._scheduled_stop = None
 
@@ -50,7 +54,9 @@ class BasePecker(object):
         pass
 
     def set_navigation(self, str_name, str_file):
-        self._navigation = utils.create_class_from(str_name, str_file, self._scenario_folder,
+        self._navigation = utils.create_class_from(str_name,
+                                                   str_file,
+                                                   self._scenario_folder,
                                                    options=self.options,
                                                    log=self.log)
         self.status = 'Ready'
@@ -68,7 +74,8 @@ class BasePecker(object):
         pass
 
     def set_elapsed_time(self):
-        self._elapsed_time = (utils.get_timestamp(False) - self._start_time).total_seconds()
+        self._elapsed_time = \
+            (utils.get_timestamp(False) - self._start_time).total_seconds()
 
     def _run_all(self):
         self._start_time = utils.get_timestamp(False)
@@ -76,7 +83,8 @@ class BasePecker(object):
         # Prepare navigation for execution
         self._navigation.prepare_for_run()
 
-        # If handling mode is set to passive, wait until the start elapsed time is reached
+        # If handling mode is set to passive,
+        # wait until the start elapsed time is reached
         if self._handling_mode == 'passive':
             self.status = 'Waiting to start'
             while True:
@@ -89,10 +97,13 @@ class BasePecker(object):
         self._navigation.run_setup()
         self.set_elapsed_time()
 
-        # While the iteration is valid (or no limit is set), execute the main transactions
-        while not self.max_iterations or self.iteration <= self.max_iterations or (
-            self._handling_mode == 'passive' and self._elapsed_time < self._scheduled_stop
-        ):
+        # While the iteration is valid (or no limit is set),
+        # execute the main transactions
+        while not self.max_iterations \
+            or self.iteration <= self.max_iterations \
+            or (
+                self._handling_mode == 'passive' and
+                self._elapsed_time < self._scheduled_stop):
             if not self._check_for_stop():
                 self.status = 'Running'
                 self._navigation.run_main(self.iteration)

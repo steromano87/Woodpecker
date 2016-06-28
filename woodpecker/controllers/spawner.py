@@ -33,15 +33,24 @@ class Spawner(StoppableThread):
         self._start_time = None
 
         # Spawning mode, to choose between threads and greenlet
-        self.spawning_mode = kwargs.get('spawning_mode', self.options.get('execution', 'spawning_mode'))
+        self.spawning_mode = kwargs.get('spawning_mode',
+                                        self.options.get('execution',
+                                                         'spawning_mode'))
         if self.spawning_mode == 'threads':
-            self.pecker_class = getattr(importlib.import_module('woodpecker.peckers.threadedpecker'), 'ThreadedPecker')
+            self.pecker_class = getattr(
+                importlib.import_module('woodpecker.peckers.threadedpecker'),
+                'ThreadedPecker'
+            )
         elif self.spawning_mode == 'greenlet':
-            self.pecker_class = getattr(importlib.import_module('woodpecker.peckers.greenletpecker'), 'GreenletPecker')
+            self.pecker_class = getattr(
+                importlib.import_module('woodpecker.peckers.greenletpecker'),
+                'GreenletPecker'
+            )
 
         # Pecker handling mode, it may be active or passive
-        self.pecker_handling_mode = kwargs.get('pecker_handling_mode',
-                                               self.options.get('execution', 'pecker_handling_mode'))
+        self.pecker_handling_mode = kwargs.get(
+            'pecker_handling_mode',
+            self.options.get('execution', 'pecker_handling_mode'))
 
         # Save total scenario duration
         self._scenario_duration = None
@@ -53,19 +62,23 @@ class Spawner(StoppableThread):
         self._scenario_duration = self._scenario.get_scenario_duration()
 
     def set_elapsed_time(self):
-        self._elapsed_time = (utils.get_timestamp(False) - self._start_time).total_seconds()
+        self._elapsed_time = (utils.get_timestamp(False) -
+                              self._start_time).total_seconds()
 
     def initialize_peckers_list(self):
         for str_nav_name in self._scenario.get_navigation_names():
             self._peckers[str_nav_name] = []
             if self.pecker_handling_mode == 'passive':
-                self._schedules[str_nav_name] = self._scenario.get_navigation_pecker_schedule(str_nav_name)
+                self._schedules[str_nav_name] = \
+                    self._scenario.get_navigation_pecker_schedule(str_nav_name)
 
     def start_pecker_for(self, str_nav_name):
         dic_navigation = self._scenario.get_navigation(str_nav_name)
-        obj_pecker = self.pecker_class(max_iterations=dic_navigation.get('max_iterations', None),
-                                       pecker_handling_mode=self.pecker_handling_mode,
-                                       options=self.options)
+        obj_pecker = self.pecker_class(
+            max_iterations=dic_navigation.get('max_iterations', None),
+            pecker_handling_mode=self.pecker_handling_mode,
+            options=self.options
+        )
 
         if self.pecker_handling_mode == 'passive':
             dic_schedule = self._schedules[str_nav_name].pop(0)
@@ -84,13 +97,16 @@ class Spawner(StoppableThread):
         if self.pecker_handling_mode == 'active':
             for str_nav_name in self._scenario.get_navigation_names():
                 self._check_running_peckers_active(str_nav_name)
-            time.sleep(self.options.get('execution', 'pecker_status_active_polling_interval'))
+            time.sleep(self.options.get('execution',
+                                        'pecker_status_active_polling_interval')
+                       )
         elif self.pecker_handling_mode == 'passive':
             for str_nav_name in self._scenario.get_navigation_names():
                 self._check_running_peckers_passive(str_nav_name)
 
     def _check_running_peckers_active(self, str_nav_name):
-        int_scheduled_peckers = self._scenario.get_navigation_planned_peckers_at(self._elapsed_time)
+        int_scheduled_peckers = \
+            self._scenario.get_navigation_planned_peckers_at(self._elapsed_time)
         int_running_peckers = len(self._peckers[str_nav_name])
         int_peckers_diff = int_scheduled_peckers - int_running_peckers
 
@@ -104,7 +120,8 @@ class Spawner(StoppableThread):
     def _check_running_peckers_passive(self, str_nav_name):
         # Run only if there are some unscheduled peckers
         if len(self._schedules[str_nav_name]) > 0:
-            int_max_peckers = self._scenario.get_navigation_max_peckers(str_nav_name)
+            int_max_peckers = \
+                self._scenario.get_navigation_max_peckers(str_nav_name)
             for int_counter in range(0, int_max_peckers):
                 self.start_pecker_for(str_nav_name)
 
@@ -112,7 +129,8 @@ class Spawner(StoppableThread):
         self._start_time = utils.get_timestamp(False)
         while True:
             self.set_elapsed_time()
-            if not self.is_marked_for_stop() and self._elapsed_time <= self._scenario_duration:
+            if not self.is_marked_for_stop() \
+                    and self._elapsed_time <= self._scenario_duration:
                 self.check_running_peckers()
             else:
                 for str_nav_name in self._scenario.get_navigation_names():

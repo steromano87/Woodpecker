@@ -102,7 +102,8 @@ class Navigation(object):
         self.iteration = int_iteration
         for dic_transaction in self._transactions:
             self._run_transaction(dic_transaction)
-            time.sleep(self.options.get('generic', 'think_time_between_transactions'))
+            time.sleep(self.options.get('generic',
+                                        'think_time_between_transactions'))
 
         time.sleep(self.options.get('generic', 'think_time_between_iterations'))
         return self.log
@@ -116,13 +117,16 @@ class Navigation(object):
 
     def _run_transaction(self, dic_transaction):
         # Get an instance of the transaction class
-        obj_current_transaction = utils.create_class_from(dic_transaction['name'], dic_transaction['file'],
-                                                          self._scenario_folder,
-                                                          options=self.options,
-                                                          pecker_varriables=self.pecker_variables,
-                                                          iteration=self.iteration,
-                                                          navigation_name=self.navigation_name,
-                                                          pecker_id=self.pecker_id,
-                                                          log=self.log)
+        obj_current_transaction = utils.create_class_from(
+            dic_transaction['name'], dic_transaction['file'],
+            self._scenario_folder,
+            options=self.options,
+            pecker_varriables=self.pecker_variables,
+            iteration=self.iteration,
+            navigation_name=self.navigation_name,
+            pecker_id=self.pecker_id,
+            log=self.log
+        )
 
-        self.options, self.pecker_variables, self.log = obj_current_transaction.run(self.iteration)
+        self.options, self.pecker_variables, self.log = \
+            obj_current_transaction.run(self.iteration)

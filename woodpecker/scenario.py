@@ -54,10 +54,12 @@ class Scenario(object):
 
     # Calculation methods
     def get_navigation_max_peckers(self, str_nav_name):
-        return sum([obj_ramp.get_max_peckers() for obj_ramp in self._navigations[str_nav_name]['ramps']])
+        return sum([obj_ramp.get_max_peckers()
+                    for obj_ramp in self._navigations[str_nav_name]['ramps']])
 
     def get_navigation_duration(self, str_nav_name):
-        return max([obj_ramp.get_duration() for obj_ramp in self._navigations[str_nav_name]['ramps']])
+        return max([obj_ramp.get_duration()
+                    for obj_ramp in self._navigations[str_nav_name]['ramps']])
 
     def get_navigation_planned_peckers_at(self, str_nav_name, dbl_elapsed_time):
         return sum([obj_ramp.get_planned_peckers_at(dbl_elapsed_time)
@@ -70,19 +72,24 @@ class Scenario(object):
         return lst_schedule_merged
 
     def get_scenario_max_peckers(self):
-        return sum([self.get_navigation_max_peckers(str_nav_name) for str_nav_name in self._navigations.iterkeys()])
+        return sum([self.get_navigation_max_peckers(str_nav_name)
+                    for str_nav_name in self._navigations.iterkeys()])
 
     def get_scenario_duration(self):
-        return max([self.get_navigation_duration(str_nav_name) for str_nav_name in self._navigations.iterkeys()])
+        return max([self.get_navigation_duration(str_nav_name)
+                    for str_nav_name in self._navigations.iterkeys()])
 
     def get_scenario_planned_peckers_at(self, dbl_elapsed_time):
-        return sum([self.get_navigation_planned_peckers_at(str_nav_name, dbl_elapsed_time)
+        return sum([self.get_navigation_planned_peckers_at(str_nav_name,
+                                                           dbl_elapsed_time)
                     for str_nav_name in self._navigations.iterkeys()])
 
     def get_scenario_pecker_schedule(self):
         lst_scheduled_merged = []
-        lst_scheduled_merged.extend(self.get_navigation_pecker_schedule(str_nav_name)
-                                    for str_nav_name in self._navigations.iterkeys())
+        lst_scheduled_merged.extend(
+            self.get_navigation_pecker_schedule(str_nav_name)
+            for str_nav_name in self._navigations.iterkeys()
+        )
         return lst_scheduled_merged
 
     # Rescaling methods

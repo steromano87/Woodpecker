@@ -18,7 +18,10 @@ class BaseRamp(object):
         pass
 
     def get_duration(self):
-        return self.initial_delay + self.ramp_up_duration + self.load_duration + self.ramp_down_duration
+        return self.initial_delay + \
+               self.ramp_up_duration + \
+               self.load_duration + \
+               self.ramp_down_duration
 
     def get_max_peckers(self):
         return self.peckers
