@@ -83,7 +83,8 @@ class SpawnerController(object):
 
     def _scenario_unpack(self, dic_data):
         # Get zipped scenario folder
-        obj_scenario_zipped_folder = StringIO(dic_data['compressed_scenario_folder'])
+        obj_scenario_zipped_folder = \
+            StringIO(dic_data['compressed_scenario_folder'])
         obj_zipfile = ZipFile(obj_scenario_zipped_folder, 'r')
 
         # Extract the zipped folder into temp folder
@@ -92,7 +93,8 @@ class SpawnerController(object):
 
     def _scenario_setup(self, dic_data):
         # Dynamically load scenario from file
-        obj_scenario = utils.create_class_from(dic_data['scenario_name'], 'scenario', self.scenario_folder)
+        obj_scenario = utils.create_class_from(dic_data['scenario_name'],
+                                               'scenario', self.scenario_folder)
 
         # Get rescale ratio and resize the whole pecker pool accordingly
         dbl_rescale_ratio = dic_data['rescale_ratio']
