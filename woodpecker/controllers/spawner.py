@@ -22,6 +22,9 @@ class Spawner(StoppableThread):
         # Loaded scenario
         self._scenario = None
 
+        # Scenario folder
+        self._scenario_folder = None
+
         # Peckers list
         self._peckers = {}
 
@@ -61,6 +64,9 @@ class Spawner(StoppableThread):
         self._scenario.navigations()
         self._scenario_duration = self._scenario.get_scenario_duration()
 
+    def set_scenario_folder(self, str_scenario_folder):
+        self._scenario_folder = str_scenario_folder
+
     def set_elapsed_time(self):
         self._elapsed_time = (utils.get_timestamp(False) -
                               self._start_time).total_seconds()
@@ -77,7 +83,8 @@ class Spawner(StoppableThread):
         obj_pecker = self.pecker_class(
             max_iterations=dic_navigation.get('max_iterations', None),
             pecker_handling_mode=self.pecker_handling_mode,
-            options=self.options
+            options=self.options,
+            scenario_folder=self._scenario_folder
         )
 
         if self.pecker_handling_mode == 'passive':
