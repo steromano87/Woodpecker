@@ -45,7 +45,8 @@ class Options(object):
                 ]
             },
             'logging': {
-                'max_entries_before_flush': 100,
+                'max_entries_before_flush': 10,
+                'max_interval_before_flush': 30.0,
                 'logger_host': 'localhost',
                 'logger_port': 7878,
                 'logger_protocol': 'UDP',

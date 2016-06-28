@@ -1,3 +1,5 @@
+import woodpecker.misc.utils as utils
+
 from woodpecker.logging.sender import Sender
 from woodpecker.options import Options
 
@@ -13,6 +15,9 @@ class Log(object):
 
         # Internal options
         self._options = kwargs.get('options', Options())
+
+        # Start time to get elapsed time
+        self._start_time = utils.get_timestamp(False)
 
         # Internal sender to flush data
         self._sender = Sender(self._options.get('logging', 'logger_host'),
@@ -35,7 +40,11 @@ class Log(object):
         self._data_count += 1
         # Automatic data flushing
         if self._data_count > self._options.get('logging',
-                                                'max_entries_before_flush'):
+                                                'max_entries_before_flush') \
+                or (utils.get_timestamp(False) -
+                    self._start_time).total_seconds() > \
+                self._options.get('logging',
+                                  'max_interval_before_flush'):
             self.flush()
 
     def flush(self):
