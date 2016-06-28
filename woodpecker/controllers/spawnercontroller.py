@@ -103,6 +103,12 @@ class SpawnerController(object):
         # Assign scenario to spawner
         self._spawner.attach_scenario(obj_scenario)
 
+        # Set scenario folder
+        self._spawner.set_scenario_folder(self.scenario_folder)
+
+        # Initialize peckers list
+        self._spawner.initialize_peckers_list()
+
     def _start(self):
         self._sysmonitor.start()
         self._spawner.start()
