@@ -13,7 +13,7 @@ class Navigation(object):
 
     def __init__(self, **kwargs):
         # Navigation settings
-        self.options = kwargs.get('options', None) or Options()
+        self.options = kwargs.get('options', Options())
 
         # Pecker variables shared between transactions
         self.pecker_variables = kwargs.get('pecker_variables', {})
@@ -40,7 +40,7 @@ class Navigation(object):
         self._teardown_transactions = []
 
         # Internal log, used to send data at the end of the navigation
-        self.log = kwargs.get('log', Log())
+        self.log = kwargs.get('log', Log(options=self.options))
 
     # Variables methods
     def set_variable(self, str_name, mix_value):
