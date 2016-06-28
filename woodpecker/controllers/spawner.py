@@ -33,7 +33,7 @@ class Spawner(StoppableThread):
         self._start_time = None
 
         # Spawning mode, to choose between threads and greenlet
-        self.spawning_mode = kwargs.get('spawning_mdoe', self.options.get('execution', 'spawning_mode'))
+        self.spawning_mode = kwargs.get('spawning_mode', self.options.get('execution', 'spawning_mode'))
         if self.spawning_mode == 'threads':
             self.pecker_class = getattr(importlib.import_module('woodpecker.peckers.threadedpecker'), 'ThreadedPecker')
         elif self.spawning_mode == 'greenlet':
