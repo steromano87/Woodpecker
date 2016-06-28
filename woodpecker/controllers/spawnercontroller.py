@@ -1,6 +1,4 @@
 import os
-import socket
-import msgpack
 import tempfile
 import shutil
 
@@ -13,6 +11,7 @@ from woodpecker.options import Options
 from woodpecker.logging.log import Log
 from woodpecker.logging.sysmonitor import Sysmonitor
 from woodpecker.controllers.spawner import Spawner
+from woodpecker.logging.messenger import Messenger
 
 
 class SpawnerController(object):
@@ -33,13 +32,15 @@ class SpawnerController(object):
         # Flag for starting/stoppping
         self.is_marked_for_stop = False
 
-        # Socket data
-        self._socket = None
-        self._socket_listening_port = self._options.get('execution', 'controller_port')
-        self._socket_connection = None
-        self._socket_controller_address = None
-        self._socket_data = None
-        self._socket_buffer_size = long(2 ** 30)
+        # Socket messenger
+        self._messenger = \
+            Messenger(self._options.get('execution', 'controller_port'),
+                      self._options.get('execution', 'controller_protocol'),
+                      self._options.get(
+                          'execution',
+                          'controller_socket_max_pending_connections'
+                      )
+                      )
 
         # Message from socket
         self.message = None
@@ -47,39 +48,16 @@ class SpawnerController(object):
         # Scenario data (AKA working dir)
         self.scenario_folder = None
 
-        # Socket setup
-        if self._options.get('execution', 'controller_protocol') == 'TCP':
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        elif self._options.get('execution', 'controller_protocol') == 'UDP':
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-        # Bind socket and start listening
-        self._socket.bind(('', self._socket_listening_port))
-        self._socket.listen(
-            self._options.get('execution',
-                              'controller_socket_max_pending_connections')
-        )
-
     def run(self):
         # Run until marked for stop
         while True:
             if not self.is_marked_for_stop:
-                self._socket_connection, \
-                    self._socket_controller_address = self._socket.accept()
-                # Correct the controller IP address
-                self._socket_controller_address = \
-                    self._socket_controller_address[0]
-                self._socket_data = self._socket_connection.recv(
-                    self._socket_buffer_size
-                )
+                self.message = self._messenger.listen()
                 self.handle_data()
             else:
-                self._socket_connection.close()
                 break
 
     def handle_data(self):
-        self.message = msgpack.unpackb(self._socket_data)
-
         # Execute different actions based upon message type
         if self.message['type'] == 'command':
             self._handle_command()
