@@ -29,6 +29,7 @@ class LogCollector(StoppableThread):
 
         # Internal DBWriter
         self._dbwriter = DBWriter(self._results_file)
+        self._dbwriter.initialize_db()
 
         # Internal messenger
         self._messenger = \
