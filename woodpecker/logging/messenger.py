@@ -30,16 +30,19 @@ class Messenger(object):
         # Last remote address
         self.last_remote_address = None
 
+        # Initialize socket
+        self._initialize_socket()
+
     def _initialize_socket(self):
         if self._protocol == 'TCP':
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._socket.bind(('', self._port))
             self._socket.listen(self._max_pending_connections)
         elif self._protocol == 'UDP':
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self._socket.bind(('', self._port))
         else:
             raise Exception('Unsupported socket protocol')
-
-        self._socket.bind(('', self._port))
 
     def listen(self):
         if self._protocol == 'TCP':
