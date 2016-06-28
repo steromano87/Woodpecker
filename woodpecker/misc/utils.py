@@ -52,8 +52,10 @@ def get_ip_address():
 
 def create_class_from(str_class_name, str_module_name, str_module_path,
                       *args, **kwargs):
+    arr_module_subpaths = [x[0] for x in os.walk(str_module_path)]
     obj_file, str_filename, str_description = \
-        imp.find_module(str_module_name, [str_module_path])
+        imp.find_module(str_module_name,
+                        arr_module_subpaths)
     obj_package = imp.load_module(str_module_name, obj_file,
                                   str_filename, str_description)
     return getattr(obj_package, str_class_name)(*args, **kwargs)
