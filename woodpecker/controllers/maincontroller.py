@@ -1,7 +1,6 @@
 from __future__ import division
 
 import os
-import importlib
 import zipfile
 
 import woodpecker.misc.utils as utils
@@ -12,6 +11,7 @@ from woodpecker.options import Options
 from woodpecker.logging.log import Log
 from woodpecker.logging.sysmonitor import Sysmonitor
 from woodpecker.logging.sender import Sender
+from woodpecker.logging.logcollector import LogCollector
 
 
 class MainController(object):
@@ -28,23 +28,26 @@ class MainController(object):
 
         # Spawner hosts
         self.spawners = {}
-        lst_spawners = kwargs.get('spawners', self._options.get('execution', 'spawners'))
+        lst_spawners = kwargs.get('spawners',
+                                  self._options.get('execution', 'spawners'))
         for str_spawner in lst_spawners:
             self.spawners[str_spawner] = {
                 'sender': Sender(str_spawner,
-                                 self._options.get('execution', 'controller_port'),
-                                 self._options.get('execution', 'controller_protocol')),
+                                 self._options.get('execution',
+                                                   'controller_port'),
+                                 self._options.get('execution',
+                                                   'controller_protocol')),
                 'rescale_ratio': 1.0
             }
 
-        # Log collector
-        self._log_collector = None
-
         # Scenario folder
-        self._scenario_folder = os.path.abspath(kwargs.get('scenario_folder', os.getcwd()))
+        self._scenario_folder = os.path.abspath(kwargs.get('scenario_folder',
+                                                           os.getcwd()))
 
         # Scenario
-        self._scenario = utils.create_class_from(str_scenario_name, 'scenario', self._scenario_folder,
+        self._scenario = utils.create_class_from(str_scenario_name,
+                                                 'scenario',
+                                                 self._scenario_folder,
                                                  options=self._options)
         self._scenario_name = str_scenario_name
         self._scenario.configure()
@@ -56,26 +59,36 @@ class MainController(object):
         # Compressed scenario
         self._compressed_scenario = None
 
+        # Log collector
+        self._log_collector = LogCollector(
+            scenario_folder=self._scenario_folder,
+            options=self._options,
+            results_file=kwargs.get('results_file', 'results')
+        )
+
     def calculate_resize_ratios(self):
         int_max_peckers = self._scenario.get_scenario_max_peckers()
         int_spawners_num = len(self.spawners.keys())
-        # Iterate and calculate resize ratios for every spawner (odd numbers safe)
+        # Iterate and calculate resize ratios for every spawner
         for str_spawner in self.spawners.iterkeys():
             int_pecker_quota = int(round(int_max_peckers / int_spawners_num, 0))
-            dbl_pecker_quota = int_pecker_quota / self._scenario.get_scenario_max_peckers()
+            dbl_pecker_quota = \
+                int_pecker_quota / self._scenario.get_scenario_max_peckers()
             int_max_peckers -= int_pecker_quota
             int_spawners_num -= 1
             self.spawners[str_spawner]['rescale_ratio'] = dbl_pecker_quota
 
     def compress_scenario_folder(self):
         obj_in_memory_zip = StringIO()
-        obj_zipfile = zipfile.ZipFile(obj_in_memory_zip, 'w', zipfile.ZIP_DEFLATED)
+        obj_zipfile = zipfile.ZipFile(obj_in_memory_zip, 'w',
+                                      zipfile.ZIP_DEFLATED)
 
         # Walk through files and folders
         for root, dirs, files in os.walk(self._scenario_folder):
             for filename in files:
                 str_relpath = os.path.relpath(root, self._scenario_folder)
-                obj_zipfile.write(os.path.join(root, filename), os.path.join(str_relpath, filename))
+                obj_zipfile.write(os.path.join(root, filename),
+                                  os.path.join(str_relpath, filename))
         obj_zipfile.close()
         self._compressed_scenario = obj_in_memory_zip.getvalue()
 
@@ -109,13 +122,19 @@ class MainController(object):
             obj_spawner_data['sender'].send('command', dic_payload)
 
     def send_start(self):
+        self._log_collector.start()
+        self._sysmonitor.start()
         self._send_to_all('command', {'command': 'start'})
 
     def send_stop(self):
+        self._log_collector.mark_for_stop()
+        self._sysmonitor.mark_for_stop()
         self._send_to_all('command', {'command': 'stop'})
 
     def send_emergency_stop(self):
         self._send_to_all('command', {'command': 'emergency_stop'})
 
     def send_shutdown(self):
+        self._log_collector.mark_for_stop()
+        self._sysmonitor.mark_for_stop()
         self._send_to_all('command', {'command': 'shutdown'})
