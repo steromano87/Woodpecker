@@ -5,3 +5,5 @@ colorama
 click
 psutil
 requests
+PyYAML
+six
