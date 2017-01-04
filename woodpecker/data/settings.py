@@ -109,5 +109,8 @@ class BaseSettings(Settings):
                 'max_interval_before_flush': 30.0,
                 'results_file': 'results',
                 'sysmonitor_polling_interval': 5.0
+            },
+            'runtime': {
+                'raise_error_if_variable_not_defined': False
             }
         }
