@@ -7,3 +7,4 @@ psutil
 requests
 PyYAML
 six
+Cerberus
