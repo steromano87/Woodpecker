@@ -1,5 +1,5 @@
 msgpack-python
-gevent
+greenlet
 python-dateutil
 colorama
 click
