@@ -59,8 +59,8 @@ target/
 # IDEA project folders
 .idea/
 
-# Navigation folder used to store temporary navs written during project development
-tests/
-
 # Virtual environment folder
 venvs/
+
+# Temporary folders for test
+temp/
