@@ -74,7 +74,7 @@ class Settings(object):
             return self._validator.validate(self._data), \
                    pprint.pprint(self._validator.errors)
         except cerberus.DocumentError as error:
-            return False, error.message
+            return False, str(error)
 
     def extend(self, additional_settings):
         if isinstance(additional_settings, Settings):
