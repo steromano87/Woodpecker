@@ -28,7 +28,8 @@ class Settings(object):
 
         # Internal validator
         self._validator = cerberus.Validator(self._validation_mask,
-                                             purge_unknown=True)
+                                             purge_unknown=True,
+                                             allow_unknown=False)
 
         # Load settings data
         self.load()
@@ -46,7 +47,7 @@ class Settings(object):
 
     def get(self, section, entry):
         if section in six.viewkeys(self._data):
-            if entry in six.viewkeys(self._data.get(section)):
+            if entry in six.viewkeys(self._data.get(section, {})):
                 return self._data.get(section).get(entry)
             else:
                 raise KeyError(
@@ -59,8 +60,11 @@ class Settings(object):
             ))
 
     def set(self, section, entry, value):
-        if self._validator.validate({section: {entry: value}}):
-            self._data.update({section: {entry: value}})
+        dic_setting = {section: {entry: value}}
+        if self._validator.validate(dic_setting) \
+                and section in six.viewkeys(self._data) \
+                and entry in six.viewkeys(self._data.get(section, {})):
+            self._data[section][entry] = value
         else:
             raise ValueError('Error in input values:\n{error_list}'.format(
                 error_list=pprint.pformat(self._validator.errors, indent=2)
@@ -91,6 +95,8 @@ class Settings(object):
         else:
             raise TypeError('Wrong type: provided settings are not an '
                             'instance of Woodpecker settings')
+        # Reload and validate default settings
+        self._data = self._validator.validated(self._data)
 
 
 class BaseSettings(Settings):

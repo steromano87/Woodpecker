@@ -90,6 +90,16 @@ def test_set_invalid_value(settings):
         settings.set('timing', 'skip_think_time', 'bar')
 
 
+def test_set_value_in_invalid_section(settings):
+    with pytest.raises(ValueError):
+        settings.set('foo', 'skip_think_time', True)
+
+
+def test_set_value_in_invalid_key(settings):
+    with pytest.raises(ValueError):
+        settings.set('timing', 'bar', True)
+
+
 def test_extension_with_valid_settings(settings, derived_settings):
     settings.extend(derived_settings)
     settings.set('foo', 'bar', False)
