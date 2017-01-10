@@ -22,11 +22,13 @@ def derived_settings():
                         'baz': {
                             'type': 'float'
                         }
-                    },
-                    'default': {
-                        'bar': True,
-                        'baz': 3.4
                     }
+                }
+            }
+            self._default_data = {
+                'foo': {
+                    'bar': True,
+                    'baz': 3.4
                 }
             }
             super(DerivedSettings, self).__init__(peckerfile)
@@ -47,11 +49,13 @@ def fake_settings():
                         'baz': {
                             'type': 'float'
                         }
-                    },
-                    'default': {
-                        'bar': True,
-                        'baz': 'wunderbar'
                     }
+                }
+            }
+            self._default_data = {
+                'foo': {
+                    'bar': True,
+                    'baz': 'wunderbar'
                 }
             }
             super(FakeSettings, self).__init__(peckerfile)
@@ -73,6 +77,19 @@ def test_value_modification(settings):
     settings.set('network', 'controller_port', new_value)
     assert new_value == settings.get('network', 'controller_port')
     assert old_value != settings.get('network', 'controller_port')
+
+
+def test_set_multiple_values_at_a_time(settings):
+    settings.set({
+        'timing': {
+            'skip_think_time': True
+        },
+        'logging': {
+            'max_entries_before_flush': 200
+        }
+    })
+    assert settings.get('timing', 'skip_think_time') is True
+    assert settings.get('logging', 'max_entries_before_flush') == 200
 
 
 def test_value_retrieval_with_nonexistent_section(settings):
@@ -104,6 +121,18 @@ def test_extension_with_valid_settings(settings, derived_settings):
     settings.extend(derived_settings)
     settings.set('foo', 'bar', False)
     settings.set('foo', 'baz', -0.5)
+    assert settings.get('foo', 'bar') is False
+    assert settings.get('foo', 'baz') == -0.5
+
+
+def test_extension_with_valid_settings_and_massive_modification(settings, derived_settings):
+    settings.extend(derived_settings)
+    settings.set({
+        'foo': {
+            'bar': False,
+            'baz': 15
+        }
+    })
 
 
 def test_extension_with_invalid_settings(settings):

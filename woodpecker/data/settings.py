@@ -26,10 +26,16 @@ class Settings(object):
             if not self._validation_mask \
             else self._validation_mask
 
+        # Default data
+        self._default_data = {} \
+            if not self._default_data \
+            else self._default_data
+
         # Internal validator
         self._validator = cerberus.Validator(self._validation_mask,
                                              purge_unknown=True,
-                                             allow_unknown=False)
+                                             allow_unknown=False,
+                                             root_allow_unknown=False)
 
         # Load settings data
         self.load()
@@ -39,7 +45,7 @@ class Settings(object):
             with open(self._peckerfile, 'r') as fp:
                 self._data = self._validator.validated(yaml.safe_load(fp))
         else:
-            self._data = self._validator.validated({})
+            self._data = self._validator.validated(self._default_data)
 
     def save(self):
         with open(self._peckerfile, 'w') as pf:
@@ -51,7 +57,7 @@ class Settings(object):
                 return self._data.get(section).get(entry)
             else:
                 raise KeyError(
-                    'The entry {entry} does not exist ',
+                    'The entry {entry} does not exist '
                     'in section {section}'.format(entry=entry, section=section)
                 )
         else:
@@ -59,12 +65,24 @@ class Settings(object):
                 section=section
             ))
 
-    def set(self, section, entry, value):
-        dic_setting = {section: {entry: value}}
+    def set(self, *args):
+        # If there are exactly 3 args, treat them as section - key - value
+        if len(args) == 3:
+            dic_setting = {args[0]: {args[1]: args[2]}}
+        # If there is only one arg, treat it as dict
+        elif len(args) == 1:
+            dic_setting = args[0]
+        # Raise exception otherwise
+        else:
+            raise ValueError('Only dicts or section-key-value form is allowed')
+
         if self._validator.validate(dic_setting) \
-                and section in six.viewkeys(self._data) \
-                and entry in six.viewkeys(self._data.get(section, {})):
-            self._data[section][entry] = value
+                and self._validator.validated(dic_setting) == dic_setting:
+            # self._data.update(self._validator.validated(dic_setting))
+            for str_section in six.iterkeys(
+                    self._validator.validated(dic_setting)):
+                for str_key, str_value in six.iteritems(dic_setting[str_section]):
+                    self._data[str_section][str_key] = str_value
         else:
             raise ValueError('Error in input values:\n{error_list}'.format(
                 error_list=pprint.pformat(self._validator.errors, indent=2)
@@ -88,6 +106,9 @@ class Settings(object):
                 self._validation_mask.update(
                     additional_settings._validation_mask
                 )
+                self._default_data.update(
+                    additional_settings._default_data
+                )
             else:
                 raise ValueError('Given settings are not self-consistent:\n'
                                  '{errors}'.format(errors=str_message)
@@ -96,7 +117,7 @@ class Settings(object):
             raise TypeError('Wrong type: provided settings are not an '
                             'instance of Woodpecker settings')
         # Reload and validate default settings
-        self._data = self._validator.validated(self._data)
+        self._data = self._validator.validated(self._default_data)
 
 
 class BaseSettings(Settings):
@@ -136,15 +157,6 @@ class BaseSettings(Settings):
                         'min': 0.0,
                         'coerce': float
                     }
-                },
-                'default': {
-                    'skip_think_time': False,
-                    'max_think_time': 5.0,
-                    'think_time_after_setup': 0.0,
-                    'think_time_between_transactions': 0.0,
-                    'think_time_before_teardown': 0.0,
-                    'think_time_between_iterations': 0.0
-
                 }
             },
             'network': {
@@ -159,11 +171,6 @@ class BaseSettings(Settings):
                         'type': 'integer',
                         'min': 1
                     }
-                },
-                'default': {
-                    'controller_port': 7877,
-                    'max_pending_connections': 4
-
                 }
             },
             'spawning': {
@@ -193,18 +200,8 @@ class BaseSettings(Settings):
                         'type': 'list',
                         'schema': {
                             'type': 'string'
-                        },
-                        'coerce': list
+                        }
                     }
-                },
-                'default': {
-                    'spawning_mode': 'threads',
-                    'pecker_handling_mode': 'passive',
-                    'pecker_status_active_polling_interval': 0.1,
-                    'spawners': [
-                        'localhost'
-                    ]
-
                 }
             },
             'logging': {
@@ -228,12 +225,6 @@ class BaseSettings(Settings):
                         'min': 0,
                         'coerce': float
                     }
-                },
-                'default': {
-                    'max_entries_before_flush': 10,
-                    'max_interval_before_flush': 30.0,
-                    'results_file': 'results.sqlite',
-                    'sysmonitor_polling_interval': 5.0
                 }
             },
             'runtime': {
@@ -242,10 +233,39 @@ class BaseSettings(Settings):
                     'raise_error_if_variable_not_defined': {
                         'type': 'boolean'
                     }
-                },
-                'default': {
-                    'raise_error_if_variable_not_defined': False
                 }
+            }
+        }
+
+        self._default_data = {
+            'timing': {
+                'skip_think_time': False,
+                'max_think_time': 5.0,
+                'think_time_after_setup': 0.0,
+                'think_time_between_transactions': 0.0,
+                'think_time_before_teardown': 0.0,
+                'think_time_between_iterations': 0.0
+            },
+            'network': {
+                'controller_port': 7877,
+                'max_pending_connections': 4
+            },
+            'logging': {
+                'max_entries_before_flush': 10,
+                'max_interval_before_flush': 30.0,
+                'results_file': 'results.sqlite',
+                'sysmonitor_polling_interval': 5.0
+            },
+            'spawning': {
+                'spawning_mode': 'threads',
+                'pecker_handling_mode': 'passive',
+                'pecker_status_active_polling_interval': 0.1,
+                'spawners': [
+                    'localhost'
+                ]
+            },
+            'runtime': {
+                'raise_error_if_variable_not_defined': False
             }
         }
         super(BaseSettings, self).__init__(peckerfile)
