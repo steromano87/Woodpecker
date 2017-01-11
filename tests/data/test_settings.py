@@ -11,8 +11,9 @@ def settings():
 @pytest.fixture
 def derived_settings():
     class DerivedSettings(Settings):
-        def __init__(self, peckerfile='Peckerfile'):
-            self._validation_mask = {
+        @staticmethod
+        def validation_mask():
+            return {
                 'foo': {
                     'type': 'dict',
                     'schema': {
@@ -25,21 +26,25 @@ def derived_settings():
                     }
                 }
             }
-            self._default_data = {
+
+        @staticmethod
+        def default_values():
+            return {
                 'foo': {
                     'bar': True,
                     'baz': 3.4
                 }
             }
-            super(DerivedSettings, self).__init__(peckerfile)
+
     return DerivedSettings()
 
 
 @pytest.fixture
 def fake_settings():
     class FakeSettings(Settings):
-        def __init__(self, peckerfile='Peckerfile'):
-            self._validation_mask = {
+        @staticmethod
+        def validation_mask():
+            return {
                 'foo': {
                     'type': 'dict',
                     'schema': {
@@ -52,13 +57,16 @@ def fake_settings():
                     }
                 }
             }
-            self._default_data = {
+
+        @staticmethod
+        def default_values():
+            return {
                 'foo': {
                     'bar': True,
                     'baz': 'wunderbar'
                 }
             }
-            super(FakeSettings, self).__init__(peckerfile)
+
     return FakeSettings()
 
 
@@ -125,7 +133,8 @@ def test_extension_with_valid_settings(settings, derived_settings):
     assert settings.get('foo', 'baz') == -0.5
 
 
-def test_extension_with_valid_settings_and_massive_modification(settings, derived_settings):
+def test_extension_with_valid_settings_and_massive_modification(settings,
+                                                                derived_settings):
     settings.extend(derived_settings)
     settings.set({
         'foo': {

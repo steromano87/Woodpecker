@@ -66,6 +66,6 @@ def test_set_get_pecker_id(variablejar):
     assert variablejar.get_pecker_id() == 'abcde'
 
 
-def test_set_get_current_transaction(variablejar):
-    variablejar.set_current_transaction('Test Transaction')
-    assert variablejar.get_current_transaction() == 'Test Transaction'
+def test_set_get_current_sequence(variablejar):
+    variablejar.set_current_sequence('Test Transaction')
+    assert variablejar.get_current_sequence() == 'Test Transaction'
