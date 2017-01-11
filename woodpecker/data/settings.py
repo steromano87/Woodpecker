@@ -1,6 +1,5 @@
 import os
 import six
-import abc
 import pprint
 
 import yaml
@@ -10,10 +9,8 @@ import cerberus
 class Settings(object):
     """
     Abstract class that is subclassed by the settings specific
-    to each transaction type
+    to each sequence type
     """
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self, peckerfile='Peckerfile'):
         # Absolute path to Peckerfile
         self._peckerfile = os.path.abspath(peckerfile)
