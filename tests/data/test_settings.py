@@ -165,3 +165,13 @@ def test_extension_symmetry(settings, derived_settings):
            extended_derived_settings._validation_mask
     assert extended_settings._default_values == \
            extended_derived_settings._default_values
+
+
+def test_multiple_extension(settings, derived_settings):
+    obj_settings = Settings()
+    obj_settings.extend(settings)
+    obj_settings.extend(derived_settings)
+    obj_settings.set('foo', 'bar', False)
+    obj_settings.set('foo', 'baz', -0.5)
+    assert obj_settings.get('foo', 'bar') is False
+    assert obj_settings.get('foo', 'baz') == -0.5
