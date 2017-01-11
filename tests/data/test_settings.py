@@ -1,4 +1,5 @@
 import pytest
+import copy
 
 from woodpecker.data.settings import Settings, BaseSettings
 
@@ -152,3 +153,15 @@ def test_extension_with_invalid_settings(settings):
 def test_extension_with_non_consistent_settings(settings, fake_settings):
     with pytest.raises(ValueError):
         settings.extend(fake_settings)
+
+
+def test_extension_symmetry(settings, derived_settings):
+    extended_settings = copy.deepcopy(settings)
+    extended_derived_settings = copy.deepcopy(derived_settings)
+    extended_settings.extend(derived_settings)
+    extended_derived_settings.extend(settings)
+    assert extended_settings.dump() == extended_derived_settings.dump()
+    assert extended_settings._validation_mask ==\
+           extended_derived_settings._validation_mask
+    assert extended_settings._default_values == \
+           extended_derived_settings._default_values
