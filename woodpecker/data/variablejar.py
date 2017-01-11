@@ -44,6 +44,9 @@ class VariableJar(object):
             raise KeyError("The variable name '{name}' is reserved "
                            "and cannot be used".format(name=name))
 
+    def is_set(self, name):
+        return name in six.viewkeys(self._public_variables)
+
     def delete(self, name):
         if name not in six.viewkeys(self._reserved_variables):
             if name in six.viewkeys(self._public_variables):
