@@ -66,17 +66,24 @@ class VariableJar(object):
             'last_updated_on': datetime.datetime.now(),
             'last_updated_item': None,
             'pecker_id': None,
-            'current_transaction': None
+            'current_sequence': None,
+            'current_iteration': 0
         }
 
     def set_pecker_id(self, pecker_id):
         self._reserved_variables['pecker_id'] = pecker_id
 
-    def set_current_transaction(self, transaction_name):
-        self._reserved_variables['current_transaction'] = transaction_name
+    def set_current_sequence(self, sequence_name):
+        self._reserved_variables['current_sequence'] = sequence_name
+
+    def set_current_iteration(self, iteration):
+        self._reserved_variables['current_iteration'] = iteration
 
     def get_pecker_id(self):
         return self._reserved_variables['pecker_id']
 
-    def get_current_transaction(self):
-        return self._reserved_variables['current_transaction']
+    def get_current_sequence(self):
+        return self._reserved_variables['current_sequence']
+
+    def get_current_iteration(self):
+        return self._reserved_variables['current_iteration']
