@@ -49,3 +49,7 @@ class BaseSequence(object):
 
         # Now, wait
         time.sleep(dbl_amount_final)
+
+    @staticmethod
+    def default_settings():
+        return BaseSettings()
