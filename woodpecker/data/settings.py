@@ -153,7 +153,8 @@ class BaseSettings(Settings):
                 ]
             },
             'runtime': {
-                'raise_error_if_variable_not_defined': False
+                'raise_error_if_variable_not_defined': False,
+                'each_sequence_is_transaction': True
             }
         }
 
@@ -265,6 +266,9 @@ class BaseSettings(Settings):
                 'type': 'dict',
                 'schema': {
                     'raise_error_if_variable_not_defined': {
+                        'type': 'boolean'
+                    },
+                    'each_sequence_is_transaction': {
                         'type': 'boolean'
                     }
                 }
