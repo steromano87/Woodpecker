@@ -142,7 +142,8 @@ class BaseSettings(Settings):
                 'max_entries_before_flush': 10,
                 'max_interval_before_flush': 30.0,
                 'results_file': 'results.sqlite',
-                'sysmonitor_polling_interval': 5.0
+                'sysmonitor_polling_interval': 5.0,
+                'use_compressed_logs': True
             },
             'spawning': {
                 'spawning_mode': 'threads',
@@ -259,6 +260,9 @@ class BaseSettings(Settings):
                         'type': 'number',
                         'min': 0,
                         'coerce': float
+                    },
+                    'use_compressed_logs': {
+                        'type': 'boolean'
                     }
                 }
             },
