@@ -105,3 +105,20 @@ class BaseSequence(object):
     @staticmethod
     def default_settings():
         return BaseSettings()
+
+    def run_steps(self):
+        # If each sequence is treated as a transaction, add the sequence itself
+        # to the list of active transactions
+        if self.settings.get('runtime', 'each_sequence_is_transaction'):
+            self.start_transaction(self.__class__.__name__)
+
+        self.steps()
+
+        # If each sequence is treated as a transaction, end the current sequence
+        if self.settings.get('runtime', 'each_sequence_is_transaction'):
+            self.end_transaction(self.__class__.__name__)
+
+        return self.settings, \
+            self.variables, \
+            self._parameters, \
+            self._transactions
