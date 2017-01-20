@@ -2,6 +2,7 @@ import abc
 import six
 
 import requests
+import grequests
 
 from woodpecker.data.settings import Settings
 from woodpecker.data.variablejar import VariableJar

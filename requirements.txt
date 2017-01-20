@@ -5,6 +5,7 @@ colorama
 click
 psutil
 requests
+grequests
 PyYAML
 six
 Cerberus
