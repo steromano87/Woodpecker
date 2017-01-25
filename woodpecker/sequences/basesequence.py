@@ -4,6 +4,7 @@ import random
 import time
 import datetime
 import msgpack
+import logging
 
 from woodpecker.data.settings import BaseSettings
 from woodpecker.data.variablejar import VariableJar
@@ -17,7 +18,9 @@ class BaseSequence(object):
                  log_queue=six.moves.queue(),
                  variables=VariableJar(),
                  parameters=None,
-                 transactions=None):
+                 transactions=None,
+                 debug=False,
+                 log_file=None):
         # Settings
         self.settings = settings
 
@@ -32,6 +35,21 @@ class BaseSequence(object):
 
         # Transactions (passed from outside)
         self._transactions = transactions or {}
+
+        # Inline logger (to debug and replay the sequences)
+        self._inline_logger = logging.getLogger(self.__class__.__name__)
+        obj_console_logger = logging.StreamHandler()
+        self._inline_logger.addHandler(obj_console_logger)
+        if debug:
+            self._inline_logger.setLevel(logging.DEBUG)
+        else:
+            self._inline_logger.setLevel(logging.INFO)
+
+        # File logger (only if filename is provided)
+        if log_file:
+            obj_file_logger = logging.FileHandler(log_file)
+            obj_file_logger.setLevel(logging.INFO)
+            self._inline_logger.addHandler(obj_file_logger)
 
     @abc.abstractmethod
     def steps(self):
