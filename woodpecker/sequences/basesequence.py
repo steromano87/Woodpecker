@@ -150,7 +150,9 @@ class BaseSequence(object):
         if self.settings.get('runtime', 'each_sequence_is_transaction'):
             self.start_transaction(self.__class__.__name__)
 
+        self._inline_logger.debug('Sequence started')
         self.steps()
+        self._inline_logger.debug('Sequence ended')
 
         # If each sequence is treated as a transaction, end the current sequence
         if self.settings.get('runtime', 'each_sequence_is_transaction'):
