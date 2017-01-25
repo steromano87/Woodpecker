@@ -3,8 +3,9 @@ import abc
 import random
 import time
 import datetime
-import msgpack
 import logging
+
+import msgpack
 
 from woodpecker.data.settings import BaseSettings
 from woodpecker.data.variablejar import VariableJar
