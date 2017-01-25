@@ -108,7 +108,7 @@ class BaseSequence(object):
         self._inline_logger.debug(
             'Transaction "{transaction}" started'.format(
                 transaction=name
-        ))
+            ))
 
     def end_transaction(self, name):
         try:
