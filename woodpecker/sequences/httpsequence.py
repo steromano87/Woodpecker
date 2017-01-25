@@ -71,28 +71,48 @@ class HttpSequence(BaseSequence):
 
         # Execute the request
         obj_session = self.variables.get('__http_session')
+        str_status_code = None
+        int_response_size = 0
         try:
             obj_last_response = obj_session.request(method, url, **kwargs)
+            str_status_code = obj_last_response.status_code
+            int_response_size = obj_last_response.content
             self.variables.set('__last_response', obj_last_response)
-        except requests.exceptions.SSLError:
-            obj_last_response = None
-        self.variables.set('__http_session', obj_session)
+            self._inline_logger.debug(
+                'HTTP Request - {method} - {url} - {status} - {size}'.format(
+                    method=method,
+                    url=url,
+                    status=str_status_code,
+                    size=int_response_size
+                ))
+        except requests.exceptions.SSLError as error:
+            str_status_code = 'SSL Error'
+            self._inline_logger.error(
+                'SSL error - {method} - {url} - {message}'.format(
+                    method=method,
+                    url=url,
+                    message=str(error)
+                )
+            )
+        finally:
+            self.variables.set('__http_session', obj_session)
 
-        # Log the result of the request
-        self.log('step', {
-            'step_type': 'http_request',
-            'active_transactions': self._transactions.keys(),
-            'step_content': {
-                'name': name,
-                'url': url,
-                'method': method,
-                'params': kwargs.get('params', None),
-                'data': kwargs.get('data', None) or kwargs.get('json', None),
-                'headers': kwargs['headers'],
-                'response_status': obj_last_response.status_code,
-                'response_size': obj_last_response.content
-            }
-        })
+            # Log the result of the request
+            self.log('step', {
+                'step_type': 'http_request',
+                'active_transactions': self._transactions.keys(),
+                'step_content': {
+                    'name': name,
+                    'url': url,
+                    'method': method,
+                    'params': kwargs.get('params', None),
+                    'data': kwargs.get('data', None)
+                    or kwargs.get('json', None),
+                    'headers': kwargs['headers'],
+                    'response_status': str_status_code,
+                    'response_size': int_response_size
+                }
+            })
 
     def get(self,
             name,
