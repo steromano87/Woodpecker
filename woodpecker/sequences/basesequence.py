@@ -57,8 +57,8 @@ class BaseSequence(object):
         pass
 
     # Think times
-    @staticmethod
-    def think_time(duration='fixed',
+    def think_time(self,
+                   duration='fixed',
                    amount=5,
                    **kwargs):
         # Determine the amount of time to wait from the type of think time
@@ -72,6 +72,10 @@ class BaseSequence(object):
 
         # Now, wait
         time.sleep(dbl_amount_final)
+        self._inline_logger.debug('Think time: {amount} ({duration})'.format(
+            amount=amount,
+            duration=duration
+        ))
 
     def log(self, message_type, log_message):
         mix_message = {
@@ -100,6 +104,10 @@ class BaseSequence(object):
                 'timestamp': str_start_timestamp
             }
         })
+        self._inline_logger.debug(
+            'Transaction "{transaction}" started'.format(
+                transaction=name
+        ))
 
     def end_transaction(self, name):
         try:
@@ -112,13 +120,24 @@ class BaseSequence(object):
                     'timestamp': str_end_timestamp
                 }
             })
+            self._inline_logger.debug(
+                'Transaction "{transaction}" ended'.format(
+                    transaction=name
+                ))
             self._transactions.pop(name)
         except KeyError:
-            raise KeyError(
+            str_error_message = \
                 'Transaction {name} set to end, but never started'.format(
                     name=name
                 )
-            )
+            self.log('event', {
+                'event_type': 'error',
+                'event_content': {
+                    'message': str_error_message
+                }
+            })
+            self._inline_logger.error(str_error_message)
+            raise KeyError(str_error_message)
 
     @staticmethod
     def default_settings():
