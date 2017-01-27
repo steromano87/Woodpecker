@@ -1,15 +1,15 @@
-import six
 import abc
-import random
-import time
 import datetime
 import logging
+import random
 import sys
+import time
 
 import msgpack
+import six
 
-from woodpecker.data.settings import BaseSettings
 from woodpecker.data.variablejar import VariableJar
+from woodpecker.settings.basesettings import BaseSettings
 
 
 class BaseSequence(object):

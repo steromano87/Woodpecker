@@ -1,7 +1,8 @@
 import datetime
+
 import six
 
-from woodpecker.data.settings import BaseSettings
+from woodpecker.settings.basesettings import BaseSettings
 
 
 class VariableJar(object):

@@ -1,7 +1,8 @@
-import pytest
 import copy
 
-from woodpecker.data.settings import Settings, BaseSettings
+import pytest
+
+from woodpecker.settings.basesettings import Settings, BaseSettings
 
 
 @pytest.fixture

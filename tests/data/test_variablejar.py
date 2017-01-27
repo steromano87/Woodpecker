@@ -1,7 +1,7 @@
 import pytest
 
-from woodpecker.data.settings import BaseSettings
 from woodpecker.data.variablejar import VariableJar
+from woodpecker.settings.basesettings import BaseSettings
 
 
 @pytest.fixture
