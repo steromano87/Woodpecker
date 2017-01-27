@@ -62,13 +62,13 @@ class BaseSequence(object):
 
     # Think times
     def think_time(self,
-                   duration='fixed',
+                   kind='fixed',
                    amount=5,
                    **kwargs):
         # Determine the amount of time to wait from the type of think time
-        if duration == 'fixed':
+        if kind == 'fixed':
             dbl_amount_final = amount
-        elif duration == 'gaussian':
+        elif kind == 'gaussian':
             dbl_std = kwargs.get('std', 0.5 * amount)
             dbl_amount_final = abs(random.gauss(dbl_std))
         else:
@@ -78,7 +78,7 @@ class BaseSequence(object):
         time.sleep(dbl_amount_final)
         self._inline_logger.debug('Think time: {amount} ({duration})'.format(
             amount=amount,
-            duration=duration
+            duration=kind
         ))
 
     def log(self, message_type, log_message):
