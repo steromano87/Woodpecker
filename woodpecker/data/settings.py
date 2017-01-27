@@ -143,7 +143,9 @@ class BaseSettings(Settings):
                 'max_interval_before_flush': 30.0,
                 'results_file': 'results.sqlite',
                 'sysmonitor_polling_interval': 5.0,
-                'use_compressed_logs': True
+                'use_compressed_logs': True,
+                'inline_log_format':
+                    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             },
             'spawning': {
                 'spawning_mode': 'threads',
@@ -263,6 +265,9 @@ class BaseSettings(Settings):
                     },
                     'use_compressed_logs': {
                         'type': 'boolean'
+                    },
+                    'inline_log_format': {
+                        'type': 'string'
                     }
                 }
             },
