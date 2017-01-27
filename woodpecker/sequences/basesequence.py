@@ -4,6 +4,7 @@ import random
 import time
 import datetime
 import logging
+import sys
 
 import msgpack
 
@@ -16,12 +17,12 @@ class BaseSequence(object):
 
     def __init__(self,
                  settings=BaseSettings(),
-                 log_queue=six.moves.queue(),
+                 log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
                  parameters=None,
                  transactions=None,
                  debug=False,
-                 log_file=None):
+                 inline_log_sinks=(sys.stdout,)):
         # Settings
         self.settings = settings
 
@@ -39,18 +40,20 @@ class BaseSequence(object):
 
         # Inline logger (to debug and replay the sequences)
         self._inline_logger = logging.getLogger(self.__class__.__name__)
-        obj_console_logger = logging.StreamHandler()
-        self._inline_logger.addHandler(obj_console_logger)
         if debug:
             self._inline_logger.setLevel(logging.DEBUG)
         else:
             self._inline_logger.setLevel(logging.INFO)
 
-        # File logger (only if filename is provided)
-        if log_file:
-            obj_file_logger = logging.FileHandler(log_file)
-            obj_file_logger.setLevel(logging.INFO)
-            self._inline_logger.addHandler(obj_file_logger)
+        # Cycle through all the given streams and add them to logger
+        for obj_log_sink in inline_log_sinks:
+            obj_inline_handler = logging.StreamHandler(obj_log_sink)
+            obj_inline_handler.setFormatter(
+                logging.Formatter(
+                    self.settings.get('logging', 'inline_log_format')
+                )
+            )
+            self._inline_logger.addHandler(obj_inline_handler)
 
     @abc.abstractmethod
     def steps(self):
