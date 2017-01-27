@@ -95,6 +95,9 @@ class BaseSequence(object):
         self._log_queue.put(mix_message)
         self._log_queue.task_done()
 
+    def log_inline(self, level, message):
+        self._inline_logger.log(level, message)
+
     def start_transaction(self, name):
         str_start_timestamp = str(datetime.datetime.now())
         self._transactions[name] = {
