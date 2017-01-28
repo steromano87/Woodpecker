@@ -1,10 +1,12 @@
 import abc
 import six
+import sys
 
 import requests
 import grequests
 
-from woodpecker.data.settings import Settings
+from woodpecker.settings.httpsettings import HttpSettings
+from woodpecker.settings.basesettings import BaseSettings
 from woodpecker.data.variablejar import VariableJar
 from woodpecker.sequences.basesequence import BaseSequence
 
@@ -14,13 +16,22 @@ class HttpSequence(BaseSequence):
 
     def __init__(self,
                  settings=HttpSettings(),
-                 log_queue=six.moves.queue(),
+                 log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
-                 parameters=None):
+                 parameters=None,
+                 transactions=None,
+                 debug=False,
+                 inline_log_sinks=(sys.stdout,)):
+        # Extend the standard settings
+        obj_settings = BaseSettings()
+        settings.extend(obj_settings)
         super(HttpSequence, self).__init__(settings=settings,
                                            log_queue=log_queue,
                                            variables=variables,
-                                           parameters=parameters)
+                                           parameters=parameters,
+                                           transactions=transactions,
+                                           debug=debug,
+                                           inline_log_sinks=inline_log_sinks)
         if not self.variables.is_set('__http_session'):
             self.variables.set('__http_session', requests.Session())
         if not self.variables.is_set('__last_response'):
@@ -31,14 +42,12 @@ class HttpSequence(BaseSequence):
         return HttpSettings()
 
     def http_request(self,
-                     name,
                      url,
                      method='GET',
                      **kwargs):
         """
         Generic HTTP request
 
-        :param name: the name of the request (useful for logging)
         :param url: the URL of the request
         :param method: a standard HTTP request method
         :param kwargs: arguments to be passed to requests library
@@ -69,24 +78,15 @@ class HttpSequence(BaseSequence):
         if not kwargs['verify']:
             requests.packages.urllib3.disable_warnings()
 
+        # Add logging hook
+        kwargs['hooks'] = {'response': self._request_log_hook}
+
         # Execute the request
         obj_session = self.variables.get('__http_session')
-        str_status_code = None
-        int_response_size = 0
         try:
             obj_last_response = obj_session.request(method, url, **kwargs)
-            str_status_code = obj_last_response.status_code
-            int_response_size = obj_last_response.content
             self.variables.set('__last_response', obj_last_response)
-            self._inline_logger.debug(
-                'HTTP Request - {method} - {url} - {status} - {size}'.format(
-                    method=method,
-                    url=url,
-                    status=str_status_code,
-                    size=int_response_size
-                ))
         except requests.exceptions.SSLError as error:
-            str_status_code = 'SSL Error'
             self._inline_logger.error(
                 'SSL error - {method} - {url} - {message}'.format(
                     method=method,
@@ -97,25 +97,7 @@ class HttpSequence(BaseSequence):
         finally:
             self.variables.set('__http_session', obj_session)
 
-            # Log the result of the request
-            self.log('step', {
-                'step_type': 'http_request',
-                'active_transactions': self._transactions.keys(),
-                'step_content': {
-                    'name': name,
-                    'url': url,
-                    'method': method,
-                    'params': kwargs.get('params', None),
-                    'data': kwargs.get('data', None)
-                    or kwargs.get('json', None),
-                    'headers': kwargs['headers'],
-                    'response_status': str_status_code,
-                    'response_size': int_response_size
-                }
-            })
-
     def get(self,
-            name,
             url,
             **kwargs):
         """
@@ -125,60 +107,78 @@ class HttpSequence(BaseSequence):
         :param url: the URL of the request
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(name, url, method='GET', **kwargs)
+        self.http_request(url, method='GET', **kwargs)
 
     def post(self,
-             name,
              url,
              **kwargs):
         """
         Shorthand for POST requests
 
-        :param name: the name of the request (useful for logging)
         :param url: the URL of the request
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(name, url, method='POST', **kwargs)
+        self.http_request(url, method='POST', **kwargs)
 
     def put(self,
-            name,
             url,
             **kwargs):
         """
         Shorthand for PUT requests
 
-        :param name: the name of the request (useful for logging)
         :param url: the URL of the request
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(name, url, method='PUT', **kwargs)
+        self.http_request(url, method='PUT', **kwargs)
 
     def patch(self,
-              name,
               url,
               **kwargs):
         """
         Shorthand for PATCH requests
 
-        :param name: the name of the request (useful for logging)
         :param url: the URL of the request
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(name, url, method='PATCH', **kwargs)
+        self.http_request(url, method='PATCH', **kwargs)
 
     def delete(self,
-               name,
                url,
                **kwargs):
         """
         Shorthand for DELETE requests
 
-        :param name: the name of the request (useful for logging)
         :param url: the URL of the request
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(name, url, method='DELETE', **kwargs)
+        self.http_request(url, method='DELETE', **kwargs)
 
+    def _request_log_hook(self, response, **kwargs):
+        # Log request status in inline logger
+        self._inline_logger.debug(
+            'HTTP Request - {method} - {url} - '
+            '{status} - {elapsed} ms - {size} bytes'.format(
+                method=response.request.method,
+                url=response.request.url,
+                status=' '.join((str(response.status_code), response.reason)),
+                elapsed=response.elapsed.total_seconds() * 1000,
+                size=len(response.content)
+            ))
 
-class HttpSettings(Settings):
-    pass
+        # Log the result of the request
+        self.log('step', {
+            'step_type': 'http_request',
+            'active_transactions': self._transactions.keys(),
+            'step_content': {
+                'url': response.request.url,
+                'method': response.request.method,
+                'body': response.request.body,
+                # Conversion from CaseInsensitive dict to normal dict
+                'headers': dict(response.request.headers),
+                'response_url': response.url,
+                'response_status': ' '.join((str(response.status_code),
+                                             response.reason)),
+                'response_size': len(response.content),
+                'elapsed': response.elapsed.total_seconds() * 1000
+            }
+        })
