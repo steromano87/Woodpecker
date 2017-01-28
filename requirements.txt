@@ -1,7 +1,11 @@
 msgpack-python
-gevent
+greenlet
 python-dateutil
 colorama
 click
 psutil
 requests
+grequests
+PyYAML
+six
+Cerberus
