@@ -88,14 +88,14 @@ class Settings(object):
     def validate(self):
         try:
             return self._validator.validate(self._data), \
-                   pprint.pprint(self._validator.errors)
+                   pprint.pformat(self._validator.errors)
         except cerberus.DocumentError as error:
             return False, str(error)
 
     def extend(self, additional_settings):
         if isinstance(additional_settings, Settings):
             additional_settings.load()
-            bool_is_valid, str_message = additional_settings.validate()
+            (bool_is_valid, str_message) = additional_settings.validate()
             if bool_is_valid:
                 self._validation_mask.update(
                     additional_settings._validation_mask
