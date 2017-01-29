@@ -10,7 +10,8 @@ class HttpSettings(Settings):
                 'allow_redirects': True,
                 'ignore_ssl_errors': True,
                 'proxies': {},
-                'default_timeout': 5.0
+                'default_timeout': 5.0,
+                'max_async_concurrent_requests': 10
             }
         }
 
@@ -36,6 +37,10 @@ class HttpSettings(Settings):
                         'type': 'number',
                         'min': 0.0,
                         'coerce': float
+                    },
+                    'max_async_concurrent_requests': {
+                        'type': 'integer',
+                        'min': 0
                     }
                 }
             }
