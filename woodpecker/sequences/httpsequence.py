@@ -103,7 +103,6 @@ class HttpSequence(BaseSequence):
         """
         Shorthand for GET requests
 
-        :param name: the name of the request (useful for logging)
         :param url: the URL of the request
         :param kwargs: arguments to be passed to requests library
         """
