@@ -107,7 +107,7 @@ class HttpSequence(BaseSequence):
         self._patch_kwargs(kwargs)
 
         # Add logging hook
-        kwargs['hooks'] = {'response': self._request_log_hook}
+        kwargs['hooks'] = {'response': self._request_log_hook(is_async=False)}
 
         # Execute the request
         obj_session = self.variables.get('__http_session')
@@ -180,68 +180,45 @@ class HttpSequence(BaseSequence):
         """
         self.http_request(url, method='DELETE', **kwargs)
 
-    def _request_log_hook(self, response, **kwargs):
-        # TODO: manage redirect logging
-        # Log request status in inline logger
-        self._inline_logger.debug(
-            'HTTP Request - {method} - {url} - '
-            '{status} - {elapsed} ms - {size} bytes'.format(
-                method=response.request.method,
-                url=response.request.url,
-                status=' '.join((str(response.status_code), response.reason)),
-                elapsed=response.elapsed.total_seconds() * 1000,
-                size=len(response.content)
-            ))
+    def _request_log_hook(self, is_async=False):
+        def _request_log_hook_gen(response, **kwargs):
+            # TODO: manage redirect logging
+            # Log request status in inline logger
+            if is_async:
+                str_inline_message = \
+                    'HTTP Request (async) - {method} - {url} - ' \
+                    '{status} - {elapsed} ms - {size} bytes'
+            else:
+                str_inline_message = 'HTTP Request - {method} - {url} - ' \
+                                     '{status} - {elapsed} ms - {size} bytes'
+            self._inline_logger.debug(str_inline_message.format(
+                    method=response.request.method,
+                    url=response.request.url,
+                    status=' '.join((str(response.status_code),
+                                     response.reason)),
+                    elapsed=response.elapsed.total_seconds() * 1000,
+                    size=len(response.content)
+                ))
 
-        # Log the result of the request
-        self.log('step', {
-            'step_type': 'http_request',
-            'active_transactions': self._transactions.keys(),
-            'step_content': {
-                'url': response.request.url,
-                'method': response.request.method,
-                'body': response.request.body,
-                # Conversion from CaseInsensitive dict to normal dict
-                'headers': dict(response.request.headers),
-                'response_url': response.url,
-                'response_status': ' '.join((str(response.status_code),
-                                             response.reason)),
-                'response_size': len(response.content),
-                'elapsed': response.elapsed.total_seconds() * 1000,
-                'async': False
-            }
-        })
-
-    def _async_request_log_hook(self, response, **kwargs):
-        # Log request status in inline logger
-        self._inline_logger.debug(
-            'HTTP Request (async) - {method} - {url} - '
-            '{status} - {elapsed} ms - {size} bytes'.format(
-                method=response.request.method,
-                url=response.request.url,
-                status=' '.join((str(response.status_code), response.reason)),
-                elapsed=response.elapsed.total_seconds() * 1000,
-                size=len(response.content)
-            ))
-
-        # Log the result of the request
-        self.log('step', {
-            'step_type': 'http_request',
-            'active_transactions': self._transactions.keys(),
-            'step_content': {
-                'url': response.request.url,
-                'method': response.request.method,
-                'body': response.request.body,
-                # Conversion from CaseInsensitive dict to normal dict
-                'headers': dict(response.request.headers),
-                'response_url': response.url,
-                'response_status': ' '.join((str(response.status_code),
-                                             response.reason)),
-                'response_size': len(response.content),
-                'elapsed': response.elapsed.total_seconds() * 1000,
-                'async': True
-            }
-        })
+            # Log the result of the request
+            self.log('step', {
+                'step_type': 'http_request',
+                'active_transactions': self._transactions.keys(),
+                'step_content': {
+                    'url': response.request.url,
+                    'method': response.request.method,
+                    'body': response.request.body,
+                    # Conversion from CaseInsensitive dict to normal dict
+                    'headers': dict(response.request.headers),
+                    'response_url': response.url,
+                    'response_status': ' '.join((str(response.status_code),
+                                                 response.reason)),
+                    'response_size': len(response.content),
+                    'elapsed': response.elapsed.total_seconds() * 1000,
+                    'async': is_async
+                }
+            })
+        return _request_log_hook_gen
 
     def async_http_request(self,
                            url,
@@ -258,7 +235,7 @@ class HttpSequence(BaseSequence):
         self._patch_kwargs(kwargs)
 
         # Add async response log hook
-        kwargs['hooks'] = {'response': self._async_request_log_hook}
+        kwargs['hooks'] = {'response': self._request_log_hook(is_async=True)}
 
         # Create base request
         obj_async_request = grequests.AsyncRequest(method,
