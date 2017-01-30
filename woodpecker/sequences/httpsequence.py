@@ -89,7 +89,8 @@ class HttpSequence(BaseSequence):
         self._async_pool_active = False
         grequests.map(self._async_pool,
                       size=self.settings.get('http',
-                                             'max_async_concurrent_requests'))
+                                             'max_async_concurrent_requests'),
+                      exception_handler=self._async_exception_handler)
         self._async_pool = []
 
     def http_request(self,
@@ -203,7 +204,7 @@ class HttpSequence(BaseSequence):
         self.http_request(url, method='DELETE',
                           is_resource=is_resource, **kwargs)
 
-    def _request_log_hook(self, is_async=False):
+    def _request_log_hook(self, is_async=False, is_resource=False):
         def _request_log_hook_gen(response, **kwargs):
             # TODO: manage redirect logging
             # Log request status in inline logger
@@ -241,7 +242,14 @@ class HttpSequence(BaseSequence):
                     'async': is_async
                 }
             })
+
+            if is_async and not is_resource and not response.ok:
+                response.raise_for_status()
         return _request_log_hook_gen
+
+    def _async_exception_handler(self, request, exception):
+        if not request.kwargs.get('is_resource', False):
+            self._inline_logger.error(str(exception))
 
     def async_http_request(self,
                            url,
@@ -262,7 +270,10 @@ class HttpSequence(BaseSequence):
         self._patch_kwargs(kwargs)
 
         # Add async response log hook
-        kwargs['hooks'] = {'response': self._request_log_hook(is_async=True)}
+        kwargs['hooks'] = {'response': self._request_log_hook(
+            is_async=True,
+            is_resource=is_resource
+        )}
 
         # Create base request
         obj_async_request = grequests.AsyncRequest(method,
