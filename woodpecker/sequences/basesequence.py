@@ -154,7 +154,9 @@ class BaseSequence(object):
         # If each sequence is treated as a transaction, add the sequence itself
         # to the list of active transactions
         if self.settings.get('runtime', 'each_sequence_is_transaction'):
-            self.start_transaction(self.__class__.__name__)
+            self.start_transaction('{sequence}_transaction'.format(
+                sequence=self.__class__.__name__
+            ))
 
         self._inline_logger.debug('Sequence started')
         self.steps()
@@ -162,7 +164,9 @@ class BaseSequence(object):
 
         # If each sequence is treated as a transaction, end the current sequence
         if self.settings.get('runtime', 'each_sequence_is_transaction'):
-            self.end_transaction(self.__class__.__name__)
+            self.end_transaction('{sequence}_transaction'.format(
+                sequence=self.__class__.__name__
+            ))
 
         return self.settings, \
             self.variables, \
