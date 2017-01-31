@@ -81,6 +81,7 @@ class HttpSequence(BaseSequence):
         when a end_async call is made.
         """
         self._async_pool_active = True
+        self._inline_logger.debug('Starting async requests pool')
 
     def end_async_pool(self):
         """
@@ -92,6 +93,7 @@ class HttpSequence(BaseSequence):
                                              'max_async_concurrent_requests'),
                       exception_handler=self._async_exception_handler)
         self._async_pool = []
+        self._inline_logger.debug('Async requests pool ended')
 
     def http_request(self,
                      url,
