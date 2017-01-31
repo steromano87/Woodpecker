@@ -123,6 +123,7 @@ class HttpSequence(BaseSequence):
             self.variables.set('__last_response', obj_last_response)
         except requests.exceptions.RequestException as error:
             self._inline_logger.error(str(error))
+            raise error
         finally:
             self.variables.set('__http_session', obj_session)
 
@@ -250,6 +251,7 @@ class HttpSequence(BaseSequence):
     def _async_exception_handler(self, request, exception):
         if not request.kwargs.get('is_resource', False):
             self._inline_logger.error(str(exception))
+            raise exception
 
     def async_http_request(self,
                            url,
