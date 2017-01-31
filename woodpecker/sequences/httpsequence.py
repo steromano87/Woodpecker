@@ -217,7 +217,6 @@ class HttpSequence(BaseSequence):
 
     def _request_log_hook(self, is_async=False, is_resource=False):
         def _request_log_hook_gen(response, **kwargs):
-            # TODO: manage redirect logging
             # Log request status in inline logger
             if is_async:
                 str_inline_message = \
