@@ -398,21 +398,67 @@ class HttpSequence(BaseSequence):
     # Assertions
     @staticmethod
     def assert_http_status(status):
-        return lambda response: response.status_code == status
+        def _assert_hook(response):
+            if response.status_code != status:
+                raise AssertionError(
+                    'Expected HTTP status {expected}, got {actual}'.format(
+                        expected=status,
+                        actual=response.status_code
+                    )
+                )
+        return _assert_hook
 
     @staticmethod
     def assert_body_has_text(target):
-        return lambda response: response.content.find(target) > -1
+        def _assert_hook(response):
+            if target not in response.content:
+                raise AssertionError(
+                    'Cannot find {target} in response body'.format(
+                        target=target
+                    )
+                )
+        return _assert_hook
 
     @staticmethod
     def assert_header_contains(key, value):
-        return lambda response: response.headers.get(key, None) == value
+        def _assert_hook(response):
+            if response.headers.get(key, None) is None:
+                raise AssertionError(
+                    'The header {key} is not present in response header'.format(
+                        key=key
+                    )
+                )
+            elif response.headers.get(key, None) != value:
+                raise AssertionError(
+                    'Expected header {key} to have value {value}, '
+                    'got {actual} instead'.format(
+                        key=key,
+                        value=value,
+                        actual=response.headers.get(key, None)
+                    )
+                )
+        return _assert_hook
 
     @staticmethod
     def assert_body_has_regex(regex):
-        return lambda response: re.search(regex, response.content) is not None
+        def _assert_hook(response):
+            if re.search(regex, response.content) is None:
+                raise AssertionError(
+                    'Cannot match regex {regex} in response body'.format(
+                        regex=regex
+                    )
+                )
+        return _assert_hook
 
     @staticmethod
     def assert_elapsed_within(amount_msec):
-        return lambda response: \
-            response.elapsed.total_seconds() * 1000 <= amount_msec
+        def _assert_hook(response):
+            if response.elapsed.total_seconds() * 1000 > amount_msec:
+                raise AssertionError(
+                    'Request did not complete within {amount} ms, '
+                    'elapsed time was {real_elapsed}'.format(
+                        amount=amount_msec,
+                        real_elapsed=response.elapsed.total_seconds() * 1000
+                    )
+                )
+        return _assert_hook
