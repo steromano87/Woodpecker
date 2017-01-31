@@ -114,8 +114,14 @@ class HttpSequence(BaseSequence):
         # Patches kwargs with settings and defaults
         self._patch_kwargs(kwargs)
 
-        # Add logging hook
-        kwargs['hooks'] = {'response': self._request_log_hook(is_async=False)}
+        # Add logging hook to existing hooks
+        response_hooks = kwargs.pop('response_hooks', [])
+        kwargs.setdefault(
+            'hooks', {'response': response_hooks}
+        )
+        kwargs['hooks']['response'].append(
+            self._request_log_hook(is_async=False)
+        )
 
         # Execute the request
         obj_session = self.variables.get('__http_session')
@@ -293,11 +299,14 @@ class HttpSequence(BaseSequence):
         # Patches kwargs
         self._patch_kwargs(kwargs)
 
-        # Add async response log hook
-        kwargs['hooks'] = {'response': self._request_log_hook(
-            is_async=True,
-            is_resource=is_resource
-        )}
+        # Add async response log hook to existing hooks
+        response_hooks = kwargs.pop('response_hooks', [])
+        kwargs.setdefault(
+            'hooks', {'response': response_hooks}
+        )
+        kwargs['hooks']['response'].append(
+            self._request_log_hook(is_async=True, is_resource=is_resource)
+        )
 
         # Create base request
         obj_async_request = grequests.AsyncRequest(method,
@@ -396,9 +405,8 @@ class HttpSequence(BaseSequence):
                                 is_resource=is_resource, **kwargs)
 
     # Assertions
-    @staticmethod
-    def assert_http_status(status):
-        def _assert_hook(response):
+    def assert_http_status(self, status):
+        def _assert_hook(response, **kwargs):
             if response.status_code != status:
                 raise AssertionError(
                     'Expected HTTP status {expected}, got {actual}'.format(
@@ -406,22 +414,33 @@ class HttpSequence(BaseSequence):
                         actual=response.status_code
                     )
                 )
+            else:
+                self._inline_logger.debug(
+                    'HTTP Status matched the expected code '
+                    '{status_code}'.format(
+                        status_code=status
+                    )
+                )
         return _assert_hook
 
-    @staticmethod
-    def assert_body_has_text(target):
-        def _assert_hook(response):
+    def assert_body_has_text(self, target):
+        def _assert_hook(response, **kwargs):
             if target not in response.content:
                 raise AssertionError(
                     'Cannot find {target} in response body'.format(
                         target=target
                     )
                 )
+            else:
+                self._inline_logger.debug(
+                    'Text {target} correctly found in response body'.format(
+                        target=target
+                    )
+                )
         return _assert_hook
 
-    @staticmethod
-    def assert_header_contains(key, value):
-        def _assert_hook(response):
+    def assert_header_value(self, key, value):
+        def _assert_hook(response, **kwargs):
             if response.headers.get(key, None) is None:
                 raise AssertionError(
                     'The header {key} is not present in response header'.format(
@@ -437,28 +456,98 @@ class HttpSequence(BaseSequence):
                         actual=response.headers.get(key, None)
                     )
                 )
+            else:
+                self._inline_logger.debug(
+                    'Header {key} matched the expected value {value}'.format(
+                        key=key,
+                        value=value
+                    )
+                )
         return _assert_hook
 
-    @staticmethod
-    def assert_body_has_regex(regex):
-        def _assert_hook(response):
+    def assert_body_has_regex(self, regex):
+        def _assert_hook(response, **kwargs):
             if re.search(regex, response.content) is None:
                 raise AssertionError(
                     'Cannot match regex {regex} in response body'.format(
                         regex=regex
                     )
                 )
+            else:
+                self._inline_logger.debug(
+                    'Regex {regex} matched successfully in response body'.format(
+                        regex=regex
+                    )
+                )
         return _assert_hook
 
-    @staticmethod
-    def assert_elapsed_within(amount_msec):
-        def _assert_hook(response):
+    def assert_elapsed_within(self, amount_msec):
+        def _assert_hook(response, **kwargs):
             if response.elapsed.total_seconds() * 1000 > amount_msec:
                 raise AssertionError(
                     'Request did not complete within {amount} ms, '
-                    'elapsed time was {real_elapsed}'.format(
+                    'elapsed time was {real_elapsed} ms'.format(
                         amount=amount_msec,
                         real_elapsed=response.elapsed.total_seconds() * 1000
                     )
                 )
+            else:
+                self._inline_logger.debug(
+                    'Request completed within {threshold} ms: '
+                    'elapsed time was {elapsed} ms'.format(
+                        threshold=amount_msec,
+                        elapsed=response.elapsed.total_seconds() * 1000
+                    )
+                )
         return _assert_hook
+
+    # Parameter retrieval
+    def param_from_regex(self,
+                         name,
+                         regex,
+                         target='body',
+                         instances='first'):
+        def _param_hook(response, **kwargs):
+            # Find the target of regex
+            targets = {
+                'url': response.url,
+                'body': response.content,
+                'headers': '\n'.join(
+                    [': '.join((str(key), str(value)))
+                     for key, value in six.iteritems(response.headers)]
+                ),
+                'all': '\n'.join((
+                    response.url,
+                    '\n'.join(
+                        [': '.join((str(key), str(value)))
+                         for key, value in six.iteritems(response.headers)]
+                    ),
+                    response.content
+                ))
+            }
+            target_string = targets.get(target, response.content)
+
+            # If match is not found, raise exception, else save the parameter
+            if re.search(regex, target_string) is None:
+                raise IOError(
+                    'Cannot save the parameter {name}, '
+                    'no match found for regex {regex} in {target}'.format(
+                        regex=regex,
+                        name=name,
+                        target=target
+                    )
+                )
+            else:
+                matches = re.findall(regex, response.content)
+                if instances == 'first' or len(matches) == 1:
+                    parameter = matches[0]
+                else:
+                    parameter = matches
+                self.variables.set(name, parameter)
+                self._inline_logger.debug(
+                    'Saved parameter {name}: {value}'.format(
+                        name=name,
+                        value=parameter
+                    )
+                )
+        return _param_hook
