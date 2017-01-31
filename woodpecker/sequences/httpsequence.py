@@ -1,6 +1,7 @@
 import abc
 import six
 import sys
+import re
 
 import requests
 import grequests
@@ -393,3 +394,25 @@ class HttpSequence(BaseSequence):
         """
         self.async_http_request(url, method='DELETE',
                                 is_resource=is_resource, **kwargs)
+
+    # Assertions
+    @staticmethod
+    def assert_http_status(status):
+        return lambda response: response.status_code == status
+
+    @staticmethod
+    def assert_body_has_text(target):
+        return lambda response: response.content.find(target) > -1
+
+    @staticmethod
+    def assert_header_contains(key, value):
+        return lambda response: response.headers.get(key, None) == value
+
+    @staticmethod
+    def assert_body_has_regex(regex):
+        return lambda response: re.search(regex, response.content) is not None
+
+    @staticmethod
+    def assert_elapsed_within(amount_msec):
+        return lambda response: \
+            response.elapsed.total_seconds() * 1000 <= amount_msec
