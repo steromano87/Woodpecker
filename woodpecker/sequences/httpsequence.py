@@ -123,6 +123,16 @@ class HttpSequence(BaseSequence):
             self.variables.set('__last_response', obj_last_response)
         except requests.exceptions.RequestException as error:
             self._inline_logger.error(str(error))
+            self.log('event', {
+                'event_type': 'error',
+                'event_content': {
+                    'sequence': self.variables.get_current_sequence(),
+                    'iteration': self.variables.get_current_iteration(),
+                    'pecker_id': self.variables.get_pecker_id(),
+                    'url': url,
+                    'error': str(error)
+                }
+            })
             raise error
         finally:
             self.variables.set('__http_session', obj_session)
@@ -251,6 +261,16 @@ class HttpSequence(BaseSequence):
     def _async_exception_handler(self, request, exception):
         if not request.kwargs.get('is_resource', False):
             self._inline_logger.error(str(exception))
+            self.log('event', {
+                'event_type': 'error',
+                'event_content': {
+                    'sequence': self.variables.get_current_sequence(),
+                    'iteration': self.variables.get_current_iteration(),
+                    'pecker_id': self.variables.get_pecker_id(),
+                    'url': request.url,
+                    'error': str(exception)
+                }
+            })
             raise exception
 
     def async_http_request(self,
