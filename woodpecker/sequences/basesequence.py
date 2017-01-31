@@ -62,8 +62,8 @@ class BaseSequence(object):
 
     # Think times
     def think_time(self,
+                   amount,
                    kind='fixed',
-                   amount=5,
                    **kwargs):
         # Determine the amount of time to wait from the type of think time
         if kind == 'fixed':
@@ -76,9 +76,9 @@ class BaseSequence(object):
 
         # Now, wait
         time.sleep(dbl_amount_final)
-        self._inline_logger.debug('Think time: {amount} ({duration})'.format(
+        self._inline_logger.debug('Think time: {amount} ({kind})'.format(
             amount=amount,
-            duration=kind
+            kind=kind
         ))
 
     def log(self, message_type, log_message):
