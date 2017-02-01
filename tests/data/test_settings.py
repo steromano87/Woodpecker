@@ -162,10 +162,10 @@ def test_extension_symmetry(settings, derived_settings):
     extended_settings.extend(derived_settings)
     extended_derived_settings.extend(settings)
     assert extended_settings.dump() == extended_derived_settings.dump()
-    assert extended_settings._validation_mask ==\
-           extended_derived_settings._validation_mask
+    assert extended_settings._validation_mask == \
+        extended_derived_settings._validation_mask
     assert extended_settings._default_values == \
-           extended_derived_settings._default_values
+        extended_derived_settings._default_values
 
 
 def test_multiple_extension(settings, derived_settings):
