@@ -43,8 +43,8 @@ class HttpSequence(BaseSequence):
             self.variables.set('__last_response', None)
 
         # Add property to check if async pool is active
-        self._async_pool_active = False
-        self._async_pool = []
+        self._async_request_pool_active = False
+        self._async_request_pool = []
 
     def _patch_kwargs(self, args):
         # Request headers
@@ -81,19 +81,19 @@ class HttpSequence(BaseSequence):
         Starts async requests pool. The added requests will be performed
         when a end_async call is made.
         """
-        self._async_pool_active = True
+        self._async_request_pool_active = True
         self._inline_logger.debug('Starting async requests pool')
 
     def end_async_pool(self):
         """
         End the async requests pool and flushes all the added async requests
         """
-        self._async_pool_active = False
-        grequests.map(self._async_pool,
+        self._async_request_pool_active = False
+        grequests.map(self._async_request_pool,
                       size=self.settings.get('http',
                                              'max_async_concurrent_requests'),
                       exception_handler=self._async_exception_handler)
-        self._async_pool = []
+        self._async_request_pool = []
         self._inline_logger.debug('Async requests pool ended')
 
     def http_request(self,
@@ -314,15 +314,18 @@ class HttpSequence(BaseSequence):
                                                    **kwargs)
 
         # If async pool is active, add the quest to the pool
-        if self._async_pool_active:
-            self._async_pool.append(obj_async_request)
+        if self._async_request_pool_active:
+            self._async_request_pool.append(obj_async_request)
         else:
             # If async pool is not active, send the request immediately
-            grequests.send(obj_async_request,
-                           pool=grequests.Pool(
-                               self.settings.get(
-                                   'http', 'max_async_concurrent_requests')
-                           ))
+            async_greenlet = grequests.send(
+                obj_async_request,
+                pool=grequests.Pool(
+                    self.settings.get(
+                        'http', 'max_async_concurrent_requests')
+                )
+            )
+            self._async_greenlets.append(async_greenlet)
 
     def async_get(self,
                   url,

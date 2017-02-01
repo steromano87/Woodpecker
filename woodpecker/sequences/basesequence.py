@@ -7,6 +7,7 @@ import time
 
 import msgpack
 import six
+import gevent
 
 from woodpecker.data.variablejar import VariableJar
 from woodpecker.settings.basesettings import BaseSettings
@@ -37,6 +38,9 @@ class BaseSequence(object):
 
         # Transactions (passed from outside)
         self._transactions = transactions or {}
+
+        # Async Greenlets pool
+        self._async_greenlets = []
 
         # Inline logger (to debug and replay the sequences)
         self._inline_logger = logging.getLogger(self.__class__.__name__)
@@ -160,6 +164,7 @@ class BaseSequence(object):
 
         self._inline_logger.debug('Sequence started')
         self.steps()
+        gevent.joinall(self._async_greenlets)
         self._inline_logger.debug('Sequence ended')
 
         # If each sequence is treated as a transaction, end the current sequence
