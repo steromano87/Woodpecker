@@ -9,6 +9,8 @@ import msgpack
 import six
 import gevent
 
+from string import Template
+
 from woodpecker.data.variablejar import VariableJar
 from woodpecker.settings.basesettings import BaseSettings
 
@@ -20,7 +22,6 @@ class BaseSequence(object):
                  settings=BaseSettings(),
                  log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
-                 parameters=None,
                  transactions=None,
                  debug=False,
                  inline_log_sinks=(sys.stdout,)):
@@ -32,9 +33,6 @@ class BaseSequence(object):
 
         # Internal log queue
         self._log_queue = log_queue
-
-        # Parameters (passed from outside)
-        self._parameters = parameters or {}
 
         # Transactions (passed from outside)
         self._transactions = transactions or {}
@@ -154,6 +152,9 @@ class BaseSequence(object):
     def default_settings():
         return BaseSettings()
 
+    def _inject_variables(self, text):
+        return Template(text).safe_substitute(self.variables.dump())
+
     def run_steps(self):
         # If each sequence is treated as a transaction, add the sequence itself
         # to the list of active transactions
@@ -175,5 +176,4 @@ class BaseSequence(object):
 
         return self.settings, \
             self.variables, \
-            self._parameters, \
             self._transactions

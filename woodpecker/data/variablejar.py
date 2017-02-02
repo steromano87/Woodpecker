@@ -74,6 +74,9 @@ class VariableJar(object):
             'current_iteration': 0
         }
 
+    def dump(self):
+        return self._public_variables
+
     def set_pecker_id(self, pecker_id):
         self._reserved_variables['pecker_id'] = pecker_id
 
