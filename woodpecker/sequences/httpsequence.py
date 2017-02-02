@@ -299,6 +299,9 @@ class HttpSequence(BaseSequence):
         # Patches kwargs
         self._patch_kwargs(kwargs)
 
+        # Add specific header for async request (XHR)
+        kwargs['headers'].update({'X-Requested-With': 'XMLHttpRequest'})
+
         # Add async response log hook to existing hooks
         response_hooks = kwargs.pop('response_hooks', [])
         kwargs.setdefault(
