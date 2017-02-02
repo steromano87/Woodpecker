@@ -19,7 +19,6 @@ class HttpSequence(BaseSequence):
                  settings=HttpSettings(),
                  log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
-                 parameters=None,
                  transactions=None,
                  debug=False,
                  inline_log_sinks=(sys.stdout,)):
@@ -31,7 +30,6 @@ class HttpSequence(BaseSequence):
         super(HttpSequence, self).__init__(settings=settings,
                                            log_queue=log_queue,
                                            variables=variables,
-                                           parameters=parameters,
                                            transactions=transactions,
                                            debug=debug,
                                            inline_log_sinks=inline_log_sinks)
@@ -100,6 +98,7 @@ class HttpSequence(BaseSequence):
                      url,
                      method='GET',
                      is_resource=False,
+                     response_hooks=None,
                      **kwargs):
         """
         Generic HTTP request
@@ -115,7 +114,7 @@ class HttpSequence(BaseSequence):
         self._patch_kwargs(kwargs)
 
         # Add logging hook to existing hooks
-        response_hooks = kwargs.pop('response_hooks', [])
+        response_hooks = response_hooks or []
         kwargs.setdefault(
             'hooks', {'response': response_hooks}
         )
@@ -507,17 +506,18 @@ class HttpSequence(BaseSequence):
                 )
         return _assert_hook
 
-    # Parameter retrieval
-    def param_from_regex(self,
-                         name,
-                         regex,
-                         target='body',
-                         instances='first'):
+    # Variables retrieval
+    def var_from_regex(self,
+                       name,
+                       regex,
+                       target='body',
+                       instances='first',
+                       group=0):
         def _param_hook(response, **kwargs):
             # Find the target of regex
             targets = {
                 'url': response.url,
-                'body': response.content,
+                'body': response.text,
                 'headers': '\n'.join(
                     [': '.join((str(key), str(value)))
                      for key, value in six.iteritems(response.headers)]
@@ -528,7 +528,7 @@ class HttpSequence(BaseSequence):
                         [': '.join((str(key), str(value)))
                          for key, value in six.iteritems(response.headers)]
                     ),
-                    response.content
+                    response.text
                 ))
             }
             target_string = targets.get(target, response.content)
@@ -547,6 +547,9 @@ class HttpSequence(BaseSequence):
                 matches = re.findall(regex, response.content)
                 if instances == 'first' or len(matches) == 1:
                     parameter = matches[0]
+                    # Check for capturing groups, if more are present
+                    if isinstance(parameter, tuple):
+                        parameter = parameter[group]
                 else:
                     parameter = matches
                 self.variables.set(name, parameter)
