@@ -99,7 +99,7 @@ class BaseSequence(object):
         self._log_queue.put(mix_message)
         self._log_queue.task_done()
 
-    def log_inline(self, level, message):
+    def log_inline(self, message, level=logging.INFO):
         self._inline_logger.log(level, message)
 
     def start_transaction(self, name):
