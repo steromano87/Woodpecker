@@ -108,6 +108,8 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
         # Patches kwargs with settings and defaults
@@ -121,6 +123,9 @@ class HttpSequence(BaseSequence):
         kwargs['hooks']['response'].append(
             self._request_log_hook(is_async=False)
         )
+
+        # Automatically replaces parameters in URL
+        url = self._inject_variables(url)
 
         # Execute the request
         obj_session = self.variables.get('__http_session')
@@ -148,6 +153,7 @@ class HttpSequence(BaseSequence):
     def get(self,
             url,
             is_resource=False,
+            response_hooks=None,
             **kwargs):
         """
         Shorthand for GET requests
@@ -156,13 +162,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(url, method='GET', is_resource=is_resource, **kwargs)
+        self.http_request(url,
+                          method='GET',
+                          is_resource=is_resource,
+                          response_hooks=response_hooks,
+                          **kwargs)
 
     def post(self,
              url,
              is_resource=False,
+             response_hooks=None,
              **kwargs):
         """
         Shorthand for POST requests
@@ -171,14 +184,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(url, method='POST',
-                          is_resource=is_resource, **kwargs)
+        self.http_request(url,
+                          method='POST',
+                          is_resource=is_resource,
+                          response_hooks=response_hooks,
+                          **kwargs)
 
     def put(self,
             url,
             is_resource=False,
+            response_hooks=None,
             **kwargs):
         """
         Shorthand for PUT requests
@@ -187,13 +206,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(url, method='PUT', is_resource=is_resource, **kwargs)
+        self.http_request(url,
+                          method='PUT',
+                          is_resource=is_resource,
+                          response_hooks=response_hooks,
+                          **kwargs)
 
     def patch(self,
               url,
               is_resource=False,
+              response_hooks=None,
               **kwargs):
         """
         Shorthand for PATCH requests
@@ -202,14 +228,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(url, method='PATCH',
-                          is_resource=is_resource, **kwargs)
+        self.http_request(url,
+                          method='PATCH',
+                          is_resource=is_resource,
+                          response_hooks=response_hooks,
+                          **kwargs)
 
     def delete(self,
                url,
                is_resource=False,
+               response_hooks=None,
                **kwargs):
         """
         Shorthand for DELETE requests
@@ -218,10 +250,15 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(url, method='DELETE',
-                          is_resource=is_resource, **kwargs)
+        self.http_request(url,
+                          method='DELETE',
+                          is_resource=is_resource,
+                          response_hooks=response_hooks,
+                          **kwargs)
 
     def _request_log_hook(self, is_async=False, is_resource=False):
         def _request_log_hook_gen(response, **kwargs):
@@ -284,6 +321,7 @@ class HttpSequence(BaseSequence):
                            url,
                            method='GET',
                            is_resource=False,
+                           response_hooks=None,
                            **kwargs):
         """
         Generic async HTTP request
@@ -293,6 +331,8 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
         # Patches kwargs
@@ -301,8 +341,11 @@ class HttpSequence(BaseSequence):
         # Add specific header for async request (XHR)
         kwargs['headers'].update({'X-Requested-With': 'XMLHttpRequest'})
 
+        # Automatically replaces parameters in URL
+        url = self._inject_variables(url)
+
         # Add async response log hook to existing hooks
-        response_hooks = kwargs.pop('response_hooks', [])
+        response_hooks = response_hooks or []
         kwargs.setdefault(
             'hooks', {'response': response_hooks}
         )
@@ -332,6 +375,7 @@ class HttpSequence(BaseSequence):
     def async_get(self,
                   url,
                   is_resource=False,
+                  response_hooks=None,
                   **kwargs):
         """
         Shorthand for GET async request
@@ -340,14 +384,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.async_http_request(url, method='GET',
-                                is_resource=is_resource, **kwargs)
+        self.async_http_request(url,
+                                method='GET',
+                                is_resource=is_resource,
+                                response_hooks=response_hooks,
+                                **kwargs)
 
     def async_post(self,
                    url,
                    is_resource=False,
+                   response_hooks=None,
                    **kwargs):
         """
         Shorthand for POST async request
@@ -356,14 +406,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.async_http_request(url, method='POST',
-                                is_resource=is_resource, **kwargs)
+        self.async_http_request(url,
+                                method='POST',
+                                is_resource=is_resource,
+                                response_hooks=response_hooks,
+                                **kwargs)
 
     def async_put(self,
                   url,
                   is_resource=False,
+                  response_hooks=None,
                   **kwargs):
         """
         Shorthand for PUT async request
@@ -372,14 +428,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.async_http_request(url, method='PUT',
-                                is_resource=is_resource, **kwargs)
+        self.async_http_request(url,
+                                method='PUT',
+                                is_resource=is_resource,
+                                response_hooks=response_hooks,
+                                **kwargs)
 
     def async_patch(self,
                     url,
                     is_resource=False,
+                    response_hooks=None,
                     **kwargs):
         """
         Shorthand for PATCH async request
@@ -388,14 +450,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.async_http_request(url, method='PATCH',
-                                is_resource=is_resource, **kwargs)
+        self.async_http_request(url,
+                                method='PATCH',
+                                is_resource=is_resource,
+                                response_hooks=response_hooks,
+                                **kwargs)
 
     def async_delete(self,
                      url,
                      is_resource=False,
+                     response_hooks=None,
                      **kwargs):
         """
         Shorthand for DELETE async request
@@ -404,10 +472,15 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.async_http_request(url, method='DELETE',
-                                is_resource=is_resource, **kwargs)
+        self.async_http_request(url,
+                                method='DELETE',
+                                is_resource=is_resource,
+                                response_hooks=response_hooks,
+                                **kwargs)
 
     # Assertions
     def assert_http_status(self, status):
