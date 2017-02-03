@@ -165,10 +165,14 @@ class BaseSequence(object):
 
         self._inline_logger.debug('Sequence started')
         self.steps()
-        gevent.joinall(self._async_greenlets)
+        # Wait for active Greenlets to complete
+        # (but only if there are Greenlets to wait)
+        if len(self._async_greenlets) > 0:
+            gevent.joinall(self._async_greenlets)
         self._inline_logger.debug('Sequence ended')
 
-        # If each sequence is treated as a transaction, end the current sequence
+        # If each sequence is treated as a transaction,
+        # end the current sequence
         if self.settings.get('runtime', 'each_sequence_is_transaction'):
             self.end_transaction('{sequence}_transaction'.format(
                 sequence=self.__class__.__name__
