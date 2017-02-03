@@ -448,7 +448,8 @@ class HttpSequence(BaseSequence):
         def _assert_hook(response, **kwargs):
             if response.headers.get(key, None) is None:
                 raise AssertionError(
-                    'The header {key} is not present in response header'.format(
+                    'The header {key} is not present '
+                    'in response header'.format(
                         key=key
                     )
                 )
@@ -480,7 +481,8 @@ class HttpSequence(BaseSequence):
                 )
             else:
                 self._inline_logger.debug(
-                    'Regex {regex} matched successfully in response body'.format(
+                    'Regex {regex} matched '
+                    'successfully in response body'.format(
                         regex=regex
                     )
                 )
