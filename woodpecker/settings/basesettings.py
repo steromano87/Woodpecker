@@ -9,7 +9,7 @@ class BaseSettings(Settings):
                 'skip_think_time': False,
                 'max_think_time': 5.0,
                 'think_time_after_setup': 0.0,
-                'think_time_between_transactions': 0.0,
+                'think_time_between_sequences': 0.0,
                 'think_time_before_teardown': 0.0,
                 'think_time_between_iterations': 0.0
             },
@@ -59,7 +59,7 @@ class BaseSettings(Settings):
                         'min': 0.0,
                         'coerce': float
                     },
-                    'think_time_between_transactions': {
+                    'think_time_between_sequences': {
                         'type': 'number',
                         'min': 0.0,
                         'coerce': float
