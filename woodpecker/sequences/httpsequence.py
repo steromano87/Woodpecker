@@ -505,13 +505,13 @@ class HttpSequence(BaseSequence):
         def _assert_hook(response, **kwargs):
             if target not in response.content:
                 raise AssertionError(
-                    'Cannot find {target} in response body'.format(
+                    'Cannot find "{target}" in response body'.format(
                         target=target
                     )
                 )
             else:
                 self._inline_logger.debug(
-                    'Text {target} correctly found in response body'.format(
+                    'Text "{target}" correctly found in response body'.format(
                         target=target
                     )
                 )
@@ -521,15 +521,15 @@ class HttpSequence(BaseSequence):
         def _assert_hook(response, **kwargs):
             if response.headers.get(key, None) is None:
                 raise AssertionError(
-                    'The header {key} is not present '
+                    'The header "{key}" is not present '
                     'in response header'.format(
                         key=key
                     )
                 )
             elif response.headers.get(key, None) != value:
                 raise AssertionError(
-                    'Expected header {key} to have value {value}, '
-                    'got {actual} instead'.format(
+                    'Expected header "{key}" to have value "{value}", '
+                    'got "{actual}" instead'.format(
                         key=key,
                         value=value,
                         actual=response.headers.get(key, None)
@@ -537,7 +537,8 @@ class HttpSequence(BaseSequence):
                 )
             else:
                 self._inline_logger.debug(
-                    'Header {key} matched the expected value {value}'.format(
+                    'Header "{key}" matched '
+                    'the expected value "{value}"'.format(
                         key=key,
                         value=value
                     )
@@ -548,13 +549,13 @@ class HttpSequence(BaseSequence):
         def _assert_hook(response, **kwargs):
             if re.search(regex, response.content.decode('utf-8')) is None:
                 raise AssertionError(
-                    'Cannot match regex {regex} in response body'.format(
+                    'Cannot match regex "{regex}" in response body'.format(
                         regex=regex
                     )
                 )
             else:
                 self._inline_logger.debug(
-                    'Regex {regex} matched '
+                    'Regex "{regex}" matched '
                     'successfully in response body'.format(
                         regex=regex
                     )
