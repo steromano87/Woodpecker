@@ -87,9 +87,9 @@ def test_gaussian_random_think_time(random_gaussian_think_time_sequence):
     sequence.run_steps()
     output_stream.seek(0)
     output_string = output_stream.getvalue()
-    assert re.search(r"Think time: \d+\.\d{3} s \(gaussian\)", output_string) \
+    assert re.search(r"Think time: \d+\.\d{,3} s \(gaussian\)", output_string) \
         is not None
     think_time = float(re.findall(
-        r"Think time: (\d+\.\d{3}) s \(gaussian\)", output_string
+        r"Think time: (\d+\.\d{,3}) s \(gaussian\)", output_string
     )[0])
     assert think_time >= 0
