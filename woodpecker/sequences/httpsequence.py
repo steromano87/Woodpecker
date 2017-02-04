@@ -503,7 +503,7 @@ class HttpSequence(BaseSequence):
 
     def assert_body_has_text(self, target):
         def _assert_hook(response, **kwargs):
-            if target not in response.content:
+            if target not in response.content.decode('utf-8'):
                 raise AssertionError(
                     'Cannot find "{target}" in response body'.format(
                         target=target
