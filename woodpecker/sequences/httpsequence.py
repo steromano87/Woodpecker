@@ -282,7 +282,7 @@ class HttpSequence(BaseSequence):
             # Log the result of the request
             self.log('step', {
                 'step_type': 'http_request',
-                'active_transactions': self._transactions.keys(),
+                'active_transactions': list(self._transactions.keys()),
                 'step_content': {
                     'url': response.request.url,
                     'method': response.request.method,
