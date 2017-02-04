@@ -611,8 +611,8 @@ class HttpSequence(BaseSequence):
             # If match is not found, raise exception, else save the parameter
             if re.search(regex, target_string) is None:
                 raise IOError(
-                    'Cannot save the parameter {name}, '
-                    'no match found for regex {regex} in {target}'.format(
+                    'Cannot save the parameter "{name}", '
+                    'no match found for regex "{regex}" in {target}'.format(
                         regex=regex,
                         name=name,
                         target=target
@@ -629,7 +629,7 @@ class HttpSequence(BaseSequence):
                     parameter = matches
                 self.variables.set(name, parameter)
                 self._inline_logger.debug(
-                    'Saved parameter {name}: {value}'.format(
+                    'Saved parameter "{name}": "{value}"'.format(
                         name=name,
                         value=parameter
                     )
