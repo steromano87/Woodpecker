@@ -619,7 +619,7 @@ class HttpSequence(BaseSequence):
                     )
                 )
             else:
-                matches = re.findall(regex, response.content)
+                matches = re.findall(regex, target_string)
                 if instances == 'first' or len(matches) == 1:
                     parameter = matches[0]
                     # Check for capturing groups, if more are present
