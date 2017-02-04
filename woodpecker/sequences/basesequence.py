@@ -78,7 +78,7 @@ class BaseSequence(object):
 
         # Now, wait
         time.sleep(dbl_amount_final)
-        self._inline_logger.debug('Think time: {amount} ({kind})'.format(
+        self._inline_logger.debug('Think time: {amount} s ({kind})'.format(
             amount=amount,
             kind=kind
         ))
