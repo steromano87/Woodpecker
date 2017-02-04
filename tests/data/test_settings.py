@@ -135,8 +135,10 @@ def test_extension_with_valid_settings(settings, derived_settings):
     assert settings.get('foo', 'baz') == -0.5
 
 
-def test_extension_with_valid_settings_and_massive_modification(settings,
-                                                                derived_settings):
+def test_extension_with_valid_settings_and_massive_modification(
+        settings,
+        derived_settings
+):
     settings.extend(derived_settings)
     settings.set({
         'foo': {
