@@ -72,14 +72,14 @@ class BaseSequence(object):
             dbl_amount_final = amount
         elif kind == 'gaussian':
             dbl_std = kwargs.get('std', 0.5 * amount)
-            dbl_amount_final = abs(random.gauss(dbl_std))
+            dbl_amount_final = round(abs(random.gauss(amount, dbl_std)), 3)
         else:
             dbl_amount_final = amount
 
         # Now, wait
         time.sleep(dbl_amount_final)
         self._inline_logger.debug('Think time: {amount} s ({kind})'.format(
-            amount=amount,
+            amount=dbl_amount_final,
             kind=kind
         ))
 
