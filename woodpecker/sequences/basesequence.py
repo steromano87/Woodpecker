@@ -7,6 +7,9 @@ import time
 
 import msgpack
 import six
+import gevent
+
+from string import Template
 
 from woodpecker.data.variablejar import VariableJar
 from woodpecker.settings.basesettings import BaseSettings
@@ -19,7 +22,6 @@ class BaseSequence(object):
                  settings=BaseSettings(),
                  log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
-                 parameters=None,
                  transactions=None,
                  debug=False,
                  inline_log_sinks=(sys.stdout,)):
@@ -32,11 +34,11 @@ class BaseSequence(object):
         # Internal log queue
         self._log_queue = log_queue
 
-        # Parameters (passed from outside)
-        self._parameters = parameters or {}
-
         # Transactions (passed from outside)
         self._transactions = transactions or {}
+
+        # Async Greenlets pool
+        self._async_greenlets = []
 
         # Inline logger (to debug and replay the sequences)
         self._inline_logger = logging.getLogger(self.__class__.__name__)
@@ -70,14 +72,14 @@ class BaseSequence(object):
             dbl_amount_final = amount
         elif kind == 'gaussian':
             dbl_std = kwargs.get('std', 0.5 * amount)
-            dbl_amount_final = abs(random.gauss(dbl_std))
+            dbl_amount_final = round(abs(random.gauss(amount, dbl_std)), 3)
         else:
             dbl_amount_final = amount
 
         # Now, wait
         time.sleep(dbl_amount_final)
-        self._inline_logger.debug('Think time: {amount} ({kind})'.format(
-            amount=amount,
+        self._inline_logger.debug('Think time: {amount} s ({kind})'.format(
+            amount=dbl_amount_final,
             kind=kind
         ))
 
@@ -95,7 +97,7 @@ class BaseSequence(object):
         self._log_queue.put(mix_message)
         self._log_queue.task_done()
 
-    def log_inline(self, level, message):
+    def log_inline(self, message, level=logging.INFO):
         self._inline_logger.log(level, message)
 
     def start_transaction(self, name):
@@ -150,21 +152,32 @@ class BaseSequence(object):
     def default_settings():
         return BaseSettings()
 
+    def _inject_variables(self, text):
+        return Template(text).safe_substitute(self.variables.dump())
+
     def run_steps(self):
         # If each sequence is treated as a transaction, add the sequence itself
         # to the list of active transactions
         if self.settings.get('runtime', 'each_sequence_is_transaction'):
-            self.start_transaction(self.__class__.__name__)
+            self.start_transaction('{sequence}_transaction'.format(
+                sequence=self.__class__.__name__
+            ))
 
         self._inline_logger.debug('Sequence started')
         self.steps()
+        # Wait for active Greenlets to complete
+        # (but only if there are Greenlets to wait)
+        if len(self._async_greenlets) > 0:
+            gevent.joinall(self._async_greenlets)
         self._inline_logger.debug('Sequence ended')
 
-        # If each sequence is treated as a transaction, end the current sequence
+        # If each sequence is treated as a transaction,
+        # end the current sequence
         if self.settings.get('runtime', 'each_sequence_is_transaction'):
-            self.end_transaction(self.__class__.__name__)
+            self.end_transaction('{sequence}_transaction'.format(
+                sequence=self.__class__.__name__
+            ))
 
         return self.settings, \
             self.variables, \
-            self._parameters, \
             self._transactions

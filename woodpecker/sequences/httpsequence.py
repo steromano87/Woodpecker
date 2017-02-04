@@ -1,6 +1,7 @@
 import abc
 import six
 import sys
+import re
 
 import requests
 import grequests
@@ -18,7 +19,6 @@ class HttpSequence(BaseSequence):
                  settings=HttpSettings(),
                  log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
-                 parameters=None,
                  transactions=None,
                  debug=False,
                  inline_log_sinks=(sys.stdout,)):
@@ -30,7 +30,6 @@ class HttpSequence(BaseSequence):
         super(HttpSequence, self).__init__(settings=settings,
                                            log_queue=log_queue,
                                            variables=variables,
-                                           parameters=parameters,
                                            transactions=transactions,
                                            debug=debug,
                                            inline_log_sinks=inline_log_sinks)
@@ -42,8 +41,8 @@ class HttpSequence(BaseSequence):
             self.variables.set('__last_response', None)
 
         # Add property to check if async pool is active
-        self._async_pool_active = False
-        self._async_pool = []
+        self._async_request_pool_active = False
+        self._async_request_pool = []
 
     def _patch_kwargs(self, args):
         # Request headers
@@ -80,25 +79,26 @@ class HttpSequence(BaseSequence):
         Starts async requests pool. The added requests will be performed
         when a end_async call is made.
         """
-        self._async_pool_active = True
+        self._async_request_pool_active = True
         self._inline_logger.debug('Starting async requests pool')
 
     def end_async_pool(self):
         """
         End the async requests pool and flushes all the added async requests
         """
-        self._async_pool_active = False
-        grequests.map(self._async_pool,
+        self._async_request_pool_active = False
+        grequests.map(self._async_request_pool,
                       size=self.settings.get('http',
                                              'max_async_concurrent_requests'),
                       exception_handler=self._async_exception_handler)
-        self._async_pool = []
+        self._async_request_pool = []
         self._inline_logger.debug('Async requests pool ended')
 
     def http_request(self,
                      url,
                      method='GET',
                      is_resource=False,
+                     response_hooks=None,
                      **kwargs):
         """
         Generic HTTP request
@@ -108,13 +108,24 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
         # Patches kwargs with settings and defaults
         self._patch_kwargs(kwargs)
 
-        # Add logging hook
-        kwargs['hooks'] = {'response': self._request_log_hook(is_async=False)}
+        # Add logging hook to existing hooks
+        response_hooks = response_hooks or []
+        kwargs.setdefault(
+            'hooks', {'response': response_hooks}
+        )
+        kwargs['hooks']['response'].append(
+            self._request_log_hook(is_async=False)
+        )
+
+        # Automatically replaces parameters in URL
+        url = self._inject_variables(url)
 
         # Execute the request
         obj_session = self.variables.get('__http_session')
@@ -142,6 +153,7 @@ class HttpSequence(BaseSequence):
     def get(self,
             url,
             is_resource=False,
+            response_hooks=None,
             **kwargs):
         """
         Shorthand for GET requests
@@ -150,13 +162,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(url, method='GET', is_resource=is_resource, **kwargs)
+        self.http_request(url,
+                          method='GET',
+                          is_resource=is_resource,
+                          response_hooks=response_hooks,
+                          **kwargs)
 
     def post(self,
              url,
              is_resource=False,
+             response_hooks=None,
              **kwargs):
         """
         Shorthand for POST requests
@@ -165,14 +184,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(url, method='POST',
-                          is_resource=is_resource, **kwargs)
+        self.http_request(url,
+                          method='POST',
+                          is_resource=is_resource,
+                          response_hooks=response_hooks,
+                          **kwargs)
 
     def put(self,
             url,
             is_resource=False,
+            response_hooks=None,
             **kwargs):
         """
         Shorthand for PUT requests
@@ -181,13 +206,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(url, method='PUT', is_resource=is_resource, **kwargs)
+        self.http_request(url,
+                          method='PUT',
+                          is_resource=is_resource,
+                          response_hooks=response_hooks,
+                          **kwargs)
 
     def patch(self,
               url,
               is_resource=False,
+              response_hooks=None,
               **kwargs):
         """
         Shorthand for PATCH requests
@@ -196,14 +228,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(url, method='PATCH',
-                          is_resource=is_resource, **kwargs)
+        self.http_request(url,
+                          method='PATCH',
+                          is_resource=is_resource,
+                          response_hooks=response_hooks,
+                          **kwargs)
 
     def delete(self,
                url,
                is_resource=False,
+               response_hooks=None,
                **kwargs):
         """
         Shorthand for DELETE requests
@@ -212,10 +250,15 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.http_request(url, method='DELETE',
-                          is_resource=is_resource, **kwargs)
+        self.http_request(url,
+                          method='DELETE',
+                          is_resource=is_resource,
+                          response_hooks=response_hooks,
+                          **kwargs)
 
     def _request_log_hook(self, is_async=False, is_resource=False):
         def _request_log_hook_gen(response, **kwargs):
@@ -239,7 +282,7 @@ class HttpSequence(BaseSequence):
             # Log the result of the request
             self.log('step', {
                 'step_type': 'http_request',
-                'active_transactions': self._transactions.keys(),
+                'active_transactions': list(self._transactions.keys()),
                 'step_content': {
                     'url': response.request.url,
                     'method': response.request.method,
@@ -278,6 +321,7 @@ class HttpSequence(BaseSequence):
                            url,
                            method='GET',
                            is_resource=False,
+                           response_hooks=None,
                            **kwargs):
         """
         Generic async HTTP request
@@ -287,16 +331,27 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
         # Patches kwargs
         self._patch_kwargs(kwargs)
 
-        # Add async response log hook
-        kwargs['hooks'] = {'response': self._request_log_hook(
-            is_async=True,
-            is_resource=is_resource
-        )}
+        # Add specific header for async request (XHR)
+        kwargs['headers'].update({'X-Requested-With': 'XMLHttpRequest'})
+
+        # Automatically replaces parameters in URL
+        url = self._inject_variables(url)
+
+        # Add async response log hook to existing hooks
+        response_hooks = response_hooks or []
+        kwargs.setdefault(
+            'hooks', {'response': response_hooks}
+        )
+        kwargs['hooks']['response'].append(
+            self._request_log_hook(is_async=True, is_resource=is_resource)
+        )
 
         # Create base request
         obj_async_request = grequests.AsyncRequest(method,
@@ -304,19 +359,23 @@ class HttpSequence(BaseSequence):
                                                    **kwargs)
 
         # If async pool is active, add the quest to the pool
-        if self._async_pool_active:
-            self._async_pool.append(obj_async_request)
+        if self._async_request_pool_active:
+            self._async_request_pool.append(obj_async_request)
         else:
             # If async pool is not active, send the request immediately
-            grequests.send(obj_async_request,
-                           pool=grequests.Pool(
-                               self.settings.get(
-                                   'http', 'max_async_concurrent_requests')
-                           ))
+            async_greenlet = grequests.send(
+                obj_async_request,
+                pool=grequests.Pool(
+                    self.settings.get(
+                        'http', 'max_async_concurrent_requests')
+                )
+            )
+            self._async_greenlets.append(async_greenlet)
 
     def async_get(self,
                   url,
                   is_resource=False,
+                  response_hooks=None,
                   **kwargs):
         """
         Shorthand for GET async request
@@ -325,14 +384,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.async_http_request(url, method='GET',
-                                is_resource=is_resource, **kwargs)
+        self.async_http_request(url,
+                                method='GET',
+                                is_resource=is_resource,
+                                response_hooks=response_hooks,
+                                **kwargs)
 
     def async_post(self,
                    url,
                    is_resource=False,
+                   response_hooks=None,
                    **kwargs):
         """
         Shorthand for POST async request
@@ -341,14 +406,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.async_http_request(url, method='POST',
-                                is_resource=is_resource, **kwargs)
+        self.async_http_request(url,
+                                method='POST',
+                                is_resource=is_resource,
+                                response_hooks=response_hooks,
+                                **kwargs)
 
     def async_put(self,
                   url,
                   is_resource=False,
+                  response_hooks=None,
                   **kwargs):
         """
         Shorthand for PUT async request
@@ -357,14 +428,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.async_http_request(url, method='PUT',
-                                is_resource=is_resource, **kwargs)
+        self.async_http_request(url,
+                                method='PUT',
+                                is_resource=is_resource,
+                                response_hooks=response_hooks,
+                                **kwargs)
 
     def async_patch(self,
                     url,
                     is_resource=False,
+                    response_hooks=None,
                     **kwargs):
         """
         Shorthand for PATCH async request
@@ -373,14 +450,20 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.async_http_request(url, method='PATCH',
-                                is_resource=is_resource, **kwargs)
+        self.async_http_request(url,
+                                method='PATCH',
+                                is_resource=is_resource,
+                                response_hooks=response_hooks,
+                                **kwargs)
 
     def async_delete(self,
                      url,
                      is_resource=False,
+                     response_hooks=None,
                      **kwargs):
         """
         Shorthand for DELETE async request
@@ -389,7 +472,167 @@ class HttpSequence(BaseSequence):
         :param is_resource: tells if the requested item is a webpage
                             or a resource. If this parameter is set to true,
                             all HTTP errors will be ignored for this entry
+        :param response_hooks: the list of hooks to apply to response
+                               (assertions or parameter retrieval)
         :param kwargs: arguments to be passed to requests library
         """
-        self.async_http_request(url, method='DELETE',
-                                is_resource=is_resource, **kwargs)
+        self.async_http_request(url,
+                                method='DELETE',
+                                is_resource=is_resource,
+                                response_hooks=response_hooks,
+                                **kwargs)
+
+    # Assertions
+    def assert_http_status(self, status):
+        def _assert_hook(response, **kwargs):
+            if response.status_code != status:
+                raise AssertionError(
+                    'Expected HTTP status {expected}, got {actual}'.format(
+                        expected=status,
+                        actual=response.status_code
+                    )
+                )
+            else:
+                self._inline_logger.debug(
+                    'HTTP Status matched the expected code '
+                    '{status_code}'.format(
+                        status_code=status
+                    )
+                )
+        return _assert_hook
+
+    def assert_body_has_text(self, target):
+        def _assert_hook(response, **kwargs):
+            if target not in response.content.decode('utf-8'):
+                raise AssertionError(
+                    'Cannot find "{target}" in response body'.format(
+                        target=target
+                    )
+                )
+            else:
+                self._inline_logger.debug(
+                    'Text "{target}" correctly found in response body'.format(
+                        target=target
+                    )
+                )
+        return _assert_hook
+
+    def assert_header_value(self, key, value):
+        def _assert_hook(response, **kwargs):
+            if response.headers.get(key, None) is None:
+                raise AssertionError(
+                    'The header "{key}" is not present '
+                    'in response header'.format(
+                        key=key
+                    )
+                )
+            elif response.headers.get(key, None) != value:
+                raise AssertionError(
+                    'Expected header "{key}" to have value "{value}", '
+                    'got "{actual}" instead'.format(
+                        key=key,
+                        value=value,
+                        actual=response.headers.get(key, None)
+                    )
+                )
+            else:
+                self._inline_logger.debug(
+                    'Header "{key}" matched '
+                    'the expected value "{value}"'.format(
+                        key=key,
+                        value=value
+                    )
+                )
+        return _assert_hook
+
+    def assert_body_has_regex(self, regex):
+        def _assert_hook(response, **kwargs):
+            if re.search(regex, response.content.decode('utf-8')) is None:
+                raise AssertionError(
+                    'Cannot match regex "{regex}" in response body'.format(
+                        regex=regex
+                    )
+                )
+            else:
+                self._inline_logger.debug(
+                    'Regex "{regex}" matched '
+                    'successfully in response body'.format(
+                        regex=regex
+                    )
+                )
+        return _assert_hook
+
+    def assert_elapsed_within(self, amount_msec):
+        def _assert_hook(response, **kwargs):
+            if response.elapsed.total_seconds() * 1000 > amount_msec:
+                raise AssertionError(
+                    'Request did not complete within {amount} ms, '
+                    'elapsed time was {real_elapsed} ms'.format(
+                        amount=amount_msec,
+                        real_elapsed=response.elapsed.total_seconds() * 1000
+                    )
+                )
+            else:
+                self._inline_logger.debug(
+                    'Request completed within {threshold} ms: '
+                    'elapsed time was {elapsed} ms'.format(
+                        threshold=amount_msec,
+                        elapsed=response.elapsed.total_seconds() * 1000
+                    )
+                )
+        return _assert_hook
+
+    # Variables retrieval
+    def var_from_regex(self,
+                       name,
+                       regex,
+                       target='body',
+                       instances='first',
+                       group=0):
+        def _param_hook(response, **kwargs):
+            # Find the target of regex
+            targets = {
+                'url': response.url,
+                'body': response.content.decode('utf-8'),
+                'headers': '\n'.join(
+                    [': '.join((str(key), str(value)))
+                     for key, value in six.iteritems(response.headers)]
+                ),
+                'all': '\n'.join((
+                    response.url,
+                    '\n'.join(
+                        [': '.join((str(key), str(value)))
+                         for key, value in six.iteritems(response.headers)]
+                    ),
+                    response.content.decode('utf-8')
+                ))
+            }
+            target_string = targets.get(target, response.content)
+
+            # If match is not found, raise exception, else save the parameter
+            if re.search(regex, target_string) is None:
+                raise IOError(
+                    'Cannot save the parameter "{name}", '
+                    'no match found for regex "{regex}" in {target}'.format(
+                        regex=regex,
+                        name=name,
+                        target=target
+                    )
+                )
+            else:
+                matches = re.findall(regex, target_string)
+                if instances == 'first' or len(matches) == 1:
+                    parameter = matches[0]
+                    # Check for capturing groups, if more are present
+                    if isinstance(parameter, tuple):
+                        parameter = parameter[group]
+                else:
+                    parameter = matches
+                self.variables.set(name, parameter)
+                self._inline_logger.debug(
+                    'Saved parameter "{name}": "{value}"'.format(
+                        name=name,
+                        value=parameter
+                    )
+                )
+        return _param_hook

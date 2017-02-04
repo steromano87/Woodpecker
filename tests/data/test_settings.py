@@ -135,8 +135,10 @@ def test_extension_with_valid_settings(settings, derived_settings):
     assert settings.get('foo', 'baz') == -0.5
 
 
-def test_extension_with_valid_settings_and_massive_modification(settings,
-                                                                derived_settings):
+def test_extension_with_valid_settings_and_massive_modification(
+        settings,
+        derived_settings
+):
     settings.extend(derived_settings)
     settings.set({
         'foo': {
@@ -162,10 +164,10 @@ def test_extension_symmetry(settings, derived_settings):
     extended_settings.extend(derived_settings)
     extended_derived_settings.extend(settings)
     assert extended_settings.dump() == extended_derived_settings.dump()
-    assert extended_settings._validation_mask ==\
-           extended_derived_settings._validation_mask
+    assert extended_settings._validation_mask == \
+        extended_derived_settings._validation_mask
     assert extended_settings._default_values == \
-           extended_derived_settings._default_values
+        extended_derived_settings._default_values
 
 
 def test_multiple_extension(settings, derived_settings):
