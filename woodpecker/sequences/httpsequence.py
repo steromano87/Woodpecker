@@ -503,7 +503,7 @@ class HttpSequence(BaseSequence):
 
     def assert_body_has_text(self, target):
         def _assert_hook(response, **kwargs):
-            if target not in response.content.decode('utf-8'):
+            if target not in response.content.decode(response.encoding):
                 raise AssertionError(
                     'Cannot find "{target}" in response body'.format(
                         target=target
@@ -547,7 +547,8 @@ class HttpSequence(BaseSequence):
 
     def assert_body_has_regex(self, regex):
         def _assert_hook(response, **kwargs):
-            if re.search(regex, response.content.decode('utf-8')) is None:
+            if re.search(regex,
+                         response.content.decode(response.encoding)) is None:
                 raise AssertionError(
                     'Cannot match regex "{regex}" in response body'.format(
                         regex=regex
@@ -593,7 +594,7 @@ class HttpSequence(BaseSequence):
             # Find the target of regex
             targets = {
                 'url': response.url,
-                'body': response.content.decode('utf-8'),
+                'body': response.content.decode(response.encoding),
                 'headers': '\n'.join(
                     [': '.join((str(key), str(value)))
                      for key, value in six.iteritems(response.headers)]
@@ -604,7 +605,7 @@ class HttpSequence(BaseSequence):
                         [': '.join((str(key), str(value)))
                          for key, value in six.iteritems(response.headers)]
                     ),
-                    response.content.decode('utf-8')
+                    response.content.decode(response.encoding)
                 ))
             }
             target_string = targets.get(target, response.content)
