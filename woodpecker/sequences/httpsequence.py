@@ -354,8 +354,10 @@ class HttpSequence(BaseSequence):
         )
 
         # Create base request
+        obj_session = self.variables.get('__http_session')
         obj_async_request = grequests.AsyncRequest(method,
                                                    url,
+                                                   session=obj_session,
                                                    **kwargs)
 
         # If async pool is active, add the quest to the pool
