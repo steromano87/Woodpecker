@@ -7,7 +7,8 @@ import time
 
 import msgpack
 import six
-import gevent
+import verboselogs
+import coloredlogs
 
 from string import Template
 
@@ -37,15 +38,18 @@ class BaseSequence(object):
         # Transactions (passed from outside)
         self._transactions = transactions or {}
 
-        # Async Greenlets pool
-        self._async_greenlets = []
+        # Internal setup and teardown hooks
+        self._setup_hooks = []
+        self._teardown_hooks = []
 
         # Inline logger (to debug and replay the sequences)
+        verboselogs.install()
+        coloredlogs.install()
         self._inline_logger = logging.getLogger(self.__class__.__name__)
         if debug:
             self._inline_logger.setLevel(logging.DEBUG)
         else:
-            self._inline_logger.setLevel(logging.INFO)
+            self._inline_logger.setLevel(logging.WARNING)
 
         # Cycle through all the given streams and add them to logger
         for obj_log_sink in inline_log_sinks:
@@ -158,18 +162,21 @@ class BaseSequence(object):
     def run_steps(self):
         # If each sequence is treated as a transaction, add the sequence itself
         # to the list of active transactions
+        self._inline_logger.debug('Sequence started')
         if self.settings.get('runtime', 'each_sequence_is_transaction'):
             self.start_transaction('{sequence}_transaction'.format(
                 sequence=self.__class__.__name__
             ))
 
-        self._inline_logger.debug('Sequence started')
+        # Run the setup hooks
+        for hook in self._setup_hooks:
+            hook()
+
         self.steps()
-        # Wait for active Greenlets to complete
-        # (but only if there are Greenlets to wait)
-        if len(self._async_greenlets) > 0:
-            gevent.joinall(self._async_greenlets)
-        self._inline_logger.debug('Sequence ended')
+
+        # Run teardown hooks
+        for hook in self._teardown_hooks:
+            hook()
 
         # If each sequence is treated as a transaction,
         # end the current sequence
@@ -177,6 +184,7 @@ class BaseSequence(object):
             self.end_transaction('{sequence}_transaction'.format(
                 sequence=self.__class__.__name__
             ))
+        self._inline_logger.debug('Sequence ended')
 
         return self.settings, \
             self.variables, \
