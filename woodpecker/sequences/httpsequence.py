@@ -5,6 +5,7 @@ import re
 
 import requests
 import grequests
+import gevent
 
 from woodpecker.settings.httpsettings import HttpSettings
 from woodpecker.settings.basesettings import BaseSettings
@@ -43,6 +44,9 @@ class HttpSequence(BaseSequence):
         # Add property to check if async pool is active
         self._async_request_pool_active = False
         self._async_request_pool = []
+
+        # Add async request hooks to teardown hooks
+        self._teardown_hooks.append(self._async_wait_hook)
 
     def _patch_kwargs(self, args):
         # Request headers
@@ -93,6 +97,13 @@ class HttpSequence(BaseSequence):
                       exception_handler=self._async_exception_handler)
         self._async_request_pool = []
         self._inline_logger.debug('Async requests pool ended')
+
+    def _async_wait_hook(self):
+        # Wait for active Greenlets to complete
+        # (but only if there are Greenlets to wait)
+        if len(self._async_request_pool) > 0:
+            gevent.joinall(self._async_request_pool)
+            self._async_request_pool = []
 
     def http_request(self,
                      url,
@@ -354,8 +365,10 @@ class HttpSequence(BaseSequence):
         )
 
         # Create base request
+        obj_session = self.variables.get('__http_session')
         obj_async_request = grequests.AsyncRequest(method,
                                                    url,
+                                                   session=obj_session,
                                                    **kwargs)
 
         # If async pool is active, add the quest to the pool
@@ -370,7 +383,7 @@ class HttpSequence(BaseSequence):
                         'http', 'max_async_concurrent_requests')
                 )
             )
-            self._async_greenlets.append(async_greenlet)
+            self._async_request_pool.append(async_greenlet)
 
     def async_get(self,
                   url,
@@ -503,7 +516,7 @@ class HttpSequence(BaseSequence):
 
     def assert_body_has_text(self, target):
         def _assert_hook(response, **kwargs):
-            if target not in response.content.decode('utf-8'):
+            if target not in response.content.decode(response.encoding):
                 raise AssertionError(
                     'Cannot find "{target}" in response body'.format(
                         target=target
@@ -547,7 +560,8 @@ class HttpSequence(BaseSequence):
 
     def assert_body_has_regex(self, regex):
         def _assert_hook(response, **kwargs):
-            if re.search(regex, response.content.decode('utf-8')) is None:
+            if re.search(regex,
+                         response.content.decode(response.encoding)) is None:
                 raise AssertionError(
                     'Cannot match regex "{regex}" in response body'.format(
                         regex=regex
@@ -593,7 +607,7 @@ class HttpSequence(BaseSequence):
             # Find the target of regex
             targets = {
                 'url': response.url,
-                'body': response.content.decode('utf-8'),
+                'body': response.content.decode(response.encoding),
                 'headers': '\n'.join(
                     [': '.join((str(key), str(value)))
                      for key, value in six.iteritems(response.headers)]
@@ -604,7 +618,7 @@ class HttpSequence(BaseSequence):
                         [': '.join((str(key), str(value)))
                          for key, value in six.iteritems(response.headers)]
                     ),
-                    response.content.decode('utf-8')
+                    response.content.decode(response.encoding)
                 ))
             }
             target_string = targets.get(target, response.content)

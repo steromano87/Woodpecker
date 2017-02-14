@@ -9,3 +9,5 @@ grequests
 PyYAML
 six
 Cerberus
+verboselogs
+coloredlogs
