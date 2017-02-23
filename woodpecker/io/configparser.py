@@ -50,7 +50,7 @@ class ConfigParser(object):
 
     def list_sessions_for(self, scenario):
         try:
-            sessions = self._scenarios[scenario].keys()
+            sessions = self._scenarios[scenario]['sessions'].keys()
         except KeyError:
             raise KeyError(
                 'Scenario {scenario} not found'.format(
@@ -62,7 +62,7 @@ class ConfigParser(object):
 
     def list_sequences_for(self, scenario, session):
         try:
-            sequences = self._scenarios.get(scenario, {})[session]
+            self._scenarios.get(scenario, {})['sessions'][session].keys()
         except KeyError:
             raise KeyError(
                 'Session {session} not found '
@@ -72,7 +72,11 @@ class ConfigParser(object):
                 )
             )
         else:
-            return sequences
+            return {
+                sequence_type: self._scenarios.get(scenario, {})[
+                    'sessions'][session][sequence_type]
+                for sequence_type in ['set_up', 'sequences', 'tear_down']
+            }
 
     def _parse_content(self):
         self._scenarios = self._config_file_content.get('scenarios', {})
