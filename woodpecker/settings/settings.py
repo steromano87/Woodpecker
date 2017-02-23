@@ -11,9 +11,9 @@ class Settings(object):
     Abstract class that is subclassed by the settings specific
     to each sequence type
     """
-    def __init__(self, peckerfile='Peckerfile'):
-        # Absolute path to Peckerfile
-        self._peckerfile = os.path.abspath(peckerfile)
+    def __init__(self, configfile='woodpecker.yml'):
+        # Absolute path to Config file
+        self._configfile = os.path.abspath(configfile)
 
         # Settings data
         self._data = {}
@@ -34,14 +34,14 @@ class Settings(object):
         self.load()
 
     def load(self):
-        if os.path.isfile(self._peckerfile):
-            with open(self._peckerfile, 'r') as fp:
+        if os.path.isfile(self._configfile):
+            with open(self._configfile, 'r') as fp:
                 self._data = self._validator.validated(yaml.safe_load(fp))
         else:
             self._data = self._validator.validated(self._default_values)
 
     def save(self):
-        with open(self._peckerfile, 'w') as pf:
+        with open(self._configfile, 'w') as pf:
             yaml.dump(self._data, stream=pf)
 
     def get(self, section, entry):
