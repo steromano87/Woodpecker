@@ -85,6 +85,9 @@ class Settings(object):
     def dump(self):
         return self._data
 
+    def __repr__(self):
+        return self.dump()
+
     def validate(self):
         try:
             return self._validator.validate(self._data), \
