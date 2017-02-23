@@ -9,7 +9,7 @@ import gevent
 
 from woodpecker.settings.httpsettings import HttpSettings
 from woodpecker.settings.basesettings import BaseSettings
-from woodpecker.data.variablejar import VariableJar
+from woodpecker.io.variablejar import VariableJar
 from woodpecker.sequences.basesequence import BaseSequence
 
 

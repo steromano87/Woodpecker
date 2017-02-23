@@ -12,7 +12,7 @@ import coloredlogs
 
 from string import Template
 
-from woodpecker.data.variablejar import VariableJar
+from woodpecker.io.variablejar import VariableJar
 from woodpecker.settings.basesettings import BaseSettings
 
 
