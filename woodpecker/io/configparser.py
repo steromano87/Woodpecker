@@ -95,3 +95,6 @@ class ConfigParser(object):
     def _parse_content(self):
         self._scenarios = self._config_file_content.get('scenarios', {})
         self._global_settings = self._config_file_content.get('settings', {})
+
+    def _build_settings_class(self):
+        pass
