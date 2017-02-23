@@ -146,6 +146,8 @@ def test_extension_with_valid_settings_and_massive_modification(
             'baz': 15
         }
     })
+    assert settings.get('foo', 'bar') is False
+    assert settings.get('foo', 'baz') == 15
 
 
 def test_extension_with_invalid_settings(settings):
