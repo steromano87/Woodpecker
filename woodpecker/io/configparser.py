@@ -12,11 +12,11 @@ class ConfigParser(object):
         # Unparsed config file content
         self._config_file_content = None
 
-        # Scenarios and navs section
-        self._scenarios = {}
+        # Scenarios and sessions section
+        self._scenarios = None
 
         # Global settings
-        self._global_settings = {}
+        self._global_settings = None
 
     def load(self):
         """
@@ -41,9 +41,23 @@ class ConfigParser(object):
         :return: None
         """
         with open(self._config_file_path, 'wb') as fp:
-            output_data = dict(settings=BaseSettings.default_values())
-            yaml.safe_dump(output_data, fp, default_flow_style=False)
+            self._config_file_content = dict(
+                settings=BaseSettings.default_values()
+            )
+            yaml.safe_dump(self._config_file_content,
+                           fp,
+                           default_flow_style=False)
         self._parse_content()
+
+    def dump(self):
+        with open(self._config_file_path, 'wb') as fp:
+            self._config_file_content = {
+                'scenarios': self._scenarios,
+                'settings': self._global_settings
+            }
+            yaml.safe_dump(self._config_file_content,
+                           fp,
+                           default_flow_style=False)
 
     def list_scenarios(self):
         return self._scenarios.keys()
