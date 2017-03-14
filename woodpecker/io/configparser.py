@@ -154,3 +154,22 @@ class ConfigParser(object):
             # If everything is ok, update settings
             global_settings.extend(scenario_settings)
             return global_settings
+
+    def build_task_settings(self, scenario, task):
+        # First, retrieve scenario settings
+        scenario_settings = self.build_scenario_settings(scenario)
+
+        try:
+            task_settings = \
+                self._scenarios[scenario]['tasks'][task].get('settings', {})
+        except KeyError:
+            raise KeyError(
+                'Task {task} not found '
+                'inside scenario {scenario}'.format(
+                    task=task,
+                    scenario=scenario
+                )
+            )
+        else:
+            scenario_settings.extend(task_settings)
+            return scenario_settings
