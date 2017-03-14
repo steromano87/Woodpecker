@@ -7,5 +7,4 @@ def import_sequence(sequence_file, sequence_class):
         '.{module}'.format(module=sequence_module),
         'sequences'
     )
-    class_object = getattr(module, sequence_class)
-    return class_object()
+    return getattr(module, sequence_class)

@@ -125,7 +125,7 @@ class ConfigParser(object):
                             sequence['class']
                         )
                         settings_classes.append(
-                            sequence_class.default_settings()
+                            sequence_class().default_settings()
                         )
 
         # Build the master scenario settings class
@@ -158,7 +158,6 @@ class ConfigParser(object):
     def build_task_settings(self, scenario, task):
         # First, retrieve scenario settings
         scenario_settings = self.build_scenario_settings(scenario)
-
         try:
             task_settings = \
                 self._scenarios[scenario]['tasks'][task].get('settings', {})
