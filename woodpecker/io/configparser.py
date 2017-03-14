@@ -104,25 +104,53 @@ class ConfigParser(object):
         self._scenarios = self._config_file_content.get('scenarios', {})
         self._global_settings = self._config_file_content.get('settings', {})
 
-    def _build_scenario_settings(self, scenario):
-        # Retrieve all sessions for the current scenario
+    def build_global_settings(self):
+        # Initialize the classes list
         settings_classes = []
-        sessions = self.list_sessions_for(scenario)
 
-        # Retrieve settings class for each sequence
-        for session in sessions:
-            sequences = self.list_sequences_for(scenario, session)
-            for sequence_lists in six.itervalues(sequences):
-                for sequence in sequence_lists:
-                    sequence_class = functions.import_sequence(
-                        sequence['file'],
-                        sequence['class']
-                    )
-                    settings_classes.append(sequence_class.default_settings())
+        # Retrieve all the scenarios
+        scenarios = self.list_scenarios()
+
+        # Retrieve all sessions for the current scenario
+        for scenario in scenarios:
+            sessions = self.list_sessions_for(scenario)
+
+            # Retrieve settings class for each sequence
+            for session in sessions:
+                sequences = self.list_sequences_for(scenario, session)
+                for sequence_lists in six.itervalues(sequences):
+                    for sequence in sequence_lists:
+                        sequence_class = functions.import_sequence(
+                            sequence['file'],
+                            sequence['class']
+                        )
+                        settings_classes.append(
+                            sequence_class.default_settings()
+                        )
 
         # Build the master scenario settings class
         # by coalescing all the settings classes
-        master_settings = BaseSettings()
+        global_settings = BaseSettings()
         for setting in settings_classes:
-            master_settings.extend(setting)
-        return master_settings
+            global_settings.extend(setting)
+
+        # Update master settings with the settings from the config file
+        global_settings.set(self._global_settings)
+        return global_settings
+
+    def build_scenario_settings(self, scenario):
+        # retrieve global settings
+        global_settings = self.build_global_settings()
+        try:
+            # Try to get scenario settings from file
+            scenario_settings = self._scenarios[scenario].get('settings', {})
+        except KeyError:
+            raise KeyError(
+                'Scenario {scenario} not found'.format(
+                    scenario=scenario
+                )
+            )
+        else:
+            # If everything is ok, update settings
+            global_settings.extend(scenario_settings)
+            return global_settings
