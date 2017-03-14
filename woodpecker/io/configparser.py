@@ -37,12 +37,17 @@ class ConfigParser(object):
         else:
             self._parse_content()
 
-    def init(self):
+    def init(self, forced=False):
         """
         Initializes the config file using the default settings
 
         :rtype: None
         """
+        # If file already exists and forced mode is not set, raise an exception
+        if os.path.isfile(self._config_file_path) and not forced:
+            raise IOError('Config file already exists, cannot initialize')
+
+        # If file is not present, or forced mode is set, write file
         with open(self._config_file_path, 'wb') as fp:
             self._config_file_content = dict(
                 settings=BaseSettings.default_values()
@@ -54,25 +59,35 @@ class ConfigParser(object):
 
     def dump(self):
         """
-        Writes to file the existing data, updating the global settings
-        according to loaded sequence types
+        Writes to file the existing data
 
         :rtype: None
         """
         with open(self._config_file_path, 'wb') as fp:
-            # Update global settings
-            global_settings_class = self.build_global_settings()
-            updated_settings = \
-                global_settings_class.extend(self._global_settings).dump()
-
-            # Write updated configuration
             self._config_file_content = {
                 'scenarios': self._scenarios,
-                'settings': updated_settings
+                'settings': self._global_settings
             }
             yaml.safe_dump(self._config_file_content,
                            fp,
                            default_flow_style=False)
+
+    def update(self):
+        """
+        Updates the existing config file by rebuilding the global settings
+
+        :rtype: None
+        """
+        # Load the actual file content
+        self.load()
+
+        # Update global settings
+        global_settings_class = self.build_global_settings()
+        global_settings_class.set(self._global_settings)
+        self._global_settings = global_settings_class.dump()
+
+        # Dump the updated content to file
+        self.dump()
 
     def list_scenarios(self):
         """
