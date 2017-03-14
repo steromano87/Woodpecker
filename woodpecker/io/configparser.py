@@ -25,7 +25,7 @@ class ConfigParser(object):
         """
         Opens the specified file and loads its content
 
-        :return: None
+        :rtype: None
         """
         try:
             with open(self._config_file_path, 'rb') as fp:
@@ -41,7 +41,7 @@ class ConfigParser(object):
         """
         Initializes the config file using the default settings
 
-        :return: None
+        :rtype: None
         """
         with open(self._config_file_path, 'wb') as fp:
             self._config_file_content = dict(
@@ -53,19 +53,44 @@ class ConfigParser(object):
         self._parse_content()
 
     def dump(self):
+        """
+        Writes to file the existing data, updating the global settings
+        according to loaded sequence types
+
+        :rtype: None
+        """
         with open(self._config_file_path, 'wb') as fp:
+            # Update global settings
+            global_settings_class = self.build_global_settings()
+            updated_settings = \
+                global_settings_class.extend(self._global_settings).dump()
+
+            # Write updated configuration
             self._config_file_content = {
                 'scenarios': self._scenarios,
-                'settings': self._global_settings
+                'settings': updated_settings
             }
             yaml.safe_dump(self._config_file_content,
                            fp,
                            default_flow_style=False)
 
     def list_scenarios(self):
+        """
+        Lists all the available scenarios
+
+        :rtype: list
+        :return: list
+        """
         return self._scenarios.keys()
 
     def list_tasks_for(self, scenario):
+        """
+        Lists all the available tasks for the given scenario
+
+        :rtype: list
+        :param scenario: the given scenario
+        :return: list
+        """
         try:
             tasks = self._scenarios[scenario]['tasks'].keys()
         except KeyError:
@@ -78,6 +103,14 @@ class ConfigParser(object):
             return tasks
 
     def list_sequences_for(self, scenario, task):
+        """
+        Lists all the available sequences for the given scenario and task
+
+        :rtype: list
+        :param scenario: the given scenario
+        :param task: the given task
+        :return: list
+        """
         try:
             sequence_types = \
                 self._scenarios.get(scenario, {})['tasks'][task].keys()
@@ -101,10 +134,21 @@ class ConfigParser(object):
             }
 
     def _parse_content(self):
+        """
+        Parses the raw file content into internal scenarios and settings
+
+        :rtype: None
+        """
         self._scenarios = self._config_file_content.get('scenarios', {})
         self._global_settings = self._config_file_content.get('settings', {})
 
     def build_global_settings(self):
+        """
+        Builds a settings class based on all loaded sequence types
+
+        :rtype: woodpecker.settings.settings.Settings
+        :return: Global settings class
+        """
         # Initialize the classes list
         settings_classes = []
 
@@ -139,7 +183,15 @@ class ConfigParser(object):
         return global_settings
 
     def build_scenario_settings(self, scenario):
-        # retrieve global settings
+        """
+        Builds the specific scenario settings
+
+        :rtype: woodpecker.settings.settings.Settings
+        :param scenario: the given scenario
+        :return: scenario settings
+        """
+
+        # Retrieve global settings
         global_settings = self.build_global_settings()
         try:
             # Try to get scenario settings from file
@@ -156,6 +208,15 @@ class ConfigParser(object):
             return global_settings
 
     def build_task_settings(self, scenario, task):
+        """
+        Builds the specific task settings
+
+        :rtype: woodpecker.settings.settings.Settings
+        :param scenario: the given scenario
+        :param task: the given task
+        :return: task settings
+        """
+
         # First, retrieve scenario settings
         scenario_settings = self.build_scenario_settings(scenario)
         try:
