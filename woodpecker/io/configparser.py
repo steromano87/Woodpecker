@@ -15,7 +15,7 @@ class ConfigParser(object):
         # Unparsed config file content
         self._config_file_content = None
 
-        # Scenarios and sessions section
+        # Scenarios and tasks section
         self._scenarios = None
 
         # Global settings
@@ -65,9 +65,9 @@ class ConfigParser(object):
     def list_scenarios(self):
         return self._scenarios.keys()
 
-    def list_sessions_for(self, scenario):
+    def list_tasks_for(self, scenario):
         try:
-            sessions = self._scenarios[scenario]['sessions'].keys()
+            tasks = self._scenarios[scenario]['tasks'].keys()
         except KeyError:
             raise KeyError(
                 'Scenario {scenario} not found'.format(
@@ -75,17 +75,17 @@ class ConfigParser(object):
                 )
             )
         else:
-            return sessions
+            return tasks
 
-    def list_sequences_for(self, scenario, session):
+    def list_sequences_for(self, scenario, task):
         try:
             sequence_types = \
-                self._scenarios.get(scenario, {})['sessions'][session].keys()
+                self._scenarios.get(scenario, {})['tasks'][task].keys()
         except KeyError:
             raise KeyError(
-                'Session {session} not found '
+                'Task {task} not found '
                 'inside scenario {scenario}'.format(
-                    session=session,
+                    task=task,
                     scenario=scenario
                 )
             )
@@ -96,7 +96,7 @@ class ConfigParser(object):
                 )
             return {
                 sequence_type: self._scenarios.get(scenario, {})[
-                    'sessions'][session][sequence_type]
+                    'tasks'][task][sequence_type]
                 for sequence_type in list(available_sequence_types)
             }
 
@@ -111,13 +111,13 @@ class ConfigParser(object):
         # Retrieve all the scenarios
         scenarios = self.list_scenarios()
 
-        # Retrieve all sessions for the current scenario
+        # Retrieve all tasks for the current scenario
         for scenario in scenarios:
-            sessions = self.list_sessions_for(scenario)
+            tasks = self.list_tasks_for(scenario)
 
             # Retrieve settings class for each sequence
-            for session in sessions:
-                sequences = self.list_sequences_for(scenario, session)
+            for task in tasks:
+                sequences = self.list_sequences_for(scenario, task)
                 for sequence_lists in six.itervalues(sequences):
                     for sequence in sequence_lists:
                         sequence_class = functions.import_sequence(
