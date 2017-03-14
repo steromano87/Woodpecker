@@ -71,7 +71,7 @@ class Settings(object):
 
         if self._validator.validate(dic_setting) \
                 and self._validator.validated(dic_setting) == dic_setting:
-            # self._data.update(self._validator.validated(dic_setting))
+            # Iterate over keys to set the values
             for str_section in six.iterkeys(
                     self._validator.validated(dic_setting)):
                 for str_key, str_value in six.iteritems(
