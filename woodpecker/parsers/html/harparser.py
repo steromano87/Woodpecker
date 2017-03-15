@@ -35,7 +35,7 @@ class HarParser(BaseParser):
             # Append the current request to parsed internal variable
             self._parsed['entries'].append({
                 'request': self._parse_request(entry),
-                'response': None
+                'response': self._parse_response(entry)
             })
 
         # Return everything
@@ -111,3 +111,19 @@ class HarParser(BaseParser):
             if request['elapsed_from_end_of_previous'] > 0 else 0.0
 
         return request
+
+    def _parse_response(self, entry):
+        entry_response = entry.get('request', {})
+
+        # Start composing response dict starting from HTTP status
+        response = dict(status=entry_response.get('status', None))
+
+        # Get request cookies
+        response['cookies'] = entry_response.get('cookies', [])
+
+        # Get content (type, size, value)
+        response['content'] = {
+            'size': entry_response.get('content', {}).get('size', 0),
+            'mime_type': entry_response.get('content', {}).get('mimeType'),
+            'content': entry_response.get('content', {}).get('value', ''),
+        }
