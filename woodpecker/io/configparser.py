@@ -48,13 +48,8 @@ class ConfigParser(object):
             raise IOError('Config file already exists, cannot initialize')
 
         # If file is not present, or forced mode is set, write file
-        with open(self._config_file_path, 'wb') as fp:
-            self._config_file_content = dict(
-                settings=BaseSettings.default_values()
-            )
-            yaml.safe_dump(self._config_file_content,
-                           fp,
-                           default_flow_style=False)
+        self._global_settings = BaseSettings.default_values()
+        self.dump()
         self._parse_content()
 
     def dump(self):
