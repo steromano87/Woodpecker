@@ -58,7 +58,7 @@ class ConfigParser(object):
 
         :rtype: None
         """
-        with open(self._config_file_path, 'wb') as fp:
+        with open(self._config_file_path, 'w') as fp:
             self._config_file_content = {
                 'scenarios': self._scenarios,
                 'settings': self._global_settings
