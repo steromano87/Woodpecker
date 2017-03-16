@@ -110,4 +110,37 @@ class HarParser(BaseParser):
             request['elapsed_from_previous'] = \
                 request['elapsed_from_start']
 
+        # If elapsed is negative, force it to zero
+        request['elapsed_from_previous'] = request['elapsed_from_previous'] \
+            if request['elapsed_from_previous'] > 0 else 0.0
+
+        # Get request elapsed from end of previous request (if any)
+        try:
+            request['elapsed_from_end_of_previous'] = \
+                request['elapsed_from_previous'] - \
+                self._parsed['entries'][-1]['request']['duration']
+        except (KeyError, IndexError):
+            request['elapsed_from_end_of_previous'] = 0.0
+
+        # If elapsed is negative, force it to zero
+        request['elapsed_from_end_of_previous'] = \
+            request['elapsed_from_end_of_previous'] \
+            if request['elapsed_from_end_of_previous'] > 0 else 0.0
+
         return request
+
+    def _parse_response(self, entry):
+        entry_response = entry.get('request', {})
+
+        # Start composing response dict starting from HTTP status
+        response = dict(status=entry_response.get('status', None))
+
+        # Get request cookies
+        response['cookies'] = entry_response.get('cookies', [])
+
+        # Get content (type, size, value)
+        response['content'] = {
+            'size': entry_response.get('content', {}).get('size', 0),
+            'mime_type': entry_response.get('content', {}).get('mimeType'),
+            'content': entry_response.get('content', {}).get('value', ''),
+        }
