@@ -42,7 +42,8 @@ class HarParser(BaseParser):
         # Return everything
         return self._parsed
 
-    def _parse_request(self, entry):
+    @staticmethod
+    def _parse_request(entry):
         entry_request = entry.get('request', {})
 
         # Get base URL (reject the query string part)
@@ -136,7 +137,8 @@ class HarParser(BaseParser):
 
         return timings
 
-    def _parse_response(self, entry):
+    @staticmethod
+    def _parse_response(entry):
         entry_response = entry.get('response', {})
 
         # Start composing response dict starting from HTTP status
@@ -151,5 +153,22 @@ class HarParser(BaseParser):
             'mime_type': entry_response.get('content', {}).get('mimeType'),
             'content': entry_response.get('content', {}).get('value', ''),
         }
+
+        # Get request headers in key - value format
+        response['headers'] = {}
+        for header in entry_response.get('headers', []):
+            try:
+                header_key = header.get('name', '')
+                # If key is 'cookie' or 'Cookie', skip it
+                # because cookies are handled in previous section
+                # If key is method, skip it for the same reason
+                if str(header_key.lower()) == 'cookie' or \
+                        str(header_key.lower()) == 'method':
+                    pass
+                else:
+                    response['headers'][header.get('name', '')] = \
+                        header.get('value', '')
+            except KeyError:
+                pass
 
         return response
