@@ -69,6 +69,23 @@ class HarParser(BaseParser):
         # Get request cookies
         request['cookies'] = entry_request.get('cookies', [])
 
+        # Get request headers in key - value format
+        request['headers'] = {}
+        for header in entry_request.get('headers', []):
+            try:
+                header_key = header.get('name', '')
+                # If key is 'cookie' or 'Cookie', skip it
+                # because cookies are handled in previous section
+                # If key is method, skip it for the same reason
+                if str(header_key.lower()) == 'cookie' or \
+                        str(header_key.lower()) == 'method':
+                    pass
+                else:
+                    request['headers'][header.get('name', '')] = \
+                        header.get('value', '')
+            except KeyError:
+                pass
+
         return request
 
     def _parse_timings(self, entry):
