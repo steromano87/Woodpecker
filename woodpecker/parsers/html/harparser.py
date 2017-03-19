@@ -55,9 +55,6 @@ class HarParser(BaseParser):
         # Get request method
         request['method'] = entry_request.get('method', 'GET')
 
-        # Get request duration
-        request['duration'] = float(entry.get('time', 0))
-
         # Get request query string parameters
         request['params'] = {}
         if '?' in url:
@@ -93,7 +90,8 @@ class HarParser(BaseParser):
 
     def _parse_timings(self, entry):
         # Get request timestamp
-        timings = {'timestamp': entry.get('startedDateTime', None)}
+        timings = {'timestamp': entry.get('startedDateTime', None),
+                   'duration': float(entry.get('time', 0))}
 
         # Get request elapsed since first request (in milliseconds)
         timings['elapsed_from_start'] = (
