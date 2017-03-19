@@ -64,6 +64,14 @@ class HarParser(BaseParser):
                 request['params'][urllib.unquote_plus(split_params[0])] = \
                     urllib.unquote_plus(split_params[1])
 
+        # Get request post data
+        request['form_data'] = {}
+        post_data_fields = entry_request.get('postData', {}).get('params', [])
+        for post_data_entry in post_data_fields:
+            request['form_data'][urllib.unquote_plus(
+                post_data_entry['name'])] = \
+                urllib.unquote_plus(post_data_entry['value'])
+
         # Get request cookies
         request['cookies'] = {}
         cookie_list = entry_request.get('cookies', [])
