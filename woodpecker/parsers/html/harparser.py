@@ -68,8 +68,8 @@ class HarParser(BaseParser):
         request['cookies'] = {}
         cookie_list = entry_request.get('cookies', [])
         for cookie_element in cookie_list:
-            request['cookies'][cookie_element['name']] = \
-                cookie_element['value']
+            request['cookies'][urllib.unquote_plus(cookie_element['name'])] = \
+                urllib.unquote_plus(cookie_element['value'])
 
         # Get request headers in key - value format
         request['headers'] = {}
