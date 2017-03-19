@@ -81,6 +81,8 @@ class HarParser(BaseParser):
                 if str(header_key.lower()) == 'cookie' or \
                         str(header_key.lower()) == 'method':
                     pass
+                elif str(header_key.lower()) == 'user-agent':
+                    request['user_agent'] = header.get('value', '')
                 else:
                     request['headers'][header.get('name', '')] = \
                         header.get('value', '')
