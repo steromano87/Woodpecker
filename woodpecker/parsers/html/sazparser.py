@@ -106,6 +106,28 @@ class SazParser(BaseParser):
                 request['headers'][header_couple[0].strip()] = \
                     header_couple[1].strip()
 
+        # Parse content lines
+        request['form_data'] = {}
+        try:
+            content_lines = functions.split_by_element(
+                raw_file_content.split('\n', 1)[1].splitlines(),
+                ''
+            )[1]
+            # If the content type is www-form-urlencoded, parse the content
+            # as POST key-value data
+            if 'application/x-www-form-urlencoded' \
+                    in request['headers'].get('Content-Type', ''):
+                post_data_lines = content_lines[0].split('&')
+                for post_data_line in post_data_lines:
+                    post_couple = post_data_line.split('=')
+                    request['form_data'][
+                        urllib.unquote_plus(post_couple[0])] = \
+                        urllib.unquote_plus(post_couple[1])
+            else:
+                request['body'] = '\n'.join(content_lines)
+        except IndexError:
+            request['body'] = None
+
         return request
 
     @staticmethod
