@@ -1,5 +1,6 @@
 import importlib
 import itertools
+import urllib
 
 
 def import_sequence(sequence_file, sequence_class):
@@ -18,3 +19,15 @@ def split_by_element(iterable, splitters):
         for k, g in itertools.groupby(iterable,
                                       lambda x:x in splitters) if not k
         ]
+
+
+def split_query_string(query_string):
+    output = {}
+    # Split query string by '&'
+    query_parameters = query_string.split('&')
+    for query_parameter in query_parameters:
+        post_couple = query_parameter.split('=')
+        output[urllib.unquote_plus(post_couple[0])] = \
+            urllib.unquote_plus(post_couple[1])
+
+    return output

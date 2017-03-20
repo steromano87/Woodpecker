@@ -81,11 +81,8 @@ class SazParser(BaseParser):
         # Parse query string parameters
         request['params'] = {}
         if '?' in first_line[1]:
-            query_string = first_line[1].split('?')[1]
-            for param_couple in query_string.split('&'):
-                split_params = param_couple.split('=')
-                request['params'][urllib.unquote_plus(split_params[0])] = \
-                    urllib.unquote_plus(split_params[1])
+            request['params'] = \
+                functions.split_query_string(first_line[1].split('?')[1])
 
         # Parse headers in key - value format
         header_lines = functions.split_by_element(
@@ -117,12 +114,8 @@ class SazParser(BaseParser):
             # as POST key-value data
             if 'application/x-www-form-urlencoded' \
                     in request['headers'].get('Content-Type', ''):
-                post_data_lines = content_lines[0].split('&')
-                for post_data_line in post_data_lines:
-                    post_couple = post_data_line.split('=')
-                    request['form_data'][
-                        urllib.unquote_plus(post_couple[0])] = \
-                        urllib.unquote_plus(post_couple[1])
+                request['form_data'] = \
+                    functions.split_query_string(content_lines[0])
             else:
                 request['body'] = '\n'.join(content_lines)
         except IndexError:
