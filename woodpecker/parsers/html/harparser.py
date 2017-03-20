@@ -14,7 +14,7 @@ class HarParser(BaseParser):
             with open(os.path.abspath(har_file), 'rb') as fp:
                 self._raw_data = json.load(fp)
         except IOError:
-            sys.stdout.write('File "{file_path}" not found'.format(
+            raise IOError('File "{file_path}" not found'.format(
                 file_path=har_file
             ))
         else:
@@ -163,7 +163,7 @@ class HarParser(BaseParser):
         response['content'] = {
             'size': entry_response.get('content', {}).get('size', 0),
             'mime_type': entry_response.get('content', {}).get('mimeType'),
-            'content': entry_response.get('content', {}).get('value', ''),
+            'text': entry_response.get('content', {}).get('text', ''),
         }
 
         # Get request headers in key - value format
