@@ -77,7 +77,7 @@ class SazParser(BaseParser):
 
         # Start getting method and URL
         request = dict(method=first_line[0])
-        request['url'] = first_line[1].split('?')[0]
+        request['url'] = urllib.unquote_plus(first_line[1].split('?')[0])
 
         # Parse query string parameters
         request['params'] = {}
@@ -97,7 +97,7 @@ class SazParser(BaseParser):
             header_couple = header_line.split(':')
             if header_couple[0].lower() == 'cookie':
                 request['cookies'] = \
-                    self._parse_cookies(header_couple[1].strip())
+                    functions.parse_cookie_header(header_couple[1].strip())
             elif header_couple[0].lower() == 'user-agent':
                 request['user_agent'] = header_couple[1].strip()
             else:
@@ -183,14 +183,3 @@ class SazParser(BaseParser):
             response['content']['content'] = line_sep.join(content_lines)
 
         return response
-
-    @staticmethod
-    def _parse_cookies(cookie_string):
-        cookies = cookie_string.split(';')
-        cookie_dict = {}
-        for cookie in cookies:
-            cookie_dict[
-                urllib.unquote_plus(cookie.split('=')[0].strip())
-            ] = \
-                urllib.unquote_plus(cookie.split('=')[1].strip())
-        return cookie_dict
