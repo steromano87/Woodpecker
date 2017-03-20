@@ -57,6 +57,9 @@ class SazParser(BaseParser):
                 }
             )
 
+        # Return everything
+        return self._parsed
+
     def _parse_request(self, index):
         # Try to read file content
         try:
