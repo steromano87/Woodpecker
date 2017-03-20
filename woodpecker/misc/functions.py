@@ -29,5 +29,29 @@ def split_query_string(query_string):
         post_couple = query_parameter.split('=')
         output[urllib.unquote_plus(post_couple[0])] = \
             urllib.unquote_plus(post_couple[1])
-
     return output
+
+
+def parse_set_cookie_header(cookie_string):
+    cookie_dict = {}
+    cookie_pairs = cookie_string.split('; ')
+    for cookie_entry in cookie_pairs:
+        cookie_couple = cookie_entry.split('=')
+        if cookie_couple[0].lower() \
+            not in ('expires', 'max-age', 'domain', 'path',
+                    'secure', 'httponly', 'samesite'):
+            cookie_dict['name'] = urllib.unquote_plus(cookie_couple[0])
+            cookie_dict['value'] = urllib.unquote_plus(cookie_couple[1])
+        elif cookie_couple[0].lower() in ('secure', 'httponly'):
+            cookie_dict[cookie_couple[0].lower()] = True
+        else:
+            cookie_dict[cookie_couple[0].lower()] = \
+                urllib.unquote_plus(cookie_couple[1])
+    return cookie_dict
+
+
+def get_eol(test_string):
+    line_endings = ('\r\n', '\r', '\n')
+    for ending in line_endings:
+        if ending in test_string:
+            return ending
