@@ -173,10 +173,9 @@ class HarParser(BaseParser):
                 # If key is 'cookie' or 'Cookie', skip it
                 # because cookies are handled in previous section
                 # If key is method, skip it for the same reason
-                if str(header_key.lower()) == 'cookie' or \
-                        str(header_key.lower()) == 'method':
-                    pass
-                else:
+                if str(header_key.lower()) not in (
+                        'set-cookie', 'method',
+                        'content-type', 'content-length'):
                     response['headers'][header.get('name', '')] = \
                         header.get('value', '')
             except KeyError:
