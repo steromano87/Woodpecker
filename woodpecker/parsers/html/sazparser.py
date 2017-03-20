@@ -118,9 +118,10 @@ class SazParser(BaseParser):
                 request['form_data'] = \
                     functions.split_query_string(content_lines[0])
             else:
-                request['body'] = '\n'.join(content_lines)
+                request['text'] = \
+                    functions.get_eol(raw_file_content).join(content_lines)
         except IndexError:
-            request['body'] = None
+            request['text'] = None
 
         return request
 
@@ -177,9 +178,9 @@ class SazParser(BaseParser):
                     ''
                 )[1:]))
         except IndexError:
-            response['content']['content'] = None
+            response['content']['text'] = None
         else:
             line_sep = functions.get_eol(raw_file_content)
-            response['content']['content'] = line_sep.join(content_lines)
+            response['content']['text'] = line_sep.join(content_lines)
 
         return response
