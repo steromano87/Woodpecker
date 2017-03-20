@@ -2,6 +2,7 @@ import os
 import re
 import zipfile
 import urllib
+import itertools
 
 import woodpecker.misc.functions as functions
 
@@ -51,7 +52,7 @@ class SazParser(BaseParser):
             self._parsed['entries'].append(
                 {
                     'request': self._parse_request(index),
-                    'response': None,
+                    'response': self._parse_response(index),
                     'timings': None
                 }
             )
@@ -122,6 +123,66 @@ class SazParser(BaseParser):
             request['body'] = None
 
         return request
+
+    def _parse_response(self, index):
+        # Try to read file content
+        try:
+            raw_file_content = \
+                self._zip_file.read('raw/{index}_s.txt'.format(index=index))
+        except IOError:
+            # Raise exception if file cannot be found
+            raise IOError(
+                'Cannot find "raw/{index}_s.txt" inside '
+                'file {saz_file}, corrupted archive?'.format(
+                    index=index,
+                    saz_file=self._saz_file_path
+                )
+            )
+
+        # If file content can be read, parse it
+        first_line = raw_file_content.split('\n', 1)[0].split(' ')
+
+        # Start getting method and URL
+        response = dict(status=first_line[1])
+
+        # Parse headers in key - value format
+        header_lines = functions.split_by_element(
+            raw_file_content.split('\n', 1)[1].splitlines(),
+            ''
+        )[0]
+
+        # Iterate over elements and save separately user agent and cookies
+        response['headers'] = {}
+        response['content'] = {}
+        response['cookies'] = []
+        for header_line in header_lines:
+            header_couple = header_line.split(': ')
+            if header_couple[0].lower() == 'set-cookie':
+                response['cookies'].append(
+                    functions.parse_set_cookie_header(header_couple[1].strip())
+                )
+            elif header_couple[0].lower() == 'content-type':
+                response['content']['mime_type'] = header_couple[1].strip()
+            elif header_couple[0].lower() == 'content-length':
+                response['content']['size'] = int(header_couple[1].strip())
+            else:
+                response['headers'][header_couple[0].strip()] = \
+                    header_couple[1].strip()
+
+        # Try to parse content lines
+        try:
+            content_lines = \
+                list(itertools.chain.from_iterable(functions.split_by_element(
+                    raw_file_content.split('\n', 1)[1].splitlines(),
+                    ''
+                )[1:]))
+        except IndexError:
+            response['content']['content'] = None
+        else:
+            line_sep = functions.get_eol(raw_file_content)
+            response['content']['content'] = line_sep.join(content_lines)
+
+        return response
 
     @staticmethod
     def _parse_cookies(cookie_string):
