@@ -101,29 +101,26 @@ class HarParser(BaseParser):
 
     def _parse_timings(self, entry):
         # Get request timestamp
-        timings = {'timestamp': entry.get('startedDateTime', None),
-                   'duration': float(entry.get('time', 0))}
+        timings = {
+            'timestamp': dateparser.parse(entry.get('startedDateTime', None)),
+            'duration': float(entry.get('time', 0))
+        }
 
         # Get request elapsed since first request (in milliseconds)
-        timings['elapsed_from_start'] = (
-                                            dateparser.parse(
-                                                timings['timestamp']
-                                            ) - self._parsed['start_time']
-                                        ).total_seconds() * 1000
+        timings['elapsed_from_start'] = \
+            (timings['timestamp'] -
+             self._parsed['start_time']).total_seconds() * 1000
 
         # Get request elapsed from previous request (if any)
         # Defaults to elapsed from start
         try:
-            timings['elapsed_from_previous'] = (
-                                                   dateparser.parse(
-                                                       timings['timestamp']
-                                                   ) -
-                                                   dateparser.parse(
-                                                       self._parsed['entries'][
-                                                           -1]['request'][
-                                                           'timestamp']
-                                                   )
-                                               ).total_seconds() * 1000
+            timings['elapsed_from_previous'] = \
+                (timings['timestamp'] - dateparser.parse(
+                    self._parsed['entries'][
+                        -1]['request'][
+                        'timestamp']
+                )
+                 ).total_seconds() * 1000
         except (KeyError, IndexError):
             timings['elapsed_from_previous'] = \
                 timings['elapsed_from_start']
