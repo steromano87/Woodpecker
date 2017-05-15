@@ -42,7 +42,9 @@ class Settings(object):
 
     def save(self):
         with open(self._configfile, 'w') as pf:
-            yaml.dump(self._data, stream=pf)
+            yaml.safe_dump(self._data,
+                           stream=pf,
+                           default_flow_style=False)
 
     def get(self, section, entry):
         if section in six.viewkeys(self._data):
