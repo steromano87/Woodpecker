@@ -4,6 +4,9 @@ import zipfile
 import urllib
 import itertools
 
+import xml.etree.cElementTree as ET
+import dateutil.parser as dateparser
+
 import woodpecker.misc.functions as functions
 
 from woodpecker.parsers.baseparser import BaseParser
@@ -53,7 +56,7 @@ class SazParser(BaseParser):
                 {
                     'request': self._parse_request(index),
                     'response': self._parse_response(index),
-                    'timings': None
+                    'timings': self._parse_timings(index)
                 }
             )
 
@@ -187,3 +190,59 @@ class SazParser(BaseParser):
             response['content']['text'] = line_sep.join(content_lines)
 
         return response
+
+    def _parse_timings(self, index):
+        # Try to read file content
+        try:
+            raw_file_content = \
+                self._zip_file.read('raw/{index}_m.xml'.format(index=index))
+        except IOError:
+            # Raise exception if file cannot be found
+            raise IOError(
+                'Cannot find "raw/{index}_m.xml" inside '
+                'file {saz_file}, corrupted archive?'.format(
+                    index=index,
+                    saz_file=self._saz_file_path
+                )
+            )
+
+        timings = {}
+
+        xml_doc = ET.fromstring(raw_file_content)
+        session_timers = xml_doc.findall('.//SessionTimers')[0]
+        timings['timestamp'] = dateparser.parse(
+            session_timers.attrib['ClientBeginRequest']
+        )
+
+        # If index is 01, set the start time, too
+        if index == '01':
+            self._parsed['start_time'] = timings['timestamp']
+
+        timings['duration'] = round((dateparser.parse(
+            session_timers.attrib['ClientDoneResponse']
+        ) - timings['timestamp']).total_seconds() * 1000)
+        timings['elapsed_from_start'] = \
+            round((timings['timestamp'] -
+                   self._parsed['start_time']).total_seconds() * 1000)
+
+        try:
+            timings['elapsed_from_previous'] = \
+                round((timings['timestamp'] -
+                       self._parsed['entries'][-1]['timings'][
+                           'timestamp']).total_seconds() * 1000)
+        except (IndexError, KeyError):
+            timings['elapsed_from_previous'] = 0
+
+        try:
+            timings['elapsed_from_end_of_previous'] = \
+                timings['elapsed_from_previous'] - \
+                self._parsed['entries'][-1]['timings'][
+                    'duration']
+        except (IndexError, KeyError):
+            timings['elapsed_from_end_of_previous'] = 0
+
+        timings['elapsed_from_end_of_previous'] = \
+            timings['elapsed_from_end_of_previous'] \
+            if timings['elapsed_from_end_of_previous'] > 0 else 0
+
+        return timings
