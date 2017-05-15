@@ -32,6 +32,17 @@ def split_query_string(query_string):
     return output
 
 
+def parse_cookie_header(cookie_string):
+    cookies = cookie_string.split(';')
+    cookie_dict = {}
+    for cookie in cookies:
+        cookie_dict[
+            urllib.unquote_plus(cookie.split('=')[0].strip())
+        ] = \
+            urllib.unquote_plus(cookie.split('=')[1].strip())
+    return cookie_dict
+
+
 def parse_set_cookie_header(cookie_string):
     cookie_dict = {}
     cookie_pairs = cookie_string.split('; ')
