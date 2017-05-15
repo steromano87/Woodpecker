@@ -11,7 +11,7 @@ class Settings(object):
     Abstract class that is subclassed by the settings specific
     to each sequence type
     """
-    def __init__(self, configfile='woodpecker.yml'):
+    def __init__(self, configfile='settings.yml'):
         # Absolute path to Config file
         self._configfile = os.path.abspath(configfile)
 
@@ -34,10 +34,10 @@ class Settings(object):
         self.load()
 
     def load(self):
-        if os.path.isfile(self._configfile):
+        try:
             with open(self._configfile, 'r') as fp:
                 self._data = self._validator.validated(yaml.safe_load(fp))
-        else:
+        except IOError:
             self._data = self._validator.validated(self._default_values)
 
     def save(self):
