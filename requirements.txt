@@ -9,5 +9,6 @@ grequests
 PyYAML
 six
 Cerberus
+simplejson
 verboselogs
 coloredlogs
