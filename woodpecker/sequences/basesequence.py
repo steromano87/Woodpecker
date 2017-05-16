@@ -13,8 +13,8 @@ import coloredlogs
 from string import Template
 from configobj import ConfigObj
 
-from woodpecker.data.variablejar import VariableJar
-from woodpecker.misc.validate import Validator
+from woodpecker.io.validate import Validator
+from woodpecker.io.variablejar import VariableJar
 
 
 class BaseSequence(object):

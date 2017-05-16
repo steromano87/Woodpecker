@@ -1,17 +1,16 @@
 import abc
-import six
-import sys
 import re
+import sys
 
-import requests
-import grequests
 import gevent
-
+import grequests
+import requests
+import six
 from configobj import ConfigObj
 
-from woodpecker.data.variablejar import VariableJar
+from woodpecker.io.validate import Validator
+from woodpecker.io.variablejar import VariableJar
 from woodpecker.sequences.basesequence import BaseSequence
-from woodpecker.misc.validate import Validator
 
 
 class HttpSequence(BaseSequence):
