@@ -51,23 +51,27 @@ class HttpSequence(BaseSequence):
     def _patch_kwargs(self, args):
         # Request headers
         args['headers'] = args.get(
-            'headers', self.settings.get('http', 'default_request_headers'))
+            'headers', {'User-Agent': self.settings['http']['user_agent']})
 
         # Option to follow redirects or not
         args['allow_redirects'] = args.get(
-            'allow_redirects', self.settings.get('http', 'allow_redirects'))
+            'allow_redirects', self.settings['http']['allow_redirects'])
 
         # Option to verify SSL certificates
         args['verify'] = args.get(
-            'verify', not self.settings.get('http', 'ignore_ssl_errors'))
+            'verify', not self.settings['http']['ignore_ssl_errors'])
 
         # Proxy settings
         args['proxies'] = args.get(
-            'proxies', self.settings.get('http', 'proxies'))
+            'proxies',
+            {
+                'http-proxy': self.settings['http']['proxies']
+            }
+        )
 
         # Default timeout
         args['timeout'] = args.get(
-            'timeout', self.settings.get('http', 'default_timeout'))
+            'timeout', self.settings['http']['default_timeout'])
 
         # If the Ignore SSL errors option is set to true,
         # disables the urllib InsecureRequestWarning message
@@ -79,7 +83,7 @@ class HttpSequence(BaseSequence):
         father_configobj = BaseSequence.default_settings()
         configobj = ConfigObj({
             'http': {
-                'default_request_headers': {},
+                'user_agent': 'Google Chrome 58',
                 'allow_redirects': True,
                 'ignore_ssl_errors': True,
                 'http_proxy': None,
@@ -100,6 +104,7 @@ class HttpSequence(BaseSequence):
         father_configspec = BaseSequence.default_settings_validator()
         configspec = ConfigObj({
             'http': {
+                'user_agent': "string(min=0, default='Google Chrome 58')",
                 'allow_redirects': 'boolean(default=True)',
                 'ignore_ssl_errors': 'boolean(default=True)',
                 'http_proxy': 'string',
