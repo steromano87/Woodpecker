@@ -7,25 +7,25 @@ import requests
 import grequests
 import gevent
 
-from woodpecker.settings.httpsettings import HttpSettings
-from woodpecker.settings.basesettings import BaseSettings
+from configobj import ConfigObj
+
 from woodpecker.data.variablejar import VariableJar
 from woodpecker.sequences.basesequence import BaseSequence
+from woodpecker.misc.validate import Validator
 
 
 class HttpSequence(BaseSequence):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self,
-                 settings=HttpSettings(),
+                 settings=None,
                  log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
                  transactions=None,
                  debug=False,
                  inline_log_sinks=(sys.stdout,)):
-        # Extend the standard settings
-        obj_settings = BaseSettings()
-        settings.extend(obj_settings)
+        # Settings
+        settings = settings or self.default_settings_validator()
 
         # Call to super constructor
         super(HttpSequence, self).__init__(settings=settings,
@@ -76,7 +76,40 @@ class HttpSequence(BaseSequence):
 
     @staticmethod
     def default_settings():
-        return HttpSettings()
+        father_configobj = BaseSequence.default_settings()
+        configobj = ConfigObj({
+            'http': {
+                'default_request_headers': {},
+                'allow_redirects': True,
+                'ignore_ssl_errors': True,
+                'http_proxy': None,
+                'https_proxy': None,
+                'default_timeout': 5.0,
+                'max_async_concurrent_requests': 10
+            }
+        },
+            interpolation=False,
+            configspec=HttpSequence.default_settings_validator()
+        )
+        configobj.merge(father_configobj)
+        configobj.validator = Validator()
+        return configobj
+
+    @staticmethod
+    def default_settings_validator():
+        father_configspec = BaseSequence.default_settings_validator()
+        configspec = ConfigObj({
+            'http': {
+                'allow_redirects': 'boolean(default=True)',
+                'ignore_ssl_errors': 'boolean(default=True)',
+                'http_proxy': 'string',
+                'https_proxy': 'string',
+                'default_timeout': 'float(min=0.0, default=5.0)',
+                'max_async_concurrent_requests': 'integer(min=0, default=10)'
+            }
+        }, interpolation=False)
+        configspec.merge(father_configspec)
+        return configspec
 
     def start_async_pool(self):
         """
