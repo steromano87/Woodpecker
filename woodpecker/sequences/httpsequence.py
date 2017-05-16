@@ -23,8 +23,6 @@ class HttpSequence(BaseSequence):
                  transactions=None,
                  debug=False,
                  inline_log_sinks=(sys.stdout,)):
-        # Settings
-        settings = settings or self.default_settings_validator()
 
         # Call to super constructor
         super(HttpSequence, self).__init__(settings=settings,
@@ -33,6 +31,9 @@ class HttpSequence(BaseSequence):
                                            transactions=transactions,
                                            debug=debug,
                                            inline_log_sinks=inline_log_sinks)
+
+        # Settings (automatically extended by the class settings)
+        self.settings = settings or self.default_settings_validator()
 
         # Instantiates new session and last response variables in VariableJar
         if not self.variables.is_set('__http_session'):
