@@ -1,7 +1,6 @@
 import pytest
 
-from woodpecker.data.variablejar import VariableJar
-from woodpecker.settings.basesettings import BaseSettings
+from woodpecker.io.variablejar import VariableJar
 
 
 @pytest.fixture
@@ -15,16 +14,12 @@ def test_set_variable(variablejar):
 
 
 def test_get_unset_variable_not_strict():
-    settings = BaseSettings()
-    settings.set('runtime', 'raise_error_if_variable_not_defined', False)
-    variable_jar = VariableJar(settings=settings)
+    variable_jar = VariableJar()
     assert variable_jar.get('foo') == 'foo'
 
 
 def test_get_unset_variable_strict():
-    settings = BaseSettings()
-    settings.set('runtime', 'raise_error_if_variable_not_defined', True)
-    variable_jar = VariableJar(settings=settings)
+    variable_jar = VariableJar(raise_variable_error=True)
     with pytest.raises(KeyError):
         variable_jar.get('foo')
 
@@ -40,9 +35,7 @@ def test_set_reserved_variable(variablejar):
 
 
 def test_delete_variable():
-    settings = BaseSettings()
-    settings.set('runtime', 'raise_error_if_variable_not_defined', True)
-    variable_jar = VariableJar(settings=settings)
+    variable_jar = VariableJar(raise_variable_error=True)
     variable_jar.set('foo', 'bar')
     assert variable_jar.get('foo') == 'bar'
     variable_jar.delete('foo')
@@ -51,9 +44,7 @@ def test_delete_variable():
 
 
 def test_reset_variablejar():
-    settings = BaseSettings()
-    settings.set('runtime', 'raise_error_if_variable_not_defined', True)
-    variable_jar = VariableJar(settings=settings)
+    variable_jar = VariableJar(raise_variable_error=True)
     variable_jar.set('foo', 'bar')
     assert variable_jar.get('foo') == 'bar'
     variable_jar.reset()

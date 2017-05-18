@@ -2,11 +2,9 @@ import datetime
 
 import six
 
-from woodpecker.settings.basesettings import BaseSettings
-
 
 class VariableJar(object):
-    def __init__(self, settings=BaseSettings()):
+    def __init__(self, raise_variable_error=False):
         # Internal public variables storage
         self._public_variables = {}
 
@@ -14,7 +12,7 @@ class VariableJar(object):
         self._reserved_variables = {}
 
         # Internal settings object
-        self._settings = settings
+        self._raise_variable_error = raise_variable_error
 
         # Set (reset) the default values
         self.reset()
@@ -34,12 +32,12 @@ class VariableJar(object):
             if name in six.viewkeys(self._public_variables):
                 return self._public_variables.get(name)
             else:
-                if self._settings.get('runtime',
-                                      'raise_error_if_variable_not_defined'):
+                if self._raise_variable_error:
                     raise KeyError("The variable '{name}' "
                                    "is not defined".format(name=name))
                 else:
-                    # FIXME: understand how to show warning and return the value
+                    # FIXME: understand how to show warning
+                    # and return the value
                     return name
         else:
             raise KeyError("The variable name '{name}' is reserved "
@@ -56,8 +54,7 @@ class VariableJar(object):
                     datetime.datetime.now()
                 self._reserved_variables['last_updated_item'] = name
             else:
-                if self._settings.get('runtime',
-                                      'raise_error_if_variable_not_defined'):
+                if self._raise_variable_error:
                     raise KeyError("The variable '{name}' "
                                    "is not defined".format(name=name))
         else:

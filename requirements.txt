@@ -12,3 +12,4 @@ Cerberus
 simplejson
 verboselogs
 coloredlogs
+configobj

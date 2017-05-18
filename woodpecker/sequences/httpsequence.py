@@ -1,31 +1,27 @@
 import abc
-import six
-import sys
 import re
+import sys
 
-import requests
-import grequests
 import gevent
+import grequests
+import requests
+import six
+from configobj import ConfigObj
 
-from woodpecker.settings.httpsettings import HttpSettings
-from woodpecker.settings.basesettings import BaseSettings
-from woodpecker.data.variablejar import VariableJar
-from woodpecker.sequences.basesequence import BaseSequence
+from woodpecker.io.variablejar import VariableJar
+from woodpecker.sequences.basesequence import BaseSequence, BaseSettings
 
 
 class HttpSequence(BaseSequence):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self,
-                 settings=HttpSettings(),
+                 settings=None,
                  log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
                  transactions=None,
                  debug=False,
                  inline_log_sinks=(sys.stdout,)):
-        # Extend the standard settings
-        obj_settings = BaseSettings()
-        settings.extend(obj_settings)
 
         # Call to super constructor
         super(HttpSequence, self).__init__(settings=settings,
@@ -34,6 +30,9 @@ class HttpSequence(BaseSequence):
                                            transactions=transactions,
                                            debug=debug,
                                            inline_log_sinks=inline_log_sinks)
+
+        # Settings (automatically extended by the class settings)
+        self.settings = settings or self.default_settings()
 
         # Instantiates new session and last response variables in VariableJar
         if not self.variables.is_set('__http_session'):
@@ -51,32 +50,33 @@ class HttpSequence(BaseSequence):
     def _patch_kwargs(self, args):
         # Request headers
         args['headers'] = args.get(
-            'headers', self.settings.get('http', 'default_request_headers'))
+            'headers', {'User-Agent': self.settings['http']['user_agent']})
 
         # Option to follow redirects or not
         args['allow_redirects'] = args.get(
-            'allow_redirects', self.settings.get('http', 'allow_redirects'))
+            'allow_redirects', self.settings['http']['allow_redirects'])
 
         # Option to verify SSL certificates
         args['verify'] = args.get(
-            'verify', not self.settings.get('http', 'ignore_ssl_errors'))
+            'verify', not self.settings['http']['ignore_ssl_errors'])
 
         # Proxy settings
         args['proxies'] = args.get(
-            'proxies', self.settings.get('http', 'proxies'))
+            'proxies',
+            {
+                'http-proxy': self.settings['http']['http_proxy'],
+                'https-proxy': self.settings['http']['https_proxy']
+            }
+        )
 
         # Default timeout
         args['timeout'] = args.get(
-            'timeout', self.settings.get('http', 'default_timeout'))
+            'timeout', self.settings['http']['default_timeout'])
 
         # If the Ignore SSL errors option is set to true,
         # disables the urllib InsecureRequestWarning message
         if not args['verify']:
             requests.packages.urllib3.disable_warnings()
-
-    @staticmethod
-    def default_settings():
-        return HttpSettings()
 
     def start_async_pool(self):
         """
@@ -92,8 +92,8 @@ class HttpSequence(BaseSequence):
         """
         self._async_request_pool_active = False
         grequests.map(self._async_request_pool,
-                      size=self.settings.get('http',
-                                             'max_async_concurrent_requests'),
+                      size=self.settings['http'][
+                          'max_async_concurrent_requests'],
                       exception_handler=self._async_exception_handler)
         self._async_request_pool = []
         self._inline_logger.debug('Async requests pool ended')
@@ -379,8 +379,7 @@ class HttpSequence(BaseSequence):
             async_greenlet = grequests.send(
                 obj_async_request,
                 pool=grequests.Pool(
-                    self.settings.get(
-                        'http', 'max_async_concurrent_requests')
+                    self.settings['http']['max_async_concurrent_requests']
                 )
             )
             self._async_request_pool.append(async_greenlet)
@@ -650,3 +649,47 @@ class HttpSequence(BaseSequence):
                     )
                 )
         return _param_hook
+
+    @staticmethod
+    def default_settings():
+        return HttpSettings()
+
+
+class HttpSettings(BaseSettings):
+    def __init__(self):
+        super(HttpSettings, self).__init__()
+
+        self.merge(
+            ConfigObj({
+                'http': {
+                    'user_agent': 'Google Chrome 58',
+                    'allow_redirects': True,
+                    'ignore_ssl_errors': True,
+                    'http_proxy': None,
+                    'https_proxy': None,
+                    'default_timeout': 5.0,
+                    'max_async_concurrent_requests': 10
+                }
+            },
+                interpolation=False,
+                configspec=HttpSettings.default_settings_validator()
+            )
+        )
+
+    @staticmethod
+    def default_settings_validator():
+        father_configspec = \
+            super(HttpSettings, HttpSettings).default_settings_validator()
+        configspec = ConfigObj({
+            'http': {
+                'user_agent': "string(min=0, default='Google Chrome 58')",
+                'allow_redirects': 'boolean(default=True)',
+                'ignore_ssl_errors': 'boolean(default=True)',
+                'http_proxy': 'string',
+                'https_proxy': 'string',
+                'default_timeout': 'float(min=0.0, default=5.0)',
+                'max_async_concurrent_requests': 'integer(min=0, default=10)'
+            }
+        }, interpolation=False)
+        configspec.merge(father_configspec)
+        return configspec
