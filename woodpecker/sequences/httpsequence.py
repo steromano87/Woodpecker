@@ -8,9 +8,8 @@ import requests
 import six
 from configobj import ConfigObj
 
-from woodpecker.io.validate import Validator
 from woodpecker.io.variablejar import VariableJar
-from woodpecker.sequences.basesequence import BaseSequence
+from woodpecker.sequences.basesequence import BaseSequence, BaseSettings
 
 
 class HttpSequence(BaseSequence):
@@ -78,44 +77,6 @@ class HttpSequence(BaseSequence):
         # disables the urllib InsecureRequestWarning message
         if not args['verify']:
             requests.packages.urllib3.disable_warnings()
-
-    @staticmethod
-    def default_settings():
-        father_configobj = BaseSequence.default_settings()
-        configobj = ConfigObj({
-            'http': {
-                'user_agent': 'Google Chrome 58',
-                'allow_redirects': True,
-                'ignore_ssl_errors': True,
-                'http_proxy': None,
-                'https_proxy': None,
-                'default_timeout': 5.0,
-                'max_async_concurrent_requests': 10
-            }
-        },
-            interpolation=False,
-            configspec=HttpSequence.default_settings_validator()
-        )
-        configobj.merge(father_configobj)
-        configobj.validator = Validator()
-        return configobj
-
-    @staticmethod
-    def default_settings_validator():
-        father_configspec = BaseSequence.default_settings_validator()
-        configspec = ConfigObj({
-            'http': {
-                'user_agent': "string(min=0, default='Google Chrome 58')",
-                'allow_redirects': 'boolean(default=True)',
-                'ignore_ssl_errors': 'boolean(default=True)',
-                'http_proxy': 'string',
-                'https_proxy': 'string',
-                'default_timeout': 'float(min=0.0, default=5.0)',
-                'max_async_concurrent_requests': 'integer(min=0, default=10)'
-            }
-        }, interpolation=False)
-        configspec.merge(father_configspec)
-        return configspec
 
     def start_async_pool(self):
         """
@@ -688,3 +649,47 @@ class HttpSequence(BaseSequence):
                     )
                 )
         return _param_hook
+
+    @staticmethod
+    def default_settings():
+        return HttpSettings()
+
+
+class HttpSettings(BaseSettings):
+    def __init__(self):
+        super(HttpSettings, self).__init__()
+
+        self.merge(
+            ConfigObj({
+                'http': {
+                    'user_agent': 'Google Chrome 58',
+                    'allow_redirects': True,
+                    'ignore_ssl_errors': True,
+                    'http_proxy': None,
+                    'https_proxy': None,
+                    'default_timeout': 5.0,
+                    'max_async_concurrent_requests': 10
+                }
+            },
+                interpolation=False,
+                configspec=HttpSettings.default_settings_validator()
+            )
+        )
+
+    @staticmethod
+    def default_settings_validator():
+        father_configspec = \
+            super(HttpSettings, HttpSettings).default_settings_validator()
+        configspec = ConfigObj({
+            'http': {
+                'user_agent': "string(min=0, default='Google Chrome 58')",
+                'allow_redirects': 'boolean(default=True)',
+                'ignore_ssl_errors': 'boolean(default=True)',
+                'http_proxy': 'string',
+                'https_proxy': 'string',
+                'default_timeout': 'float(min=0.0, default=5.0)',
+                'max_async_concurrent_requests': 'integer(min=0, default=10)'
+            }
+        }, interpolation=False)
+        configspec.merge(father_configspec)
+        return configspec

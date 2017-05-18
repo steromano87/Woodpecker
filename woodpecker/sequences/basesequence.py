@@ -153,49 +153,89 @@ class BaseSequence(object):
             self._inline_logger.error(str_error_message)
             raise KeyError(str_error_message)
 
+    def _inject_variables(self, text):
+        return Template(text).safe_substitute(self.variables.dump())
+
+    def run_steps(self):
+        # If each sequence is treated as a transaction, add the sequence itself
+        # to the list of active transactions
+        self._inline_logger.debug('Sequence started')
+        if self.settings['runtime']['each_sequence_is_transaction']:
+            self.start_transaction('{sequence}_transaction'.format(
+                sequence=self.__class__.__name__
+            ))
+
+        # Run the setup hooks
+        for hook in self._setup_hooks:
+            hook()
+
+        self.steps()
+
+        # Run teardown hooks
+        for hook in self._teardown_hooks:
+            hook()
+
+        # If each sequence is treated as a transaction,
+        # end the current sequence
+        if self.settings['runtime']['each_sequence_is_transaction']:
+            self.end_transaction('{sequence}_transaction'.format(
+                sequence=self.__class__.__name__
+            ))
+        self._inline_logger.debug('Sequence ended')
+
+        return self.settings, \
+            self.variables, \
+            self._transactions
+
     @staticmethod
     def default_settings():
-        configobj = ConfigObj({
-            'timing': {
-                'skip_think_time': False,
-                'max_think_time': 5.0,
-                'think_time_after_setup': 0.0,
-                'think_time_between_sequences': 0.0,
-                'think_time_before_teardown': 0.0,
-                'think_time_between_iterations': 0.0
-            },
-            'network': {
-                'controller_port': 7877,
-                'max_pending_connections': 4
-            },
-            'logging': {
-                'max_entries_before_flush': 10,
-                'max_interval_before_flush': 30.0,
-                'results_file': 'results.sqlite',
-                'sysmonitor_polling_interval': 5.0,
-                'use_compressed_logs': True,
-                'inline_log_format':
-                    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-            },
-            'spawning': {
-                'spawning_mode': 'threads',
-                'pecker_handling_mode': 'passive',
-                'pecker_status_active_polling_interval': 0.1,
-                'spawners': [
-                    'localhost'
-                ]
-            },
-            'runtime': {
-                'raise_error_if_variable_not_defined': False,
-                'each_sequence_is_transaction': True
-            }
-        },
-            interpolation=False,
-            configspec=BaseSequence.default_settings_validator()
-        )
-        configobj.validator = Validator()
-        return configobj
+        return BaseSettings()
 
+
+class BaseSettings(ConfigObj):
+    def __init__(self):
+        super(BaseSettings, self).__init__(
+            {
+                'timing': {
+                    'skip_think_time': False,
+                    'max_think_time': 5.0,
+                    'think_time_after_setup': 0.0,
+                    'think_time_between_sequences': 0.0,
+                    'think_time_before_teardown': 0.0,
+                    'think_time_between_iterations': 0.0
+                },
+                'network': {
+                    'controller_port': 7877,
+                    'max_pending_connections': 4
+                },
+                'logging': {
+                    'max_entries_before_flush': 10,
+                    'max_interval_before_flush': 30.0,
+                    'results_file': 'results.sqlite',
+                    'sysmonitor_polling_interval': 5.0,
+                    'use_compressed_logs': True,
+                    'inline_log_format':
+                        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                },
+                'spawning': {
+                    'spawning_mode': 'threads',
+                    'pecker_handling_mode': 'passive',
+                    'pecker_status_active_polling_interval': 0.1,
+                    'spawners': [
+                        'localhost'
+                    ]
+                },
+                'runtime': {
+                    'raise_error_if_variable_not_defined': False,
+                    'each_sequence_is_transaction': True
+                }
+            },
+            interpolation=False,
+            configspec=BaseSettings.default_settings_validator()
+        )
+
+        self.validator = Validator()
+        
     @staticmethod
     def default_settings_validator():
         return ConfigObj({
@@ -236,37 +276,3 @@ class BaseSequence(object):
                 'each_sequence_is_transaction': 'boolean(default=True)'
             }
         }, interpolation=False)
-
-    def _inject_variables(self, text):
-        return Template(text).safe_substitute(self.variables.dump())
-
-    def run_steps(self):
-        # If each sequence is treated as a transaction, add the sequence itself
-        # to the list of active transactions
-        self._inline_logger.debug('Sequence started')
-        if self.settings['runtime']['each_sequence_is_transaction']:
-            self.start_transaction('{sequence}_transaction'.format(
-                sequence=self.__class__.__name__
-            ))
-
-        # Run the setup hooks
-        for hook in self._setup_hooks:
-            hook()
-
-        self.steps()
-
-        # Run teardown hooks
-        for hook in self._teardown_hooks:
-            hook()
-
-        # If each sequence is treated as a transaction,
-        # end the current sequence
-        if self.settings['runtime']['each_sequence_is_transaction']:
-            self.end_transaction('{sequence}_transaction'.format(
-                sequence=self.__class__.__name__
-            ))
-        self._inline_logger.debug('Sequence ended')
-
-        return self.settings, \
-            self.variables, \
-            self._transactions
