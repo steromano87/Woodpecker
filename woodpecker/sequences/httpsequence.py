@@ -33,7 +33,7 @@ class HttpSequence(BaseSequence):
                                            inline_log_sinks=inline_log_sinks)
 
         # Settings (automatically extended by the class settings)
-        self.settings = settings or self.default_settings_validator()
+        self.settings = settings or self.default_settings()
 
         # Instantiates new session and last response variables in VariableJar
         if not self.variables.is_set('__http_session'):
@@ -65,7 +65,8 @@ class HttpSequence(BaseSequence):
         args['proxies'] = args.get(
             'proxies',
             {
-                'http-proxy': self.settings['http']['proxies']
+                'http-proxy': self.settings['http']['http_proxy'],
+                'https-proxy': self.settings['http']['https_proxy']
             }
         )
 
@@ -130,8 +131,8 @@ class HttpSequence(BaseSequence):
         """
         self._async_request_pool_active = False
         grequests.map(self._async_request_pool,
-                      size=self.settings.get('http',
-                                             'max_async_concurrent_requests'),
+                      size=self.settings['http'][
+                          'max_async_concurrent_requests'],
                       exception_handler=self._async_exception_handler)
         self._async_request_pool = []
         self._inline_logger.debug('Async requests pool ended')
@@ -417,8 +418,7 @@ class HttpSequence(BaseSequence):
             async_greenlet = grequests.send(
                 obj_async_request,
                 pool=grequests.Pool(
-                    self.settings.get(
-                        'http', 'max_async_concurrent_requests')
+                    self.settings['http']['max_async_concurrent_requests']
                 )
             )
             self._async_request_pool.append(async_greenlet)
