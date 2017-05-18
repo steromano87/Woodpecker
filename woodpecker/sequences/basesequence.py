@@ -57,7 +57,7 @@ class BaseSequence(object):
             obj_inline_handler = logging.StreamHandler(obj_log_sink)
             obj_inline_handler.setFormatter(
                 logging.Formatter(
-                    self.settings.get('logging', 'inline_log_format')
+                    self.settings['logging']['inline_log_format']
                 )
             )
             self._inline_logger.addHandler(obj_inline_handler)
@@ -97,7 +97,7 @@ class BaseSequence(object):
             'iteration': self.variables.get_current_iteration(),
             'message_content': log_message
         }
-        if self.settings.get('logging', 'use_compressed_logs'):
+        if self.settings['logging']['use_compressed_logs']:
             mix_message = msgpack.packb(mix_message)
         self._log_queue.put(mix_message)
         self._log_queue.task_done()
@@ -244,7 +244,7 @@ class BaseSequence(object):
         # If each sequence is treated as a transaction, add the sequence itself
         # to the list of active transactions
         self._inline_logger.debug('Sequence started')
-        if self.settings.get('runtime', 'each_sequence_is_transaction'):
+        if self.settings['runtime']['each_sequence_is_transaction']:
             self.start_transaction('{sequence}_transaction'.format(
                 sequence=self.__class__.__name__
             ))
@@ -261,7 +261,7 @@ class BaseSequence(object):
 
         # If each sequence is treated as a transaction,
         # end the current sequence
-        if self.settings.get('runtime', 'each_sequence_is_transaction'):
+        if self.settings['runtime']['each_sequence_is_transaction']:
             self.end_transaction('{sequence}_transaction'.format(
                 sequence=self.__class__.__name__
             ))
