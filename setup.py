@@ -1,5 +1,7 @@
 from setuptools import setup
 
+import versioneer
+
 
 def readme():
     with open('README.rst') as f:
@@ -13,7 +15,8 @@ def requirements():
 
 setup(
     name='woodpecker',
-    version='0.0.1',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description='Lightweight Load Test and Analysis Tool',
     long_description=readme(),
     classifiers=[

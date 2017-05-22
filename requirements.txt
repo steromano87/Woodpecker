@@ -13,3 +13,4 @@ simplejson
 verboselogs
 coloredlogs
 configobj
+versioneer
