@@ -3,6 +3,7 @@ greenlet
 python-dateutil
 colorama
 click
+click-plugins
 psutil
 requests
 grequests
