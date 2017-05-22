@@ -24,12 +24,8 @@ def generate(ctx):
                    'sequence name and will be placed under the default '
                    '"sequences" folder.',
               default=None)
-@click.option('--type', '-t',
-              help='Sequence class to be used',
-              type=(str, str),
-              default=(None, None))
 @click.pass_context
-def sequence(ctx, name, file, type):
+def sequence(ctx, name, file):
     """
     Generates a new sequence from the given source.
     If the sequence type is provided, all the required include statements 
@@ -44,12 +40,16 @@ def sequence(ctx, name, file, type):
             ctx.obj['SEQUENCE_NAME'],
             'py')
     )
-    ctx.obj['SEQUENCE_CLASS'] = type
 
 
 @sequence.command(short_help='Generates a new, empty sequence')
+@click.option('--type', '-t',
+              help='Sequence class to be used',
+              type=(str, str),
+              default=(None, None),
+              metavar='<MODULE> <CLASS>')
 @click.pass_context
-def from_scratch(ctx):
+def from_scratch(ctx, type):
     """
     Generates a new, empty sequence.
     If the sequence type is provided, all the required include statements 
@@ -58,11 +58,21 @@ def from_scratch(ctx):
     pass
 
 
-@sequence.command(short_help='Generates a new sequence from HAR file')
+@sequence.command(short_help='Generates a new sequence from HAR files')
 @click.argument('har_files', type=click.File('r'), nargs=-1)
 @click.pass_context
 def from_har(ctx, har_files):
     """
-    Generates a new sequence (HttpSequence) from a HAR file
+    Generates a new sequence (HttpSequence) from one or more HAR files
+    """
+    pass
+
+
+@sequence.command(short_help='Generates a new sequence from SAZ files')
+@click.argument('saz_files', type=click.File('r'), nargs=-1)
+@click.pass_context
+def from_saz(ctx, saz_files):
+    """
+    Generates a new sequence (HttpSequence) from one or more SAZ files
     """
     pass
