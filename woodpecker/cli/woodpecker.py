@@ -14,7 +14,9 @@ from commands.generate import generate
 @with_plugins(iter_entry_points('woodpecker.main'))
 @click_shell.shell(prompt='Woodpecker > ',
                    intro='Starting Woodpecker in interactive mode...')
-@click.version_option(version=get_versions()['version'])
+@click.version_option(version=get_versions()['version'],
+                      prog_name='Woodpecker',
+                      message='%(prog)s %(version)s')
 @click.option('--workdir', '-d', default='.',
               type=click.Path(),
               help='Target directory for initialization '
