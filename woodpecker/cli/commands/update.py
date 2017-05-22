@@ -22,8 +22,6 @@ def settings(ctx):
     """
     Updates the folder settings by merging the actual settings with the 
     required settings from the used sequences
-    :param ctx: 
-    :return: 
     """
 
     ###########################################################################
