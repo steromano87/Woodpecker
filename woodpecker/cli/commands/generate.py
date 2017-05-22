@@ -3,6 +3,8 @@ import click
 from pkg_resources import iter_entry_points
 from click_plugins import with_plugins
 
+import woodpecker.misc.functions as functions
+
 
 @with_plugins(iter_entry_points('woodpecker.generate'))
 @click.group(short_help='Creates a new entry')
@@ -16,7 +18,11 @@ def generate(ctx):
 
 @with_plugins(iter_entry_points('woodpecker.generate.sequence'))
 @generate.group(short_help='Generates a new sequence')
-@click.option('--name', '-f', help='Name of the sequence to be generated')
+@click.option('--name', '-f',
+              help='Name of the sequence to be generated. '
+                   'If no name is provided, the default "NewSequence" '
+                   'name will be assigned.',
+              default='NewSequence')
 @click.option('--file', '-f',
               type=click.Path(exists=False, dir_okay=True, writable=True),
               help='Name of the file that contains the generated sequence. '
@@ -37,7 +43,7 @@ def sequence(ctx, name, file):
         (
             ctx.obj['WORKDIR'],
             '/sequences/',
-            ctx.obj['SEQUENCE_NAME'],
+            functions.cc2underscore(ctx.obj['SEQUENCE_NAME']),
             'py')
     )
 
