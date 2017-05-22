@@ -62,6 +62,7 @@ def init(ctx, force):
 
     # Override the filename, to enable writing on file
     default_settings.filename = default_config_path
+    default_settings.indent_type = ''
 
     # Create the file
     default_settings.write()
