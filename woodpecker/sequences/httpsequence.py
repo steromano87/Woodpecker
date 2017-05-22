@@ -656,8 +656,8 @@ class HttpSequence(BaseSequence):
 
 
 class HttpSettings(BaseSettings):
-    def __init__(self):
-        super(HttpSettings, self).__init__()
+    def __init__(self, **kwargs):
+        super(HttpSettings, self).__init__(**kwargs)
 
         self.merge(
             ConfigObj({

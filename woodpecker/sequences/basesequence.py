@@ -193,7 +193,7 @@ class BaseSequence(object):
 
 
 class BaseSettings(ConfigObj):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(BaseSettings, self).__init__(
             {
                 'timing': {
@@ -231,7 +231,8 @@ class BaseSettings(ConfigObj):
                 }
             },
             interpolation=False,
-            configspec=BaseSettings.default_settings_validator()
+            configspec=BaseSettings.default_settings_validator(),
+            **kwargs
         )
 
         self.validator = Validator()
