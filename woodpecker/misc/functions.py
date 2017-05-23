@@ -64,9 +64,7 @@ def parse_set_cookie_header(cookie_string):
 
 def decode_datetime(obj):
     if b'__datetime__' in obj:
-        obj = datetime.datetime.strptime(
-            obj.decode(), "%Y%m%dT%H:%M:%S.%f"
-        )
+        obj = obj.isoformat()
     return obj
 
 
