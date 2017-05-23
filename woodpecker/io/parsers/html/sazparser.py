@@ -1,5 +1,4 @@
 import itertools
-import os
 import re
 import urllib
 import xml.etree.cElementTree as ET
@@ -12,18 +11,15 @@ from woodpecker.io.parsers.baseparser import BaseParser
 
 
 class SazParser(BaseParser):
-    def __init__(self, saz_file):
-        # Absolute path of Saz file
-        self._saz_file_path = os.path.abspath(saz_file)
 
-        # Zip file  structure
-        self._zip_file = zipfile.ZipFile(self._saz_file_path, 'r')
-
-        # Parsed data from SAZ file
-        self._parsed = {
-            'start_time': None,
-            'entries': []
-        }
+    def _import_file(self, filename):
+        try:
+            # Zip file  structure
+            self._zip_file = zipfile.ZipFile(filename, 'r')
+        except IOError:
+            raise IOError('File "{file_path}" not found'.format(
+                file_path=filename
+            ))
 
     def __del__(self):
         # Ensure to close Zip file before exiting

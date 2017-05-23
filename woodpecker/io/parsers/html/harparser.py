@@ -1,4 +1,3 @@
-import os
 import urllib
 
 import dateutil.parser as dateparser
@@ -8,19 +7,15 @@ from woodpecker.io.parsers.baseparser import BaseParser
 
 
 class HarParser(BaseParser):
-    def __init__(self, har_file):
+
+    def _import_file(self, filename):
         try:
-            with open(os.path.abspath(har_file), 'rb') as fp:
+            with open(filename, 'rb') as fp:
                 self._raw_data = json.load(fp)
         except IOError:
             raise IOError('File "{file_path}" not found'.format(
-                file_path=har_file
+                file_path=filename
             ))
-        else:
-            self._parsed = {
-                'start_time': None,
-                'entries': []
-            }
 
     def parse(self):
         entries = self._raw_data.get('log', {}).get('entries', [])
@@ -115,33 +110,30 @@ class HarParser(BaseParser):
         # Defaults to elapsed from start
         try:
             timings['elapsed_from_previous'] = \
-                (timings['timestamp'] - dateparser.parse(
-                    self._parsed['entries'][
-                        -1]['request'][
-                        'timestamp']
-                )
+                (timings['timestamp'] -
+                    self._parsed['entries'][-1]['timings']['timestamp']
                  ).total_seconds() * 1000
         except (KeyError, IndexError):
             timings['elapsed_from_previous'] = \
                 timings['elapsed_from_start']
 
         # If elapsed is negative, force it to zero
-            timings['elapsed_from_previous'] = \
-                timings['elapsed_from_previous'] \
-                if timings['elapsed_from_previous'] > 0 else 0.0
+        timings['elapsed_from_previous'] = \
+            timings['elapsed_from_previous'] \
+            if timings['elapsed_from_previous'] > 0.0 else 0.0
 
         # Get request elapsed from end of previous request (if any)
         try:
             timings['elapsed_from_end_of_previous'] = \
                 timings['elapsed_from_previous'] - \
-                self._parsed['entries'][-1]['request']['duration']
+                self._parsed['entries'][-1]['timings']['duration']
         except (KeyError, IndexError):
             timings['elapsed_from_end_of_previous'] = 0.0
 
         # If elapsed is negative, force it to zero
         timings['elapsed_from_end_of_previous'] = \
             timings['elapsed_from_end_of_previous'] \
-            if timings['elapsed_from_end_of_previous'] > 0 else 0.0
+            if timings['elapsed_from_end_of_previous'] > 0.0 else 0.0
 
         return timings
 
