@@ -1,15 +1,14 @@
+import itertools
 import os
 import re
-import zipfile
 import urllib
-import itertools
-
 import xml.etree.cElementTree as ET
+import zipfile
+
 import dateutil.parser as dateparser
 
 import woodpecker.misc.functions as functions
-
-from woodpecker.parsers.baseparser import BaseParser
+from woodpecker.io.parsers.baseparser import BaseParser
 
 
 class SazParser(BaseParser):

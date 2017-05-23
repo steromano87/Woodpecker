@@ -1,10 +1,10 @@
-import simplejson as json
 import os
 import urllib
 
 import dateutil.parser as dateparser
+import simplejson as json
 
-from woodpecker.parsers.baseparser import BaseParser
+from woodpecker.io.parsers.baseparser import BaseParser
 
 
 class HarParser(BaseParser):
