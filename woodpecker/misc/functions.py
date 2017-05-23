@@ -1,6 +1,7 @@
 import importlib
 import itertools
 import urllib
+import datetime
 
 
 def import_sequence(sequence_file, sequence_class):
@@ -59,6 +60,20 @@ def parse_set_cookie_header(cookie_string):
             cookie_dict[cookie_couple[0].lower()] = \
                 urllib.unquote_plus(cookie_couple[1])
     return cookie_dict
+
+
+def decode_datetime(obj):
+    if b'__datetime__' in obj:
+        obj = datetime.datetime.strptime(
+            obj.decode(), "%Y%m%dT%H:%M:%S.%f"
+        )
+    return obj
+
+
+def encode_datetime(obj):
+    if isinstance(obj, datetime.datetime):
+        obj = obj.strftime("%Y%m%dT%H:%M:%S.%f").encode()
+    return obj
 
 
 def get_eol(test_string):
