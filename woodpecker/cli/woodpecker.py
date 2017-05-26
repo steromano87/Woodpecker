@@ -19,8 +19,7 @@ from commands.generate import generate
                       message='%(prog)s %(version)s')
 @click.option('--workdir', '-d', default='.',
               type=click.Path(),
-              help='Target directory for initialization '
-                   '(defaults to current directory)')
+              help='Target directory (defaults to current directory)')
 @click.pass_context
 def woodpecker(ctx, workdir):
     """
