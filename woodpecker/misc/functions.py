@@ -1,6 +1,7 @@
 import importlib
 import itertools
 import urllib
+import re
 
 
 def import_sequence(sequence_file, sequence_class):
@@ -66,3 +67,8 @@ def get_eol(test_string):
     for ending in line_endings:
         if ending in test_string:
             return ending
+
+
+def cc2underscore(name):
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()

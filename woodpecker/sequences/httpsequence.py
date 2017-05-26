@@ -6,10 +6,11 @@ import gevent
 import grequests
 import requests
 import six
-from configobj import ConfigObj
 
 from woodpecker.io.variablejar import VariableJar
-from woodpecker.sequences.basesequence import BaseSequence, BaseSettings
+from woodpecker.sequences.basesequence import BaseSequence
+from woodpecker.settings.httpsequencesettings import HttpSequenceSettings
+from woodpecker.settings.coresettings import CoreSettings
 
 
 class HttpSequence(BaseSequence):
@@ -19,7 +20,7 @@ class HttpSequence(BaseSequence):
                  settings=None,
                  log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
-                 transactions=None,
+                 stopwatches=None,
                  debug=False,
                  inline_log_sinks=(sys.stdout,)):
 
@@ -27,12 +28,12 @@ class HttpSequence(BaseSequence):
         super(HttpSequence, self).__init__(settings=settings,
                                            log_queue=log_queue,
                                            variables=variables,
-                                           transactions=transactions,
+                                           stopwatches=stopwatches,
                                            debug=debug,
                                            inline_log_sinks=inline_log_sinks)
 
         # Settings (automatically extended by the class settings)
-        self.settings = settings or self.default_settings()
+        self.settings.merge(HttpSequence.default_settings())
 
         # Instantiates new session and last response variables in VariableJar
         if not self.variables.is_set('__http_session'):
@@ -293,7 +294,7 @@ class HttpSequence(BaseSequence):
             # Log the result of the request
             self.log('step', {
                 'step_type': 'http_request',
-                'active_transactions': list(self._transactions.keys()),
+                'active_stopwatches': list(self._stopwatches.keys()),
                 'step_content': {
                     'url': response.request.url,
                     'method': response.request.method,
@@ -652,44 +653,4 @@ class HttpSequence(BaseSequence):
 
     @staticmethod
     def default_settings():
-        return HttpSettings()
-
-
-class HttpSettings(BaseSettings):
-    def __init__(self):
-        super(HttpSettings, self).__init__()
-
-        self.merge(
-            ConfigObj({
-                'http': {
-                    'user_agent': 'Google Chrome 58',
-                    'allow_redirects': True,
-                    'ignore_ssl_errors': True,
-                    'http_proxy': None,
-                    'https_proxy': None,
-                    'default_timeout': 5.0,
-                    'max_async_concurrent_requests': 10
-                }
-            },
-                interpolation=False,
-                configspec=HttpSettings.default_settings_validator()
-            )
-        )
-
-    @staticmethod
-    def default_settings_validator():
-        father_configspec = \
-            super(HttpSettings, HttpSettings).default_settings_validator()
-        configspec = ConfigObj({
-            'http': {
-                'user_agent': "string(min=0, default='Google Chrome 58')",
-                'allow_redirects': 'boolean(default=True)',
-                'ignore_ssl_errors': 'boolean(default=True)',
-                'http_proxy': 'string',
-                'https_proxy': 'string',
-                'default_timeout': 'float(min=0.0, default=5.0)',
-                'max_async_concurrent_requests': 'integer(min=0, default=10)'
-            }
-        }, interpolation=False)
-        configspec.merge(father_configspec)
-        return configspec
+        return HttpSequenceSettings()

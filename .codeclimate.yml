@@ -19,3 +19,6 @@ ratings:
     - "**.py"
 exclude_paths:
   - "tests/"
+  - "woodpecker/misc/contrib/"
+  - "versioneer.py"
+  - "woodpecker/_version.py"

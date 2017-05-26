@@ -58,5 +58,5 @@ def test_set_get_pecker_id(variablejar):
 
 
 def test_set_get_current_sequence(variablejar):
-    variablejar.set_current_sequence('Test Transaction')
-    assert variablejar.get_current_sequence() == 'Test Transaction'
+    variablejar.set_current_sequence('Test stopwatch')
+    assert variablejar.get_current_sequence() == 'Test stopwatch'

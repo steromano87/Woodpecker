@@ -7,22 +7,22 @@ from woodpecker.sequences.basesequence import BaseSequence
 
 
 @pytest.fixture
-def transaction_sequence():
-    class TransactionSequence(BaseSequence):
+def stopwatch_sequence():
+    class stopwatchSequence(BaseSequence):
         def steps(self):
-            self.start_transaction('transaction_test')
-            self.end_transaction('transaction_test')
+            self.start_stopwatch('stopwatch_test')
+            self.end_stopwatch('stopwatch_test')
 
-    return TransactionSequence
+    return stopwatchSequence
 
 
 @pytest.fixture
-def bad_transaction_sequence():
-    class BadTransactionSequence(BaseSequence):
+def bad_stopwatch_sequence():
+    class BadstopwatchSequence(BaseSequence):
         def steps(self):
-            self.end_transaction('transaction_test')
+            self.end_stopwatch('stopwatch_test')
 
-    return BadTransactionSequence
+    return BadstopwatchSequence
 
 
 @pytest.fixture
@@ -43,22 +43,22 @@ def random_gaussian_think_time_sequence():
     return RandomGaussianThinkTimeSequence
 
 
-def test_transactions(transaction_sequence):
+def test_stopwatches(stopwatch_sequence):
     output_stream = StringIO()
-    sequence = transaction_sequence(
+    sequence = stopwatch_sequence(
         debug=True,
         inline_log_sinks=(output_stream,)
     )
     sequence.run_steps()
     output_stream.seek(0)
     output_string = output_stream.getvalue()
-    assert 'Transaction "transaction_test" started' in output_string
-    assert 'Transaction "transaction_test" ended' in output_string
+    assert 'Stopwatch "stopwatch_test" started' in output_string
+    assert 'Stopwatch "stopwatch_test" ended' in output_string
 
 
-def test_bad_transactions(bad_transaction_sequence):
+def test_bad_stopwatches(bad_stopwatch_sequence):
     output_stream = StringIO()
-    sequence = bad_transaction_sequence(
+    sequence = bad_stopwatch_sequence(
         debug=True,
         inline_log_sinks=(output_stream,)
     )

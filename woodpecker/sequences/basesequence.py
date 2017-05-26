@@ -4,17 +4,16 @@ import logging
 import random
 import sys
 import time
+from string import Template
 
+import coloredlogs
 import msgpack
 import six
 import verboselogs
-import coloredlogs
 
-from string import Template
-from configobj import ConfigObj
-
-from woodpecker.io.validate import Validator
 from woodpecker.io.variablejar import VariableJar
+from woodpecker.settings.basesequencesettings import BaseSequenceSettings
+from woodpecker.settings.coresettings import CoreSettings
 
 
 class BaseSequence(object):
@@ -24,11 +23,12 @@ class BaseSequence(object):
                  settings=None,
                  log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
-                 transactions=None,
+                 stopwatches=None,
                  debug=False,
                  inline_log_sinks=(sys.stdout,)):
         # Settings
-        self.settings = settings or self.default_settings()
+        self.settings = settings or BaseSequence.default_settings()
+        self.settings.merge(CoreSettings())
 
         # Variables
         self.variables = variables
@@ -36,8 +36,8 @@ class BaseSequence(object):
         # Internal log queue
         self._log_queue = log_queue
 
-        # Transactions (passed from outside)
-        self._transactions = transactions or {}
+        # Stopwatches (passed from outside)
+        self._stopwatches = stopwatches or {}
 
         # Internal setup and teardown hooks
         self._setup_hooks = []
@@ -105,43 +105,43 @@ class BaseSequence(object):
     def log_inline(self, message, level=logging.INFO):
         self._inline_logger.log(level, message)
 
-    def start_transaction(self, name):
+    def start_stopwatch(self, name):
         str_start_timestamp = str(datetime.datetime.now())
-        self._transactions[name] = {
+        self._stopwatches[name] = {
             'start': str_start_timestamp,
             'end': None
         }
         self.log('event', {
-            'event_type': 'start_transaction',
+            'event_type': 'start_stopwatch',
             'event_content': {
-                'transaction_name': name,
+                'stopwatch_name': name,
                 'timestamp': str_start_timestamp
             }
         })
         self._inline_logger.debug(
-            'Transaction "{transaction}" started'.format(
-                transaction=name
+            'Stopwatch "{stopwatch}" started'.format(
+                stopwatch=name
             ))
 
-    def end_transaction(self, name):
+    def end_stopwatch(self, name):
         try:
             str_end_timestamp = str(datetime.datetime.now())
-            self._transactions[name]['end'] = str_end_timestamp
+            self._stopwatches[name]['end'] = str_end_timestamp
             self.log('event', {
-                'event_type': 'end_transaction',
+                'event_type': 'end_stopwatch',
                 'event_content': {
-                    'transaction_name': name,
+                    'stopwatch_name': name,
                     'timestamp': str_end_timestamp
                 }
             })
             self._inline_logger.debug(
-                'Transaction "{transaction}" ended'.format(
-                    transaction=name
+                'Stopwatch "{stopwatch}" ended'.format(
+                    stopwatch=name
                 ))
-            self._transactions.pop(name)
+            self._stopwatches.pop(name)
         except KeyError:
             str_error_message = \
-                'Transaction {name} set to end, but never started'.format(
+                'Stopwatch {name} set to end, but never started'.format(
                     name=name
                 )
             self.log('event', {
@@ -157,11 +157,11 @@ class BaseSequence(object):
         return Template(text).safe_substitute(self.variables.dump())
 
     def run_steps(self):
-        # If each sequence is treated as a transaction, add the sequence itself
-        # to the list of active transactions
+        # If each sequence is treated as a stopwatch, add the sequence itself
+        # to the list of active stopwatches
         self._inline_logger.debug('Sequence started')
-        if self.settings['runtime']['each_sequence_is_transaction']:
-            self.start_transaction('{sequence}_transaction'.format(
+        if self.settings['runtime']['each_sequence_is_stopwatch']:
+            self.start_stopwatch('{sequence}_stopwatch'.format(
                 sequence=self.__class__.__name__
             ))
 
@@ -175,104 +175,18 @@ class BaseSequence(object):
         for hook in self._teardown_hooks:
             hook()
 
-        # If each sequence is treated as a transaction,
+        # If each sequence is treated as a stopwatch,
         # end the current sequence
-        if self.settings['runtime']['each_sequence_is_transaction']:
-            self.end_transaction('{sequence}_transaction'.format(
+        if self.settings['runtime']['each_sequence_is_stopwatch']:
+            self.end_stopwatch('{sequence}_stopwatch'.format(
                 sequence=self.__class__.__name__
             ))
         self._inline_logger.debug('Sequence ended')
 
         return self.settings, \
             self.variables, \
-            self._transactions
+            self._stopwatches
 
     @staticmethod
     def default_settings():
-        return BaseSettings()
-
-
-class BaseSettings(ConfigObj):
-    def __init__(self):
-        super(BaseSettings, self).__init__(
-            {
-                'timing': {
-                    'skip_think_time': False,
-                    'max_think_time': 5.0,
-                    'think_time_after_setup': 0.0,
-                    'think_time_between_sequences': 0.0,
-                    'think_time_before_teardown': 0.0,
-                    'think_time_between_iterations': 0.0
-                },
-                'network': {
-                    'controller_port': 7877,
-                    'max_pending_connections': 4
-                },
-                'logging': {
-                    'max_entries_before_flush': 10,
-                    'max_interval_before_flush': 30.0,
-                    'results_file': 'results.sqlite',
-                    'sysmonitor_polling_interval': 5.0,
-                    'use_compressed_logs': True,
-                    'inline_log_format':
-                        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-                },
-                'spawning': {
-                    'spawning_mode': 'threads',
-                    'pecker_handling_mode': 'passive',
-                    'pecker_status_active_polling_interval': 0.1,
-                    'spawners': [
-                        'localhost'
-                    ]
-                },
-                'runtime': {
-                    'raise_error_if_variable_not_defined': False,
-                    'each_sequence_is_transaction': True
-                }
-            },
-            interpolation=False,
-            configspec=BaseSettings.default_settings_validator()
-        )
-
-        self.validator = Validator()
-        
-    @staticmethod
-    def default_settings_validator():
-        return ConfigObj({
-            'timing': {
-                'skip_think_time': 'boolean(default=False)',
-                'max_think_time': 'float(min=0.0, default=5.0)',
-                'think_time_after_setup': 'float(min=0.0, default=0.0)',
-                'think_time_between_sequences': 'float(min=0.0, default=0.0)',
-                'think_time_before_teardown': 'float(min=0.0, default=0.0)',
-                'think_time_between_iterations': 'float(min=0.0, default=0.0)'
-            },
-            'network': {
-                'controller_port': 'integer(min=1, max=65535 default=7878)',
-                'max_pending_connections': 'integer(min=1, default=4)'
-            },
-            'logging': {
-                'max_entries_before_flush': 'integer(min=0, default=30)',
-                'max_interval_before_flush': 'float(min=0.0, default=30.0)',
-                'results_file': "string(default='results.sqlite')",
-                'sysmonitor_polling_interval': 'float(min=0.0, default=5.0)',
-                'use_compressed_logs': 'boolean(default=True)',
-                'inline_log_format':
-                    "string(default='%(asctime)s - %(name)s - "
-                    "%(levelname)s - %(message)s')"
-            },
-            'spawning': {
-                'spawning_mode': "option('threads', 'processes', "
-                                 "'greenlets', default='threads')",
-                'pecker_handling_mode': "option('passive', 'active', "
-                                        "default='passive')",
-                'pecker_status_active_polling_interval':
-                    'float(min=0.0, default=0.1)',
-                'spawners': "string_list(min=1, default=['localhost'])"
-            },
-            'runtime': {
-                'raise_error_if_variable_not_defined':
-                    'boolean(default=False)',
-                'each_sequence_is_transaction': 'boolean(default=True)'
-            }
-        }, interpolation=False)
+        return BaseSequenceSettings()

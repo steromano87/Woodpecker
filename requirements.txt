@@ -3,6 +3,8 @@ greenlet
 python-dateutil
 colorama
 click
+click-plugins
+click-shell
 psutil
 requests
 grequests
@@ -13,3 +15,4 @@ simplejson
 verboselogs
 coloredlogs
 configobj
+versioneer
