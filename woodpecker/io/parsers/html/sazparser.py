@@ -1,7 +1,7 @@
 import itertools
 import re
 import urllib
-import xml.etree.cElementTree as ET
+import xml.etree.cElementTree as eTree
 import zipfile
 
 import dateutil.parser as dateparser
@@ -31,7 +31,7 @@ class SazParser(BaseParser):
             content_list = self._zip_file.namelist()
         except IOError:
             raise IOError('File {file} does not exist'.format(
-                file=self._saz_file_path)
+                file=self._file_path)
             )
 
         # Sort list in alphabetical order
@@ -69,7 +69,7 @@ class SazParser(BaseParser):
                 'Cannot find "raw/{index}_c.txt" inside '
                 'file {saz_file}, corrupted archive?'.format(
                     index=index,
-                    saz_file=self._saz_file_path
+                    saz_file=self._file_path
                 )
             )
 
@@ -137,7 +137,7 @@ class SazParser(BaseParser):
                 'Cannot find "raw/{index}_s.txt" inside '
                 'file {saz_file}, corrupted archive?'.format(
                     index=index,
-                    saz_file=self._saz_file_path
+                    saz_file=self._file_path
                 )
             )
 
@@ -197,13 +197,13 @@ class SazParser(BaseParser):
                 'Cannot find "raw/{index}_m.xml" inside '
                 'file {saz_file}, corrupted archive?'.format(
                     index=index,
-                    saz_file=self._saz_file_path
+                    saz_file=self._file_path
                 )
             )
 
         timings = {}
 
-        xml_doc = ET.fromstring(raw_file_content)
+        xml_doc = eTree.fromstring(raw_file_content)
         session_timers = xml_doc.findall('.//SessionTimers')[0]
         timings['timestamp'] = dateparser.parse(
             session_timers.attrib['ClientBeginRequest']
