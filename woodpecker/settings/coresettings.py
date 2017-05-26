@@ -35,10 +35,6 @@ class CoreSettings(ConfigObj):
                     'spawners': [
                         'localhost'
                     ]
-                },
-                'runtime': {
-                    'raise_error_if_variable_not_defined': False,
-                    'each_sequence_is_transaction': True
                 }
             },
             interpolation=False,
@@ -81,10 +77,5 @@ class CoreSettings(ConfigObj):
                 'pecker_status_active_polling_interval':
                     'float(min=0.0, default=0.1)',
                 'spawners': "string_list(min=1, default=['localhost'])"
-            },
-            'runtime': {
-                'raise_error_if_variable_not_defined':
-                    'boolean(default=False)',
-                'each_sequence_is_transaction': 'boolean(default=True)'
             }
         }, interpolation=False)

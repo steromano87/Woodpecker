@@ -17,7 +17,7 @@ class HttpSequenceSettings(ConfigObj):
                 }
             },
                 interpolation=False,
-                configspec=HttpSettings.default_settings_validator(),
+                configspec=HttpSequenceSettings.default_settings_validator(),
                 **kwargs
             )
 

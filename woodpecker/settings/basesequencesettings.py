@@ -8,7 +8,7 @@ class BaseSequenceSettings(ConfigObj):
         super(BaseSequenceSettings, self).__init__({
                 'runtime': {
                     'raise_error_if_variable_not_defined': False,
-                    'each_sequence_is_transaction': True
+                    'each_sequence_is_stopwatch': True
                 }
             },
             interpolation=False,
@@ -24,6 +24,6 @@ class BaseSequenceSettings(ConfigObj):
             'runtime': {
                 'raise_error_if_variable_not_defined':
                     'boolean(default=False)',
-                'each_sequence_is_transaction': 'boolean(default=True)'
+                'each_sequence_is_stopwatch': 'boolean(default=True)'
             }
         }, interpolation=False)

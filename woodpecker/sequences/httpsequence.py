@@ -10,6 +10,7 @@ import six
 from woodpecker.io.variablejar import VariableJar
 from woodpecker.sequences.basesequence import BaseSequence
 from woodpecker.settings.httpsequencesettings import HttpSequenceSettings
+from woodpecker.settings.coresettings import CoreSettings
 
 
 class HttpSequence(BaseSequence):
@@ -19,7 +20,7 @@ class HttpSequence(BaseSequence):
                  settings=None,
                  log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
-                 transactions=None,
+                 stopwatches=None,
                  debug=False,
                  inline_log_sinks=(sys.stdout,)):
 
@@ -27,12 +28,12 @@ class HttpSequence(BaseSequence):
         super(HttpSequence, self).__init__(settings=settings,
                                            log_queue=log_queue,
                                            variables=variables,
-                                           transactions=transactions,
+                                           stopwatches=stopwatches,
                                            debug=debug,
                                            inline_log_sinks=inline_log_sinks)
 
         # Settings (automatically extended by the class settings)
-        self.settings = settings or self.default_settings()
+        self.settings.merge(HttpSequence.default_settings())
 
         # Instantiates new session and last response variables in VariableJar
         if not self.variables.is_set('__http_session'):
@@ -293,7 +294,7 @@ class HttpSequence(BaseSequence):
             # Log the result of the request
             self.log('step', {
                 'step_type': 'http_request',
-                'active_transactions': list(self._transactions.keys()),
+                'active_stopwatches': list(self._stopwatches.keys()),
                 'step_content': {
                     'url': response.request.url,
                     'method': response.request.method,

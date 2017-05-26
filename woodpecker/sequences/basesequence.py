@@ -13,6 +13,7 @@ import verboselogs
 
 from woodpecker.io.variablejar import VariableJar
 from woodpecker.settings.basesequencesettings import BaseSequenceSettings
+from woodpecker.settings.coresettings import CoreSettings
 
 
 class BaseSequence(object):
@@ -22,11 +23,12 @@ class BaseSequence(object):
                  settings=None,
                  log_queue=six.moves.queue.Queue(),
                  variables=VariableJar(),
-                 transactions=None,
+                 stopwatches=None,
                  debug=False,
                  inline_log_sinks=(sys.stdout,)):
         # Settings
-        self.settings = settings or self.default_settings()
+        self.settings = settings or BaseSequence.default_settings()
+        self.settings.merge(CoreSettings())
 
         # Variables
         self.variables = variables
@@ -34,8 +36,8 @@ class BaseSequence(object):
         # Internal log queue
         self._log_queue = log_queue
 
-        # Transactions (passed from outside)
-        self._transactions = transactions or {}
+        # Stopwatches (passed from outside)
+        self._stopwatches = stopwatches or {}
 
         # Internal setup and teardown hooks
         self._setup_hooks = []
@@ -103,43 +105,43 @@ class BaseSequence(object):
     def log_inline(self, message, level=logging.INFO):
         self._inline_logger.log(level, message)
 
-    def start_transaction(self, name):
+    def start_stopwatch(self, name):
         str_start_timestamp = str(datetime.datetime.now())
-        self._transactions[name] = {
+        self._stopwatches[name] = {
             'start': str_start_timestamp,
             'end': None
         }
         self.log('event', {
-            'event_type': 'start_transaction',
+            'event_type': 'start_stopwatch',
             'event_content': {
-                'transaction_name': name,
+                'stopwatch_name': name,
                 'timestamp': str_start_timestamp
             }
         })
         self._inline_logger.debug(
-            'Transaction "{transaction}" started'.format(
-                transaction=name
+            'Stopwatch "{stopwatch}" started'.format(
+                stopwatch=name
             ))
 
-    def end_transaction(self, name):
+    def end_stopwatch(self, name):
         try:
             str_end_timestamp = str(datetime.datetime.now())
-            self._transactions[name]['end'] = str_end_timestamp
+            self._stopwatches[name]['end'] = str_end_timestamp
             self.log('event', {
-                'event_type': 'end_transaction',
+                'event_type': 'end_stopwatch',
                 'event_content': {
-                    'transaction_name': name,
+                    'stopwatch_name': name,
                     'timestamp': str_end_timestamp
                 }
             })
             self._inline_logger.debug(
-                'Transaction "{transaction}" ended'.format(
-                    transaction=name
+                'Stopwatch "{stopwatch}" ended'.format(
+                    stopwatch=name
                 ))
-            self._transactions.pop(name)
+            self._stopwatches.pop(name)
         except KeyError:
             str_error_message = \
-                'Transaction {name} set to end, but never started'.format(
+                'Stopwatch {name} set to end, but never started'.format(
                     name=name
                 )
             self.log('event', {
@@ -155,11 +157,11 @@ class BaseSequence(object):
         return Template(text).safe_substitute(self.variables.dump())
 
     def run_steps(self):
-        # If each sequence is treated as a transaction, add the sequence itself
-        # to the list of active transactions
+        # If each sequence is treated as a stopwatch, add the sequence itself
+        # to the list of active stopwatches
         self._inline_logger.debug('Sequence started')
-        if self.settings['runtime']['each_sequence_is_transaction']:
-            self.start_transaction('{sequence}_transaction'.format(
+        if self.settings['runtime']['each_sequence_is_stopwatch']:
+            self.start_stopwatch('{sequence}_stopwatch'.format(
                 sequence=self.__class__.__name__
             ))
 
@@ -173,17 +175,17 @@ class BaseSequence(object):
         for hook in self._teardown_hooks:
             hook()
 
-        # If each sequence is treated as a transaction,
+        # If each sequence is treated as a stopwatch,
         # end the current sequence
-        if self.settings['runtime']['each_sequence_is_transaction']:
-            self.end_transaction('{sequence}_transaction'.format(
+        if self.settings['runtime']['each_sequence_is_stopwatch']:
+            self.end_stopwatch('{sequence}_stopwatch'.format(
                 sequence=self.__class__.__name__
             ))
         self._inline_logger.debug('Sequence ended')
 
         return self.settings, \
             self.variables, \
-            self._transactions
+            self._stopwatches
 
     @staticmethod
     def default_settings():

@@ -255,7 +255,7 @@ def http_assert_elapsed_ko_sequence():
     return HttpAssertElapsedKoSequence
 
 
-def test_http_200_transaction(http_200_sequence):
+def test_http_200_stopwatch(http_200_sequence):
     output_stream = StringIO()
     sequence = http_200_sequence(
         debug=True,
@@ -267,7 +267,7 @@ def test_http_200_transaction(http_200_sequence):
     assert '200 OK' in output_string
 
 
-def test_http_401_transaction(http_401_sequence):
+def test_http_401_stopwatch(http_401_sequence):
     output_stream = StringIO()
     sequence = http_401_sequence(
         debug=True,
@@ -277,7 +277,7 @@ def test_http_401_transaction(http_401_sequence):
         sequence.run_steps()
 
 
-def test_http_200_async_pool_transaction(http_200_async_pool_sequence):
+def test_http_200_async_pool_stopwatch(http_200_async_pool_sequence):
     output_stream = StringIO()
     sequence = http_200_async_pool_sequence(
         debug=True,
@@ -290,7 +290,7 @@ def test_http_200_async_pool_transaction(http_200_async_pool_sequence):
     assert 'Async requests pool ended' in output_string
 
 
-def test_variable_retrieving_transaction(variable_retrieving_sequence):
+def test_variable_retrieving_stopwatch(variable_retrieving_sequence):
     output_stream = StringIO()
     sequence = variable_retrieving_sequence(
         debug=True,
@@ -302,7 +302,7 @@ def test_variable_retrieving_transaction(variable_retrieving_sequence):
     assert 'Saved parameter "author": "Melville"' in output_string
 
 
-def test_variable_retrieving_error_transaction(
+def test_variable_retrieving_error_stopwatch(
         variable_retrieving_error_sequence):
     output_stream = StringIO()
     sequence = variable_retrieving_error_sequence(
@@ -313,7 +313,7 @@ def test_variable_retrieving_error_transaction(
         sequence.run_steps()
 
 
-def test_variable_usage_transaction(variable_usage_sequence):
+def test_variable_usage_stopwatch(variable_usage_sequence):
     output_stream = StringIO()
     sequence = variable_usage_sequence(
         debug=True,
@@ -325,7 +325,7 @@ def test_variable_usage_transaction(variable_usage_sequence):
     assert 'http://www.google.com/search?q=Melville' in output_string
 
 
-def test_variable_usage_url_transaction(variable_usage_url_sequence):
+def test_variable_usage_url_stopwatch(variable_usage_url_sequence):
     output_stream = StringIO()
     sequence = variable_usage_url_sequence(
         debug=True,
