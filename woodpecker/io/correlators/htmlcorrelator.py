@@ -48,6 +48,7 @@ class HtmlCorrelator(BaseCorrelator):
                             entry
                         )
                         is_referred = True
+                        break
 
                 if not is_referred:
                     entry_url = entry.get('request', {}).get('url', '')
