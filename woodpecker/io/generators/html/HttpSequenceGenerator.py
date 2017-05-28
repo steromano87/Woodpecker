@@ -1,6 +1,6 @@
 from woodpecker.io.generators.basegenerator import BaseGenerator
 
 
-class HttpTransactionGenerator(BaseGenerator):
+class HttpSequenceGenerator(BaseGenerator):
     def generate(self):
         pass
