@@ -6,7 +6,11 @@ class BaseResource(object):
         # Resource unique name
         self.name = name or None
 
+        # Inner resource timings instance
         self.timings = BaseResourceTimings()
+
+        # Resource's linked resources
+        self.resources = list()
 
     def __repr__(self):
         return '{classname} - {name}'.format(
