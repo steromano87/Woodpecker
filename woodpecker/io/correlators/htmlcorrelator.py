@@ -23,34 +23,29 @@ class HtmlCorrelator(BaseCorrelator):
     def _get_referers(self):
         # Start reading the loaded entries and getting the Referers
         for entry in self._parsed_entries.get('entries', []):
-            headers = entry.get('request', {}).get('headers', {})
-
             # If the call has a referer, add the referer to list
-            for header_name, header_value in six.viewitems(headers):
+            for header_name, header_value \
+                    in six.viewitems(entry.request.headers):
                 if header_name.lower() in ('referer', 'referrer'):
                     self.referers.add(header_value)
 
     def _calculate_call_hierarchy(self):
         # Cycle through referers and entries and get the top calls
         for entry in self._parsed_entries.get('entries', []):
-            entry_url = entry.get('request', {}).get('url', '')
-            if entry_url in self.referers:
-                self._correlated[entry_url] = entry
-                self._correlated[entry_url]['resources'] = []
+            if entry.url in self.referers:
+                self._correlated[entry.url] = entry
             else:
-                headers = entry.get('request', {}).get('headers', {})
                 is_referred = False
-                for header_name, header_value in six.viewitems(headers):
+                for header_name, header_value \
+                        in six.viewitems(entry.request.headers):
                     if header_name.lower() in ('referer', 'referrer') \
                             and header_value in six.viewkeys(
                                 self._correlated):
-                        self._correlated[header_value]['resources'].append(
+                        self._correlated[header_value].resources.append(
                             entry
                         )
                         is_referred = True
                         break
 
                 if not is_referred:
-                    entry_url = entry.get('request', {}).get('url', '')
-                    self._correlated[entry_url] = entry
-                    self._correlated[entry_url]['resources'] = []
+                    self._correlated[entry.url] = entry
