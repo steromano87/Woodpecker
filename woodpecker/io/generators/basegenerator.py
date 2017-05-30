@@ -45,7 +45,9 @@ class BaseGenerator(object):
 
     def _fix_code(self):
         self.buffer.seek(0)
-        return autopep8.fix_code(self.buffer.read())
+        return autopep8.fix_code(self.buffer.read(), options={
+            'aggressive': 1
+        })
 
     @abc.abstractmethod
     def generate(self, filename, sequence_name='NewSequence'):
