@@ -154,17 +154,21 @@ class HttpSequence(BaseSequence):
             self.variables.set('__last_response', obj_last_response)
 
             # If there are resources, call them asynchronously
-            for resource in with_resources:
-                # If the resource is a tuple, pick both the URL and the method
-                if isinstance(resource, tuple):
-                    self.async_http_request(
-                        resource[0],
-                        method=resource[1],
-                        is_resource=True
-                    )
-                # If the resource is a string, call it using GET method
-                else:
-                    self.async_get(resource, is_resource=True)
+            if len(with_resources) > 0:
+                self.start_async_pool()
+                for resource in with_resources:
+                    # If the resource is a tuple,
+                    # pick both the URL and the method
+                    if isinstance(resource, tuple):
+                        self.async_http_request(
+                            resource[0],
+                            method=resource[1],
+                            is_resource=True
+                        )
+                    # If the resource is a string, call it using GET method
+                    else:
+                        self.async_get(resource, is_resource=True)
+                self.end_async_pool()
 
         except requests.exceptions.RequestException as error:
             self._inline_logger.error(str(error))
