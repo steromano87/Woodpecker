@@ -1,8 +1,10 @@
 import abc
 import os
+import six
 
 import msgpack
 import simplejson
+import autopep8
 
 import woodpecker.misc.functions as functions
 
@@ -11,6 +13,10 @@ class BaseGenerator(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, parsed_entries):
+
+        # Text buffer for writing code
+        self.buffer = six.moves.cStringIO()
+
         if isinstance(parsed_entries, dict):
             # If a dict is passed, instance it directly
             self._parsed_entries = parsed_entries
@@ -37,6 +43,10 @@ class BaseGenerator(object):
                 stream, object_hook=functions.decode_datetime
             )
 
+    def _fix_code(self):
+        self.buffer.seek(0)
+        return autopep8.fix_code(self.buffer.read())
+
     @abc.abstractmethod
-    def generate(self):
+    def generate(self, filename, sequence_name='NewSequence'):
         pass
