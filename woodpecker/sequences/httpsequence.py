@@ -110,6 +110,7 @@ class HttpSequence(BaseSequence):
                      method='GET',
                      is_resource=False,
                      response_hooks=None,
+                     with_resources=tuple(),
                      **kwargs):
         """
         Generic HTTP request
@@ -121,6 +122,12 @@ class HttpSequence(BaseSequence):
                             all HTTP errors will be ignored for this entry
         :param response_hooks: the list of hooks to apply to response
                                (assertions or parameter retrieval)
+        :param with_resources: tuple containing the resource URLs
+                               to be loaded alongside the main request.
+                               The resource can be either a string or a tuple.
+                               In the latter case, the second parameter
+                               is optional and represents
+                               the method to be used (defaults to GET)
         :param kwargs: arguments to be passed to requests library
         """
         # Patches kwargs with settings and defaults
@@ -145,6 +152,20 @@ class HttpSequence(BaseSequence):
             if not is_resource:
                 obj_last_response.raise_for_status()
             self.variables.set('__last_response', obj_last_response)
+
+            # If there are resources, call them asynchronously
+            for resource in with_resources:
+                # If the resource is a tuple, pick both the URL and the method
+                if isinstance(resource, tuple):
+                    self.async_http_request(
+                        resource[0],
+                        method=resource[1],
+                        is_resource=True
+                    )
+                # If the resource is a string, call it using GET method
+                else:
+                    self.async_get(resource, is_resource=True)
+
         except requests.exceptions.RequestException as error:
             self._inline_logger.error(str(error))
             self.log('event', {
@@ -165,6 +186,7 @@ class HttpSequence(BaseSequence):
             url,
             is_resource=False,
             response_hooks=None,
+            with_resources=tuple(),
             **kwargs):
         """
         Shorthand for GET requests
@@ -175,18 +197,26 @@ class HttpSequence(BaseSequence):
                             all HTTP errors will be ignored for this entry
         :param response_hooks: the list of hooks to apply to response
                                (assertions or parameter retrieval)
+        :param with_resources: tuple containing the resource URLs
+                               to be loaded alongside the main request.
+                               The resource can be either a string or a tuple.
+                               In the latter case, the second parameter
+                               is optional and represents
+                               the method to be used (defaults to GET)
         :param kwargs: arguments to be passed to requests library
         """
         self.http_request(url,
                           method='GET',
                           is_resource=is_resource,
                           response_hooks=response_hooks,
+                          with_resources=with_resources,
                           **kwargs)
 
     def post(self,
              url,
              is_resource=False,
              response_hooks=None,
+             with_resources=tuple(),
              **kwargs):
         """
         Shorthand for POST requests
@@ -197,18 +227,26 @@ class HttpSequence(BaseSequence):
                             all HTTP errors will be ignored for this entry
         :param response_hooks: the list of hooks to apply to response
                                (assertions or parameter retrieval)
+        :param with_resources: tuple containing the resource URLs
+                               to be loaded alongside the main request.
+                               The resource can be either a string or a tuple.
+                               In the latter case, the second parameter
+                               is optional and represents
+                               the method to be used (defaults to GET)
         :param kwargs: arguments to be passed to requests library
         """
         self.http_request(url,
                           method='POST',
                           is_resource=is_resource,
                           response_hooks=response_hooks,
+                          with_resources=with_resources,
                           **kwargs)
 
     def put(self,
             url,
             is_resource=False,
             response_hooks=None,
+            with_resources=tuple(),
             **kwargs):
         """
         Shorthand for PUT requests
@@ -219,18 +257,26 @@ class HttpSequence(BaseSequence):
                             all HTTP errors will be ignored for this entry
         :param response_hooks: the list of hooks to apply to response
                                (assertions or parameter retrieval)
+        :param with_resources: tuple containing the resource URLs
+                               to be loaded alongside the main request.
+                               The resource can be either a string or a tuple.
+                               In the latter case, the second parameter
+                               is optional and represents
+                               the method to be used (defaults to GET)
         :param kwargs: arguments to be passed to requests library
         """
         self.http_request(url,
                           method='PUT',
                           is_resource=is_resource,
                           response_hooks=response_hooks,
+                          with_resources=with_resources,
                           **kwargs)
 
     def patch(self,
               url,
               is_resource=False,
               response_hooks=None,
+              with_resources=tuple(),
               **kwargs):
         """
         Shorthand for PATCH requests
@@ -241,18 +287,26 @@ class HttpSequence(BaseSequence):
                             all HTTP errors will be ignored for this entry
         :param response_hooks: the list of hooks to apply to response
                                (assertions or parameter retrieval)
+        :param with_resources: tuple containing the resource URLs
+                               to be loaded alongside the main request.
+                               The resource can be either a string or a tuple.
+                               In the latter case, the second parameter
+                               is optional and represents
+                               the method to be used (defaults to GET)
         :param kwargs: arguments to be passed to requests library
         """
         self.http_request(url,
                           method='PATCH',
                           is_resource=is_resource,
                           response_hooks=response_hooks,
+                          with_resources=with_resources,
                           **kwargs)
 
     def delete(self,
                url,
                is_resource=False,
                response_hooks=None,
+               with_resources=tuple(),
                **kwargs):
         """
         Shorthand for DELETE requests
@@ -269,6 +323,7 @@ class HttpSequence(BaseSequence):
                           method='DELETE',
                           is_resource=is_resource,
                           response_hooks=response_hooks,
+                          with_resources=with_resources,
                           **kwargs)
 
     def _request_log_hook(self, is_async=False, is_resource=False):
