@@ -16,39 +16,33 @@ class BaseGenerator(object):
 
         # Text buffer for writing code
         self.buffer = six.moves.cStringIO()
+        self.buffer_list = []
 
-        if isinstance(parsed_entries, dict):
-            # If a dict is passed, instance it directly
-            self._parsed_entries = parsed_entries
-        elif isinstance(parsed_entries, str):
-            filename = os.path.abspath(parsed_entries)
-            # If a string is passed, try to load the specified file
-            try:
-                with open(filename) as fp:
-                    self._load_file(fp)
-            except IOError:
-                raise IOError('File "{file_path}" not found'.format(
-                    file_path=filename
-                ))
-        else:
-            raise IOError('Unsupported input type')
+        # Base name for sequence generation
+        self.base_sequence_name = None
 
-    def _load_file(self, stream):
-        try:
-            self._parsed_entries = msgpack.load(
-                stream, object_hook=functions.decode_datetime
+        # Internal parsed entries from Correlator
+        self._parsed_entries = parsed_entries
+
+    def _clean_buffer(self):
+        self.buffer_list.append(self.buffer)
+        self.buffer = six.moves.cStringIO()
+
+    def _dump_buffers(self, base_file_name, folder='sequences'):
+        for index, buffer_item in enumerate(self.buffer_list):
+            buffer_item.seek(0)
+            file_content = autopep8.fix_code(buffer_item.read(), options={
+                'aggressive': 1
+            })
+            file_name = '{basename}_{index}.py'.format(
+                basename=base_file_name,
+                index=index - 1
+            ) if index > 0 else '{basename}.py'.format(
+                basename=base_file_name,
             )
-        except ValueError:
-            self._parsed_entries = simplejson.load(
-                stream, object_hook=functions.decode_datetime
-            )
-
-    def _fix_code(self):
-        self.buffer.seek(0)
-        return autopep8.fix_code(self.buffer.read(), options={
-            'aggressive': 1
-        })
+            with open(os.path.join(folder, file_name), 'w') as fp:
+                fp.write(file_content)
 
     @abc.abstractmethod
-    def generate(self, filename, sequence_name='NewSequence'):
+    def generate(self, filename, sequence_name=None):
         pass
