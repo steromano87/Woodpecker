@@ -1,4 +1,3 @@
-import os
 import copy
 import six
 
@@ -6,13 +5,18 @@ from woodpecker.io.generators.basegenerator import BaseGenerator
 
 
 class HttpSequenceGenerator(BaseGenerator):
-    def generate(self, filename, sequence_name='NewSequence', **kwargs):
+    def generate(self,
+                 filename,
+                 sequence_name='NewSequence',
+                 folder='sequences',
+                 **kwargs):
+        self.base_sequence_name = sequence_name
+
         self._generate_headers()
         self._generate_class_definition(sequence_name)
         self._generate_calls(**kwargs)
 
-        with open(os.path.abspath(filename), 'w') as fp:
-            fp.write(self._fix_code())
+        self._dump_buffers(filename, folder=folder)
 
     def _generate_headers(self):
         self.buffer.write(
@@ -27,13 +31,17 @@ class HttpSequenceGenerator(BaseGenerator):
             )
         )
 
+    def _generate_steps_method_definition(self):
+        self.buffer.write('    def steps(self):\n')
+
     def _generate_calls(self,
                         group_resources=True,
                         auto_assert=True,
-                        new_sequence_threshold=7.0,
+                        think_time_threshold=2.0,
+                        new_sequence_threshold=5.0,
                         async_request_threshold=0.1):
         # Generate steps call
-        self.buffer.write('    def steps(self):\n')
+        self._generate_steps_method_definition()
 
         previous_entry = None
         for entry in six.viewvalues(self._parsed_entries):
@@ -41,6 +49,7 @@ class HttpSequenceGenerator(BaseGenerator):
                                         previous_entry,
                                         group_resources,
                                         auto_assert,
+                                        think_time_threshold,
                                         new_sequence_threshold,
                                         async_request_threshold,
                                         False)
@@ -53,19 +62,47 @@ class HttpSequenceGenerator(BaseGenerator):
                                                 previous_entry,
                                                 group_resources,
                                                 auto_assert,
+                                                think_time_threshold,
                                                 new_sequence_threshold,
                                                 async_request_threshold,
                                                 True)
                 self.buffer.write('        self.end_async_pool()\n\n')
+
+        # In the end, clean and store the current buffer
+        self._clean_buffer()
 
     def _generate_single_entry(self,
                                entry,
                                previous_entry,
                                group_resources,
                                auto_assert,
+                               think_time_threshold,
                                new_sequence_threshold,
                                async_request_threshold,
                                _async):
+        # Determine if the previous call has an elapsed higher than
+        # the new sequence threshold. In such case, start a new sequence
+        if entry.timings.elapsed[
+                'from_end_of_previous'] / 1000 > new_sequence_threshold:
+            self._clean_buffer()
+            sequence_name = '{basename}_{index}'.format(
+                basename=self.base_sequence_name,
+                index=len(self.buffer_list)
+            )
+            self._generate_headers()
+            self._generate_class_definition(sequence_name)
+            self._generate_steps_method_definition()
+
+        # If the elapsed is greater than the think time threshold,
+        # set the think time
+        elif entry.timings.elapsed[
+                'from_end_of_previous'] / 1000 > think_time_threshold:
+            self.buffer.write('\n\n')
+            self.buffer.write('        self.think_time({amount})'.format(
+                amount=entry.timings.elapsed['from_end_of_previous'] * 1000
+            ))
+            self.buffer.write('\n\n')
+
         # Write the call according to the method
         if entry.method.upper() in ('GET', 'POST', 'PUT', 'PATCH', 'DELETE'):
             self.buffer.write(
