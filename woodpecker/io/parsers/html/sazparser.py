@@ -224,25 +224,25 @@ class SazParser(BaseParser):
         resource.timings.duration = round((dateparser.parse(
             session_timers.attrib['ClientDoneResponse']
         ) - resource.timings.timestamp).total_seconds() * 1000)
-        resource.response.timings['from_start'] = \
+        resource.timings.elapsed['from_start'] = \
             round((resource.timings.timestamp -
                    self._parsed['start_time']).total_seconds() * 1000)
 
         try:
-            resource.response.timings['from_start_of_previous'] = \
+            resource.timings.elapsed['from_start_of_previous'] = \
                 round((resource.timings.timestamp -
                        self._parsed['entries'][-1].timings.timestamp
                        ).total_seconds() * 1000)
         except (IndexError, KeyError):
-            resource.response.timings['from_start_of_previous'] = 0
+            resource.timings.elapsed['from_start_of_previous'] = 0
 
         try:
-            resource.response.timings['from_end_of_previous'] = \
-                resource.response.timings['from_start_of_previous'] - \
+            resource.timings.elapsed['from_end_of_previous'] = \
+                resource.timings.elapsed['from_start_of_previous'] - \
                 self._parsed['entries'][-1].timings.duration
         except (IndexError, KeyError):
-            resource.response.timings['from_end_of_previous'] = 0
+            resource.timings.elapsed['from_end_of_previous'] = 0
 
-            resource.response.timings['from_end_of_previous'] = \
-                resource.response.timings['from_end_of_previous'] \
-                if resource.response.timings['from_end_of_previous'] > 0 else 0
+            resource.timings.elapsed['from_end_of_previous'] = \
+                resource.timings.elapsed['from_end_of_previous'] \
+                if resource.timings.elapsed['from_end_of_previous'] > 0 else 0
