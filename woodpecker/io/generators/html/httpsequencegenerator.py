@@ -146,7 +146,10 @@ class HttpSequenceGenerator(BaseGenerator):
                 if resource.method == 'GET':
                     self.buffer.write("'{url}'".format(url=resource.url))
                 else:
-                    self.buffer.write("('{url}', '{method}')")
+                    self.buffer.write("('{url}', '{method}')".format(
+                        url=resource.url,
+                        method=resource.method
+                    ))
                 self.buffer.write(',')
             self.buffer.write(')')
 
