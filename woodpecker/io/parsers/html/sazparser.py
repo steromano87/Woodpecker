@@ -99,7 +99,7 @@ class SazParser(BaseParser):
 
         # Iterate over elements and save separately user agent and cookies
         for header_line in header_lines:
-            header_couple = header_line.split(':')
+            header_couple = header_line.split(':', 1)
             if header_couple[0].lower() == 'cookie':
                 resource.request.parse_cookie_header(header_couple[1].strip())
             elif header_couple[0].lower() == 'user-agent':
@@ -162,7 +162,7 @@ class SazParser(BaseParser):
 
         # Iterate over elements and save separately user agent and cookies
         for header_line in header_lines:
-            header_couple = header_line.split(': ')
+            header_couple = header_line.split(': ', 1)
             if header_couple[0].lower() == 'set-cookie':
                 resource.response.parse_set_cookie_header(
                     header_couple[1].strip()
