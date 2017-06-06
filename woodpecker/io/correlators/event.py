@@ -11,6 +11,9 @@ class Event(object):
         # Event unique ID
         self.id = uuid.uuid4()
 
+        # Event data
+        self.data = dict()
+
         # Related events
         self.prepended_events = EventCollection()
         self.appended_events = EventCollection()
@@ -31,7 +34,7 @@ class Event(object):
 class EventCollection(object):
     def __init__(self):
         # Inner events list
-        self._events = OrderedDict()
+        self.events = OrderedDict()
 
         # Recursive counter
         self._event_counter = 0
@@ -44,7 +47,7 @@ class EventCollection(object):
         if not isinstance(event, Event):
             raise TypeError('Only events can be added to an Event Collection')
 
-        self._events[event.id] = event
+        self.events[event.id] = event
         self._increase_counter()
 
     def prepend_event(self, main_event_id, prepended_event):
@@ -53,7 +56,7 @@ class EventCollection(object):
             raise TypeError('Only events can be added to an Event Collection')
 
         try:
-            self._events[main_event_id].prepend_event(prepended_event)
+            self.events[main_event_id].prepend_event(prepended_event)
         except KeyError:
             raise KeyError('Event {id} not found'.format(id=main_event_id))
 
@@ -63,7 +66,7 @@ class EventCollection(object):
             raise TypeError('Only events can be added to an Event Collection')
 
         try:
-            self._events[main_event_id].append_event(appended_event)
+            self.events[main_event_id].append_event(appended_event)
         except KeyError:
             raise KeyError('Event {id} not found'.format(id=main_event_id))
 
