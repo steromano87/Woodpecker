@@ -21,8 +21,9 @@ class HtmlResource(BaseResource):
         self.response = HtmlResponse()
 
     def __repr__(self):
-        return '{classname} - {name}'.format(
+        return '{classname} - {method} - {name}'.format(
             classname=self.__class__.__name__,
+            method=self.method,
             name=self.url,
         )
 
