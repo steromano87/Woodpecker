@@ -2,11 +2,7 @@ import abc
 import os
 import six
 
-import msgpack
-import simplejson
 import autopep8
-
-import woodpecker.misc.functions as functions
 
 
 class BaseGenerator(object):
@@ -46,3 +42,50 @@ class BaseGenerator(object):
     @abc.abstractmethod
     def generate(self, filename, sequence_name=None):
         pass
+
+
+class CommandGenerator(object):
+    def __init__(self, command_name, indents=1):
+        self._command = command_name
+        self._arguments = []
+        self._named_arguments = {}
+        self._indents = indents
+
+    def __repr__(self):
+        return '{classname} - {command}'.format(
+            classname=self.__class__.__name__,
+            command=self._command
+        )
+
+    def add_argument(self, argument):
+        self._arguments.append(argument)
+
+    def add_named_argument(self, arg_name, arg_value):
+        self._named_arguments[arg_name] = arg_value
+
+    def generate_command(self):
+        output = six.moves.cStringIO()
+
+        # Write command
+        for _ in six.moves.range(0, self._indents):
+            output.write('    ')
+
+        output.write('{command}('.format(command=self._command))
+
+        # Write arguments
+        output.write(', '.join(self._arguments))
+
+        # Write named arguments
+        name_arg_list = \
+            ['='.join((key, value))
+             for key, value in six.iteritems(self._named_arguments)]
+        output.wriite(', '.join(name_arg_list))
+
+        # End writing
+        output.write(')')
+
+        # Rewind the buffer and return PEP8-formatted command
+        output.seek(0)
+        return autopep8.fix_code(output.read(), options={
+                'aggressive': 1
+            })
