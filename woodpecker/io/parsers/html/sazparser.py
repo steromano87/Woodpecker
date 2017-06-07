@@ -152,7 +152,7 @@ class SazParser(BaseParser):
         first_line = raw_file_content.split('\n', 1)[0].split(' ')
 
         # Start getting method and URL
-        resource.response.status = dict(status=first_line[1])
+        resource.response.status = int(first_line[1])
 
         # Parse headers in key - value format
         header_lines = functions.split_by_element(
