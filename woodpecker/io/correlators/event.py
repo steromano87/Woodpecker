@@ -4,12 +4,12 @@ from collections import OrderedDict
 
 
 class Event(object):
-    def __init__(self, event_type):
+    def __init__(self, event_type, event_id=None):
         # Event type
         self.type = event_type
 
         # Event unique ID
-        self.id = uuid.uuid4()
+        self.id = event_id or uuid.uuid4()
 
         # Event data
         self.data = dict()
