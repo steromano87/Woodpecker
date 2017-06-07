@@ -18,6 +18,13 @@ class Event(object):
         self.prepended_events = EventCollection()
         self.appended_events = EventCollection()
 
+    def __repr__(self):
+        return '{classname} - {type} - {id}'.format(
+            classname=self.__class__.__name__,
+            type=self.type,
+            id=self.id
+        )
+
     def prepend_event(self, event):
         self.prepended_events.add_event(event)
 
