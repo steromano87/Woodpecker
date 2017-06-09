@@ -10,6 +10,16 @@ from woodpecker.io.resources.htmlresource import HtmlResource
 
 
 class HtmlCorrelator(BaseCorrelator):
+
+    resource_mime_types = (
+        'text/css',
+        'application/javascript',
+        'image/png'
+        'image/jpeg'
+        'image/gif',
+        'image/tiff'
+    )
+
     def __init__(self, parsed_entries):
         super(HtmlCorrelator, self).__init__(parsed_entries)
 
@@ -134,8 +144,12 @@ class HtmlCorrelator(BaseCorrelator):
                         event
                     )
             elif entry.request.headers.get('Referer', '') in self.referers:
-                event = self._create_http_request_event(entry,
-                                                        'http_load_resource')
+                if entry.mime_type() in HtmlCorrelator.resource_mime_types:
+                    event = self._create_http_request_event(
+                        entry, 'http_load_resource')
+                else:
+                    event = self._create_http_request_event(
+                        entry, 'http_request')
                 try:
                     self.events.append_event(
                         entry.request.headers.get('Referer', None),
