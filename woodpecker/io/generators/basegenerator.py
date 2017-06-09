@@ -77,13 +77,22 @@ class CommandGenerator(object):
         output.write('{command}('.format(command=self._command))
 
         # Write arguments
-        output.write(', '.join(self._arguments))
+        output.write(', '.join(
+            ["'{argument}'".format(argument=argument)
+             for argument in self._arguments]
+        ))
+
+        # Write args separator
+        output.write(', ')
 
         # Write named arguments
         name_arg_list = \
-            ['='.join((key, value))
+            ['='.join((
+                key,
+                "'{value}'".format(value=value) if not isinstance(value, dict) else str(value)
+            ))
              for key, value in six.iteritems(self._named_arguments)]
-        output.wriite(', '.join(name_arg_list))
+        output.write(', '.join(name_arg_list))
 
         # End writing
         output.write(')')
