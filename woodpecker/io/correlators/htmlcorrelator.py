@@ -114,6 +114,11 @@ class HtmlCorrelator(BaseCorrelator):
                                 self.events.last_event(),
                                 event
                             )
+                else:
+                    self.events.append_event(
+                        self.events.last_event(),
+                        event
+                    )
             elif entry.request.headers.get(
                     'X-Requested-With', None) == 'XMLHttpRequest':
                 event = self._create_http_request_event(entry,
