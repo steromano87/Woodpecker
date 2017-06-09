@@ -29,7 +29,7 @@ class HtmlResource(BaseResource):
 
     def mime_type(self):
         if self.response.mime_type is None:
-            return None
+            return self.request.mime_type
         elif self.response.mime_type in self.request.mime_type \
                 or '*/*' in self.request.mime_type \
                 or '{first}/*'.format(
