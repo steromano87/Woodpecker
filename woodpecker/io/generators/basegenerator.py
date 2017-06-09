@@ -31,7 +31,8 @@ class BaseGenerator(object):
     def _dump_buffers(self, base_file_name, folder='sequences'):
         for index, buffer_item in enumerate(self.buffer_list):
             buffer_item.seek(0)
-            file_content = autopep8.fix_code(buffer_item.read(), options={
+            buffer_content = buffer_item.read()
+            file_content = autopep8.fix_code(buffer_content, options={
                 'aggressive': 1
             })
             file_name = '{basename}_{index}.py'.format(
@@ -83,7 +84,8 @@ class CommandGenerator(object):
         ))
 
         # Write args separator
-        output.write(', ')
+        if len(self._named_arguments) > 0:
+            output.write(', ')
 
         # Write named arguments
         name_arg_list = \
@@ -99,6 +101,4 @@ class CommandGenerator(object):
 
         # Rewind the buffer and return PEP8-formatted command
         output.seek(0)
-        return autopep8.fix_code(output.read(), options={
-                'aggressive': 1
-            })
+        return output.read()
