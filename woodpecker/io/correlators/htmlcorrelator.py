@@ -13,11 +13,19 @@ class HtmlCorrelator(BaseCorrelator):
 
     resource_mime_types = (
         'text/css',
+        'application/x-javascript',
         'application/javascript',
-        'image/png'
-        'image/jpeg'
+        'image/png',
+        'image/jpeg',
         'image/gif',
         'image/tiff'
+    )
+
+    excluded_headers = (
+        'Host',
+        'Connection',
+        'Content-Length',
+        'X-Requested-With'
     )
 
     def __init__(self, parsed_entries):
@@ -176,8 +184,14 @@ class HtmlCorrelator(BaseCorrelator):
         # Clean headers from white noise headers
         cleaned_headers = deepcopy(entry.request.headers)
         for key, item in six.iteritems(self.wn_headers):
-            if cleaned_headers.get(key, '') != item:
+            if cleaned_headers.get(key, '') == item:
                 del cleaned_headers[key]
+
+        # Clean headers from excluded ones
+        for key in cleaned_headers.keys():
+            if key in HtmlCorrelator.excluded_headers:
+                del cleaned_headers[key]
+
         event.data.update({
             'url': entry.url,
             'query_params': entry.request.params,
