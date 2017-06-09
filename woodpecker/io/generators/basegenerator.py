@@ -97,7 +97,7 @@ class CommandGenerator(object):
         output.write(', '.join(name_arg_list))
 
         # End writing
-        output.write(')')
+        output.write(')\n\n')
 
         # Rewind the buffer and return PEP8-formatted command
         output.seek(0)
