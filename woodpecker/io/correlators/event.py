@@ -91,3 +91,10 @@ class EventCollection(object):
                     return event_key
         else:
             raise TypeError('Event data must be passed as a dict')
+
+    def last_event(self):
+        try:
+            last_key = self.events.keys()[-1]
+        except IndexError:
+            last_key = None
+        return last_key
