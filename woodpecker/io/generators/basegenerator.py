@@ -88,12 +88,19 @@ class CommandGenerator(object):
             output.write(', ')
 
         # Write named arguments
-        name_arg_list = \
-            ['='.join((
-                key,
-                "'{value}'".format(value=value) if not isinstance(value, dict) else str(value)
-            ))
-             for key, value in six.iteritems(self._named_arguments)]
+        name_arg_list = []
+        for key, value in six.iteritems(self._named_arguments):
+            if isinstance(value, dict) or isinstance(value, bool):
+                name_arg_list.append('{key}={value}'.format(
+                    key=key,
+                    value=value
+                ))
+            else:
+                name_arg_list.append("{key}='{value}'".format(
+                    key=key,
+                    value=value
+                ))
+
         output.write(', '.join(name_arg_list))
 
         # End writing
