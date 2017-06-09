@@ -1,4 +1,5 @@
 import uuid
+import six
 
 from collections import OrderedDict
 
@@ -32,10 +33,10 @@ class Event(object):
         self.appended_events.add_event(event)
 
     def has_prepended_events(self):
-        return self.prepended_events.event_count() > 0
+        return self.prepended_events.count() > 0
 
     def has_appended_events(self):
-        return self.appended_events.event_count() > 0
+        return self.appended_events.count() > 0
 
 
 class EventCollection(object):
@@ -49,33 +50,44 @@ class EventCollection(object):
     def _increase_counter(self):
         self._event_counter += 1
 
-    def add_event(self, event):
+    @staticmethod
+    def _check_event(event):
         # Raise exception if teh entry is not an event
         if not isinstance(event, Event):
             raise TypeError('Only events can be added to an Event Collection')
 
+    def add_event(self, event):
+        EventCollection._check_event(event)
         self.events[event.id] = event
         self._increase_counter()
 
     def prepend_event(self, main_event_id, prepended_event):
-        # Raise exception if teh entry is not an event
-        if not isinstance(prepended_event, Event):
-            raise TypeError('Only events can be added to an Event Collection')
-
+        EventCollection._check_event(prepended_event)
         try:
             self.events[main_event_id].prepend_event(prepended_event)
         except KeyError:
             raise KeyError('Event {id} not found'.format(id=main_event_id))
 
     def append_event(self, main_event_id, appended_event):
-        # Raise exception if teh entry is not an event
-        if not isinstance(appended_event, Event):
-            raise TypeError('Only events can be added to an Event Collection')
-
+        EventCollection._check_event(appended_event)
         try:
             self.events[main_event_id].append_event(appended_event)
         except KeyError:
             raise KeyError('Event {id} not found'.format(id=main_event_id))
 
-    def event_count(self):
+    def count(self):
         return self._event_counter
+
+    def search_by_data(self, event_data):
+        if isinstance(event_data, dict):
+            found = False
+            for event_key, event in six.iteritems(self.events):
+                for search_key, search_value in six.iteritems(event_data):
+                    if event.data.get(search_key, 'NOTFOUND') == search_value:
+                        found = True
+                    else:
+                        found = False
+                if found:
+                    return event_key
+        else:
+            raise TypeError('Event data must be passed as a dict')
