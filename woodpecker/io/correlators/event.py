@@ -98,3 +98,6 @@ class EventCollection(object):
         except IndexError:
             last_key = None
         return last_key
+
+    def all_events(self):
+        return six.viewvalues(self.events)
