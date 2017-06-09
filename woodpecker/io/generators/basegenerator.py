@@ -4,11 +4,13 @@ import six
 
 import autopep8
 
+from woodpecker.io.correlators.event import EventCollection
+
 
 class BaseGenerator(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, parsed_entries):
+    def __init__(self, event_collection):
 
         # Text buffer for writing code
         self.buffer = six.moves.cStringIO()
@@ -17,8 +19,10 @@ class BaseGenerator(object):
         # Base name for sequence generation
         self.base_sequence_name = None
 
-        # Internal parsed entries from Correlator
-        self._parsed_entries = parsed_entries
+        # Internal event collection from Correlator
+        if not isinstance(event_collection, EventCollection):
+            raise TypeError('Only EventCollection instances can be passed')
+        self.events = event_collection
 
     def _clean_buffer(self):
         self.buffer_list.append(self.buffer)
@@ -45,7 +49,7 @@ class BaseGenerator(object):
 
 
 class CommandGenerator(object):
-    def __init__(self, command_name, indents=1):
+    def __init__(self, command_name, indents=2):
         self._command = command_name
         self._arguments = []
         self._named_arguments = {}
