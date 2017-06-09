@@ -105,6 +105,16 @@ class HttpSequence(BaseSequence):
             gevent.joinall(self._async_request_pool)
             self._async_request_pool = []
 
+    def set_header(self, header_name, header_value):
+        session = self.variables.get('__http_session')
+        session.headers.update({header_name, header_value})
+        self.variables.set('__http_session', session)
+
+    def set_cookie(self, cookie_name, cookie_value, **kwargs):
+        session = self.variables.get('__http_session')
+        session.cookies.set(cookie_name, cookie_value, **kwargs)
+        self.variables.set('__http_session', session)
+
     def http_request(self,
                      url,
                      method='GET',
