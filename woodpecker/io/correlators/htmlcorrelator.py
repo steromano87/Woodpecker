@@ -107,67 +107,12 @@ class HtmlCorrelator(BaseCorrelator):
                     round(entry.timings.elapsed['from_end_of_previous']))
 
             if entry.url in self.redirects:
-                event = self._create_http_request_event(entry, 'http_redirect')
-                if entry.url in \
-                        previous_entry.response.headers.get('Location', ''):
-                    # Try to add the redirect to the direct first level event
-                    try:
-                        self.events.append_event(
-                            previous_entry.url,
-                            event
-                        )
-                    except KeyError:
-                        # If not found, try to append the redirect
-                        # to the second level events
-                        try:
-                            self.events.events[
-                                self.events.last_event()
-                            ].appended_events.append_event(
-                                previous_entry.url,
-                                event
-                            )
-                        except KeyError:
-                            # If no event is found, append to last element
-                            self.events.append_event(
-                                self.events.last_event(),
-                                event
-                            )
-                else:
-                    self.events.append_event(
-                        self.events.last_event(),
-                        event
-                    )
+                self._add_http_redirect_event(entry, previous_entry)
             elif entry.request.headers.get(
                     'X-Requested-With', None) == 'XMLHttpRequest':
-                event = self._create_http_request_event(entry,
-                                                        'http_async_request')
-                try:
-                    self.events.append_event(
-                        entry.request.headers.get('Origin', None),
-                        event
-                    )
-                except KeyError:
-                    self.events.append_event(
-                        self.events.last_event(),
-                        event
-                    )
+                self._add_http_async_request_event(entry)
             elif entry.request.headers.get('Referer', '') in self.referers:
-                if entry.mime_type() in HtmlCorrelator.resource_mime_types:
-                    event = self._create_http_request_event(
-                        entry, 'http_load_resource')
-                else:
-                    event = self._create_http_request_event(
-                        entry, 'http_request')
-                try:
-                    self.events.append_event(
-                        entry.request.headers.get('Referer', None),
-                        event
-                    )
-                except KeyError:
-                    self.events.append_event(
-                        self.events.last_event(),
-                        event
-                    )
+                self._add_http_load_resource_event(entry)
             elif 'text/html' in entry.mime_type():
                 event = self._create_http_request_event(entry,
                                                         'http_load_page')
@@ -217,3 +162,67 @@ class HtmlCorrelator(BaseCorrelator):
         event = Event('http_set_cookies')
         event.data.update(cookie)
         self.events.add_event(event)
+
+    def _add_http_redirect_event(self, entry, previous_entry=HtmlResource()):
+        event = self._create_http_request_event(entry, 'http_redirect')
+        if entry.url in \
+                previous_entry.response.headers.get('Location', ''):
+            # Try to add the redirect to the direct first level event
+            try:
+                self.events.append_event(
+                    previous_entry.url,
+                    event
+                )
+            except KeyError:
+                # If not found, try to append the redirect
+                # to the second level events
+                try:
+                    self.events.events[
+                        self.events.last_event()
+                    ].appended_events.append_event(
+                        previous_entry.url,
+                        event
+                    )
+                except KeyError:
+                    # If no event is found, append to last element
+                    self.events.append_event(
+                        self.events.last_event(),
+                        event
+                    )
+        else:
+            self.events.append_event(
+                self.events.last_event(),
+                event
+            )
+
+    def _add_http_async_request_event(self, entry):
+        event = self._create_http_request_event(entry,
+                                                'http_async_request')
+        try:
+            self.events.append_event(
+                entry.request.headers.get('Origin', None),
+                event
+            )
+        except KeyError:
+            self.events.append_event(
+                self.events.last_event(),
+                event
+            )
+
+    def _add_http_load_resource_event(self, entry):
+        if entry.mime_type() in HtmlCorrelator.resource_mime_types:
+            event = self._create_http_request_event(
+                entry, 'http_load_resource')
+        else:
+            event = self._create_http_request_event(
+                entry, 'http_request')
+        try:
+            self.events.append_event(
+                entry.request.headers.get('Referer', None),
+                event
+            )
+        except KeyError:
+            self.events.append_event(
+                self.events.last_event(),
+                event
+            )
