@@ -1,30 +1,26 @@
-import os
-import re
-import zipfile
-import urllib
 import itertools
+import re
+import urllib
+import xml.etree.cElementTree as eTree
+import zipfile
 
-import xml.etree.cElementTree as ET
 import dateutil.parser as dateparser
 
 import woodpecker.misc.functions as functions
-
-from woodpecker.parsers.baseparser import BaseParser
+from woodpecker.io.parsers.baseparser import BaseParser
+from woodpecker.io.resources.htmlresource import HtmlResource
 
 
 class SazParser(BaseParser):
-    def __init__(self, saz_file):
-        # Absolute path of Saz file
-        self._saz_file_path = os.path.abspath(saz_file)
 
-        # Zip file  structure
-        self._zip_file = zipfile.ZipFile(self._saz_file_path, 'r')
-
-        # Parsed data from SAZ file
-        self._parsed = {
-            'start_time': None,
-            'entries': []
-        }
+    def _import_file(self, filename):
+        try:
+            # Zip file  structure
+            self._zip_file = zipfile.ZipFile(filename, 'r')
+        except IOError:
+            raise IOError('File "{file_path}" not found'.format(
+                file_path=filename
+            ))
 
     def __del__(self):
         # Ensure to close Zip file before exiting
@@ -36,7 +32,7 @@ class SazParser(BaseParser):
             content_list = self._zip_file.namelist()
         except IOError:
             raise IOError('File {file} does not exist'.format(
-                file=self._saz_file_path)
+                file=self._file_path)
             )
 
         # Sort list in alphabetical order
@@ -52,18 +48,24 @@ class SazParser(BaseParser):
 
         # Cycle through index list and parse each file
         for index in index_list:
-            self._parsed['entries'].append(
-                {
-                    'request': self._parse_request(index),
-                    'response': self._parse_response(index),
-                    'timings': self._parse_timings(index)
-                }
-            )
+            resource = HtmlResource()
+            self._parse_request(index, resource)
+            self._parse_response(index, resource)
+            self._parse_timings(index, resource)
+            self._parsed['entries'].append(resource)
 
         # Return everything
         return self._parsed
 
-    def _parse_request(self, index):
+    def _parse_request(self, index, resource):
+        """
+        Parses a request into HtmlResource
+
+        :param index:
+        :param HtmlResource resource:
+        :return: None
+        """
+
         # Try to read file content
         try:
             raw_file_content = \
@@ -74,7 +76,7 @@ class SazParser(BaseParser):
                 'Cannot find "raw/{index}_c.txt" inside '
                 'file {saz_file}, corrupted archive?'.format(
                     index=index,
-                    saz_file=self._saz_file_path
+                    saz_file=self._file_path
                 )
             )
 
@@ -82,14 +84,12 @@ class SazParser(BaseParser):
         first_line = raw_file_content.split('\n', 1)[0].split(' ')
 
         # Start getting method and URL
-        request = dict(method=first_line[0])
-        request['url'] = urllib.unquote_plus(first_line[1].split('?')[0])
+        resource.method = first_line[0]
+        resource.url = urllib.unquote_plus(first_line[1].split('?')[0])
 
         # Parse query string parameters
-        request['params'] = {}
         if '?' in first_line[1]:
-            request['params'] = \
-                functions.split_query_string(first_line[1].split('?')[1])
+            resource.request.parse_query_string(first_line[1].split('?')[1])
 
         # Parse headers in key - value format
         header_lines = functions.split_by_element(
@@ -98,20 +98,17 @@ class SazParser(BaseParser):
         )[0]
 
         # Iterate over elements and save separately user agent and cookies
-        request['headers'] = {}
         for header_line in header_lines:
-            header_couple = header_line.split(':')
+            header_couple = header_line.split(':', 1)
             if header_couple[0].lower() == 'cookie':
-                request['cookies'] = \
-                    functions.parse_cookie_header(header_couple[1].strip())
+                resource.request.parse_cookie_header(header_couple[1].strip())
             elif header_couple[0].lower() == 'user-agent':
-                request['user_agent'] = header_couple[1].strip()
+                resource.request.user_agent = header_couple[1].strip()
             else:
-                request['headers'][header_couple[0].strip()] = \
+                resource.request.headers[header_couple[0].strip()] = \
                     header_couple[1].strip()
 
         # Parse content lines
-        request['form_data'] = {}
         try:
             content_lines = functions.split_by_element(
                 raw_file_content.split('\n', 1)[1].splitlines(),
@@ -120,18 +117,23 @@ class SazParser(BaseParser):
             # If the content type is www-form-urlencoded, parse the content
             # as POST key-value data
             if 'application/x-www-form-urlencoded' \
-                    in request['headers'].get('Content-Type', ''):
-                request['form_data'] = \
-                    functions.split_query_string(content_lines[0])
+                    in resource.request.headers.get('Content-Type', ''):
+                resource.request.parse_form_data(content_lines[0])
             else:
-                request['text'] = \
+                resource.request.payload = \
                     functions.get_eol(raw_file_content).join(content_lines)
         except IndexError:
-            request['text'] = None
+            resource.request.payload = None
 
-        return request
+    def _parse_response(self, index, resource):
+        """
+        Parses a response into HtmlResource
 
-    def _parse_response(self, index):
+        :param index:
+        :param HtmlResource resource:
+        :return: None
+        """
+
         # Try to read file content
         try:
             raw_file_content = \
@@ -142,7 +144,7 @@ class SazParser(BaseParser):
                 'Cannot find "raw/{index}_s.txt" inside '
                 'file {saz_file}, corrupted archive?'.format(
                     index=index,
-                    saz_file=self._saz_file_path
+                    saz_file=self._file_path
                 )
             )
 
@@ -150,7 +152,7 @@ class SazParser(BaseParser):
         first_line = raw_file_content.split('\n', 1)[0].split(' ')
 
         # Start getting method and URL
-        response = dict(status=first_line[1])
+        resource.response.status = int(first_line[1])
 
         # Parse headers in key - value format
         header_lines = functions.split_by_element(
@@ -159,21 +161,18 @@ class SazParser(BaseParser):
         )[0]
 
         # Iterate over elements and save separately user agent and cookies
-        response['headers'] = {}
-        response['content'] = {}
-        response['cookies'] = []
         for header_line in header_lines:
-            header_couple = header_line.split(': ')
+            header_couple = header_line.split(': ', 1)
             if header_couple[0].lower() == 'set-cookie':
-                response['cookies'].append(
-                    functions.parse_set_cookie_header(header_couple[1].strip())
+                resource.response.parse_set_cookie_header(
+                    header_couple[1].strip()
                 )
             elif header_couple[0].lower() == 'content-type':
-                response['content']['mime_type'] = header_couple[1].strip()
+                resource.response.mime_type = header_couple[1].strip()
             elif header_couple[0].lower() == 'content-length':
-                response['content']['size'] = int(header_couple[1].strip())
+                resource.response.size = int(header_couple[1].strip())
             else:
-                response['headers'][header_couple[0].strip()] = \
+                resource.response.headers[header_couple[0].strip()] = \
                     header_couple[1].strip()
 
         # Try to parse content lines
@@ -184,14 +183,20 @@ class SazParser(BaseParser):
                     ''
                 )[1:]))
         except IndexError:
-            response['content']['text'] = None
+            resource.response.content = None
         else:
             line_sep = functions.get_eol(raw_file_content)
-            response['content']['text'] = line_sep.join(content_lines)
+            resource.response.content = line_sep.join(content_lines)
 
-        return response
+    def _parse_timings(self, index, resource):
+        """
+        Parses the timings into HtmlResource
 
-    def _parse_timings(self, index):
+        :param index:
+        :param HtmlResource resource:
+        :return: None
+        """
+
         # Try to read file content
         try:
             raw_file_content = \
@@ -202,47 +207,42 @@ class SazParser(BaseParser):
                 'Cannot find "raw/{index}_m.xml" inside '
                 'file {saz_file}, corrupted archive?'.format(
                     index=index,
-                    saz_file=self._saz_file_path
+                    saz_file=self._file_path
                 )
             )
 
-        timings = {}
-
-        xml_doc = ET.fromstring(raw_file_content)
+        xml_doc = eTree.fromstring(raw_file_content)
         session_timers = xml_doc.findall('.//SessionTimers')[0]
-        timings['timestamp'] = dateparser.parse(
+        resource.timings.timestamp = dateparser.parse(
             session_timers.attrib['ClientBeginRequest']
         )
 
         # If index is 01, set the start time, too
         if index == '01':
-            self._parsed['start_time'] = timings['timestamp']
+            self._parsed['start_time'] = resource.timings.timestamp
 
-        timings['duration'] = round((dateparser.parse(
+        resource.timings.duration = round((dateparser.parse(
             session_timers.attrib['ClientDoneResponse']
-        ) - timings['timestamp']).total_seconds() * 1000)
-        timings['elapsed_from_start'] = \
-            round((timings['timestamp'] -
+        ) - resource.timings.timestamp).total_seconds() * 1000)
+        resource.timings.elapsed['from_start'] = \
+            round((resource.timings.timestamp -
                    self._parsed['start_time']).total_seconds() * 1000)
 
         try:
-            timings['elapsed_from_previous'] = \
-                round((timings['timestamp'] -
-                       self._parsed['entries'][-1]['timings'][
-                           'timestamp']).total_seconds() * 1000)
+            resource.timings.elapsed['from_start_of_previous'] = \
+                round((resource.timings.timestamp -
+                       self._parsed['entries'][-1].timings.timestamp
+                       ).total_seconds() * 1000)
         except (IndexError, KeyError):
-            timings['elapsed_from_previous'] = 0
+            resource.timings.elapsed['from_start_of_previous'] = 0
 
         try:
-            timings['elapsed_from_end_of_previous'] = \
-                timings['elapsed_from_previous'] - \
-                self._parsed['entries'][-1]['timings'][
-                    'duration']
+            resource.timings.elapsed['from_end_of_previous'] = \
+                resource.timings.elapsed['from_start_of_previous'] - \
+                self._parsed['entries'][-1].timings.duration
         except (IndexError, KeyError):
-            timings['elapsed_from_end_of_previous'] = 0
+            resource.timings.elapsed['from_end_of_previous'] = 0
 
-        timings['elapsed_from_end_of_previous'] = \
-            timings['elapsed_from_end_of_previous'] \
-            if timings['elapsed_from_end_of_previous'] > 0 else 0
-
-        return timings
+            resource.timings.elapsed['from_end_of_previous'] = \
+                resource.timings.elapsed['from_end_of_previous'] \
+                if resource.timings.elapsed['from_end_of_previous'] > 0 else 0

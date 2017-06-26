@@ -16,3 +16,4 @@ verboselogs
 coloredlogs
 configobj
 versioneer
+autopep8
